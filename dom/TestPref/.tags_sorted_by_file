@@ -1,0 +1,72 @@
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+Add	TestPref.cpp	/^TestPref::Add(int32_t a, int32_t b)$/;"	f	class:mozilla::dom::TestPref
+Constructor	TestPref.cpp	/^TestPref::Constructor(const GlobalObject& global, ErrorResult& aRv)$/;"	f	class:mozilla::dom::TestPref
+Constructor	TestPref.cpp	/^TestPref::Constructor(const GlobalObject& global, const nsAString& str, ErrorResult& aRv)$/;"	f	class:mozilla::dom::TestPref
+DispatchMyTestEvent	TestPref.cpp	/^nsresult TestPref::DispatchMyTestEvent(const nsAString& aType, bool aIsComplete, uint64_t aPercentage)$/;"	f	class:mozilla::dom::TestPref
+Div	TestPref.cpp	/^TestPref::Div(int32_t a, int32_t b, ErrorResult& aRv)$/;"	f	class:mozilla::dom::TestPref
+GetHelloStr	TestPref.cpp	/^TestPref::GetHelloStr(nsString& aRetVal) const$/;"	f	class:mozilla::dom::TestPref
+GetReadonlyStr	TestPref.cpp	/^TestPref::GetReadonlyStr(nsString& aRetVal) const$/;"	f	class:mozilla::dom::TestPref
+InitTimer	TestPref.cpp	/^TestPref::InitTimer(uint32_t aDelay)$/;"	f	class:mozilla::dom::TestPref
+InitTimerCallbackFunc	TestPref.cpp	/^TestPref::InitTimerCallbackFunc(uint32_t aDelay)$/;"	f	class:mozilla::dom::TestPref
+Mul	TestPref.cpp	/^TestPref::Mul(int32_t a, int32_t b)$/;"	f	class:mozilla::dom::TestPref
+MyTimerCallback	TestPref.cpp	/^MyTimerCallback::MyTimerCallback(TestPref* aObj) : mContent(aObj)$/;"	f	class:mozilla::dom::MyTimerCallback
+RandNum	TestPref.cpp	/^TestPref::RandNum()$/;"	f	class:mozilla::dom::TestPref
+SayHello	TestPref.cpp	/^TestPref::SayHello(nsString& aRetVal)$/;"	f	class:mozilla::dom::TestPref
+SetHelloStr	TestPref.cpp	/^TestPref::SetHelloStr(const nsAString& arg)$/;"	f	class:mozilla::dom::TestPref
+Sub	TestPref.cpp	/^TestPref::Sub(int32_t a, int32_t b)$/;"	f	class:mozilla::dom::TestPref
+TestPref	TestPref.cpp	/^TestPref::TestPref()$/;"	f	class:mozilla::dom::TestPref
+TestPref	TestPref.cpp	/^TestPref::TestPref(nsISupports* aParent):mParent(aParent)$/;"	f	class:mozilla::dom::TestPref
+TestPref	TestPref.cpp	/^TestPref::TestPref(nsISupports* aParent, const nsAString& aStr):mParent(aParent), hStr(aStr)$/;"	f	class:mozilla::dom::TestPref
+ThreadPrototype	TestPref.cpp	/^typedef void* (*ThreadPrototype)(void*);$/;"	t	namespace:mozilla::dom	file:
+WrapObject	TestPref.cpp	/^TestPref::WrapObject(JSContext* aCx)$/;"	f	class:mozilla::dom::TestPref
+dom	TestPref.cpp	/^namespace dom {$/;"	n	namespace:mozilla	file:
+mozilla	TestPref.cpp	/^namespace mozilla {$/;"	n	file:
+~TestPref	TestPref.cpp	/^TestPref::~TestPref()$/;"	f	class:mozilla::dom::TestPref
+GetParentObject	TestPref.h	/^  nsISupports* GetParentObject() const { return mParent; }$/;"	f	class:mozilla::dom::MOZ_FINAL
+MOZ_FINAL	TestPref.h	/^class MyTimerCallback MOZ_FINAL : public nsITimerCallback$/;"	c	namespace:mozilla::dom
+MOZ_FINAL	TestPref.h	/^class TestPref MOZ_FINAL : public DOMEventTargetHelper$/;"	c	namespace:mozilla::dom
+MOZ_OVERRIDE	TestPref.h	/^  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;$/;"	m	class:mozilla::dom::MOZ_FINAL
+TimerCallback	TestPref.h	/^  TimerCallback(nsITimer *aTimer, void *aClosure)$/;"	f	class:mozilla::dom::MOZ_FINAL
+cb	TestPref.h	/^  nsRefPtr<MyTimerCallback> cb;$/;"	m	class:mozilla::dom::MOZ_FINAL
+dom	TestPref.h	/^namespace dom {$/;"	n	namespace:mozilla
+hStr	TestPref.h	/^  nsString hStr;$/;"	m	class:mozilla::dom::MOZ_FINAL
+mContent	TestPref.h	/^  TestPref* mContent;$/;"	m	class:mozilla::dom::MOZ_FINAL
+mParent	TestPref.h	/^  nsCOMPtr<nsISupports> mParent;$/;"	m	class:mozilla::dom::MOZ_FINAL
+mTimer	TestPref.h	/^  nsCOMPtr<nsITimer> mTimer;$/;"	m	class:mozilla::dom::MOZ_FINAL
+mTimer2	TestPref.h	/^  nsCOMPtr<nsITimer> mTimer2;$/;"	m	class:mozilla::dom::MOZ_FINAL
+mozilla	TestPref.h	/^namespace mozilla {$/;"	n
+mozilla_dom_TestPref_h	TestPref.h	8;"	d
+~MyTimerCallback	TestPref.h	/^  ~MyTimerCallback()  {}$/;"	f	class:mozilla::dom::MOZ_FINAL
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+Add	temp/TestPref.cpp	/^TestPref::Add(int32_t a, int32_t b)$/;"	f	class:mozilla::dom::TestPref
+Constructor	temp/TestPref.cpp	/^TestPref::Constructor(const GlobalObject& global, ErrorResult& aRv)$/;"	f	class:mozilla::dom::TestPref
+Constructor	temp/TestPref.cpp	/^TestPref::Constructor(const GlobalObject& global, const nsAString& str, ErrorResult& aRv)$/;"	f	class:mozilla::dom::TestPref
+Div	temp/TestPref.cpp	/^TestPref::Div(int32_t a, int32_t b, ErrorResult& aRv)$/;"	f	class:mozilla::dom::TestPref
+GetHelloStr	temp/TestPref.cpp	/^TestPref::GetHelloStr(nsString& aRetVal) const$/;"	f	class:mozilla::dom::TestPref
+GetReadonlyStr	temp/TestPref.cpp	/^TestPref::GetReadonlyStr(nsString& aRetVal) const$/;"	f	class:mozilla::dom::TestPref
+LOG	temp/TestPref.cpp	14;"	d	file:
+Mul	temp/TestPref.cpp	/^TestPref::Mul(int32_t a, int32_t b)$/;"	f	class:mozilla::dom::TestPref
+RandNum	temp/TestPref.cpp	/^TestPref::RandNum()$/;"	f	class:mozilla::dom::TestPref
+SayHello	temp/TestPref.cpp	/^TestPref::SayHello(nsString& aRetVal)$/;"	f	class:mozilla::dom::TestPref
+SetHelloStr	temp/TestPref.cpp	/^TestPref::SetHelloStr(const nsAString& arg)$/;"	f	class:mozilla::dom::TestPref
+Sub	temp/TestPref.cpp	/^TestPref::Sub(int32_t a, int32_t b)$/;"	f	class:mozilla::dom::TestPref
+TestPref	temp/TestPref.cpp	/^TestPref::TestPref()$/;"	f	class:mozilla::dom::TestPref
+TestPref	temp/TestPref.cpp	/^TestPref::TestPref(nsISupports* aParent):mParent(aParent)$/;"	f	class:mozilla::dom::TestPref
+TestPref	temp/TestPref.cpp	/^TestPref::TestPref(nsISupports* aParent, const nsAString& aStr):mParent(aParent), hStr(aStr)$/;"	f	class:mozilla::dom::TestPref
+WrapObject	temp/TestPref.cpp	/^TestPref::WrapObject(JSContext* aCx)$/;"	f	class:mozilla::dom::TestPref
+dom	temp/TestPref.cpp	/^namespace dom {$/;"	n	namespace:mozilla	file:
+gMyTestModule	temp/TestPref.cpp	/^ static PRLogModuleInfo* gMyTestModule  = PR_NewLogModule("MyTestPref");$/;"	v	file:
+mozilla	temp/TestPref.cpp	/^namespace mozilla {$/;"	n	file:
+~TestPref	temp/TestPref.cpp	/^TestPref::~TestPref()$/;"	f	class:mozilla::dom::TestPref
+GetParentObject	temp/TestPref.h	/^  nsISupports* GetParentObject() const { return mParent; }$/;"	f	class:mozilla::dom::MOZ_FINAL
+MOZ_FINAL	temp/TestPref.h	/^class TestPref MOZ_FINAL : public DOMEventTargetHelper$/;"	c	namespace:mozilla::dom
+MOZ_OVERRIDE	temp/TestPref.h	/^  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;$/;"	m	class:mozilla::dom::MOZ_FINAL
+dom	temp/TestPref.h	/^namespace dom {$/;"	n	namespace:mozilla
+hStr	temp/TestPref.h	/^  nsString hStr;$/;"	m	class:mozilla::dom::MOZ_FINAL
+mParent	temp/TestPref.h	/^  nsCOMPtr<nsISupports> mParent;$/;"	m	class:mozilla::dom::MOZ_FINAL
+mozilla	temp/TestPref.h	/^namespace mozilla {$/;"	n
+mozilla_dom_TestPref_h	temp/TestPref.h	8;"	d

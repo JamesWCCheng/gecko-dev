@@ -46,6 +46,7 @@
 #include "mozilla/dom/PContentBridgeParent.h"
 #include "mozilla/dom/PCycleCollectWithLogsParent.h"
 #include "mozilla/dom/PFMRadioParent.h"
+#include "mozilla/dom/PTestParent.h"
 #include "mozilla/dom/PMemoryReportRequestParent.h"
 #include "mozilla/dom/asmjscache/AsmJSCache.h"
 #include "mozilla/dom/bluetooth/PBluetoothParent.h"
@@ -185,6 +186,7 @@ using namespace mozilla::system;
 #include "mozilla/dom/FMRadioParent.h"
 #endif
 
+#include "mozilla/dom/TestParent.h"
 #include "Crypto.h"
 
 #ifdef MOZ_WEBSPEECH
@@ -3693,6 +3695,19 @@ ContentParent::DeallocPFMRadioParent(PFMRadioParent* aActor)
     NS_WARNING("No support for FMRadio on this platform!");
     return false;
 #endif
+}
+
+PTestParent*
+ContentParent::AllocPTestParent()
+{
+    return new TestParent();
+}
+
+bool
+ContentParent::DeallocPTestParent(PTestParent* aActor)
+{
+    delete aActor;
+    return true;
 }
 
 asmjscache::PAsmJSCacheEntryParent*

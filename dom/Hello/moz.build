@@ -1,0 +1,11 @@
+EXPORTS.mozilla.dom += [
+	'Hello.h',
+]
+UNIFIED_SOURCES += [
+	'Hello.cpp',
+]
+FINAL_LIBRARY = 'xul'
+FAIL_ON_WARNINGS = True
+MOCHITEST_MANIFESTS += [
+    'test/mochitest.ini',
+]

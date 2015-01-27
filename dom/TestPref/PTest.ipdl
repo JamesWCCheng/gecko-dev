@@ -1,0 +1,16 @@
+include protocol PContent;
+namespace mozilla {
+namespace dom {
+
+protocol PTest
+{
+  manager PContent;
+child:
+  ParentFinish();
+  __delete__();
+parent:
+  ChildRequest();
+};
+
+} // namespace dom
+} // namespace mozilla

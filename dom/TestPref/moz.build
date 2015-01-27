@@ -1,0 +1,16 @@
+EXPORTS.mozilla.dom += [
+    'TestChild.h',
+    'TestParent.h',
+    'TestPref.h',
+]
+UNIFIED_SOURCES += [
+    'TestChild.cpp',
+    'TestParent.cpp',
+    'TestPref.cpp',
+]
+IPDL_SOURCES += [
+    'PTest.ipdl',
+]
+include('/ipc/chromium/chromium-config.mozbuild')
+FAIL_ON_WARNINGS = True
+FINAL_LIBRARY = 'xul'

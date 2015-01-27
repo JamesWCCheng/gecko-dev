@@ -1,0 +1,81 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>TestPref test</title>
+    <script>
+        funcInit = function(){
+            // After DOM has been loaded....
+            console.log("DOM has been loaded...");
+            var btnElement = document.querySelector('#btn');
+            btn.addEventListener('click', clickHandler);
+
+        }
+        document.addEventListener('DOMContentLoaded', funcInit);
+
+        console.log("test page is starting...");
+
+        var clickHandler = function(){
+            console.log("click trigger");
+            var h = new TestPref('Test STR');
+            var h2 = new TestPref('Test STR');
+            //var h = new TestPref("Init in JS");
+            h.addEventListener('complete', function () {
+                console.log("OnComplete");
+            });
+             h.addEventListener('error', function () {
+                console.log("OnError");
+            });
+              h.addEventListener('progress', function () {
+                console.log("OnProgress");
+            });
+                 h2.addEventListener('complete', function () {
+                console.log("OnComplete");
+            });
+             h2.addEventListener('error', function () {
+                console.log("OnError");
+            });
+              h2.addEventListener('progress', function () {
+                console.log("OnProgress");
+            });
+            console.log("sayTestPref : " + h.sayHello());
+
+            console.log("TestPrefStr : " + h.helloStr);
+            h.helloStr = null;
+            console.log("TestPrefStr : " + h.helloStr);
+            h.helloStr = "Be modified by web";
+            console.log("TestPrefStr : " + h.helloStr);
+
+            console.log("readonlyStr : " + h.readonlyStr);
+            h.readonlyStr = "Also be modified by web";
+            console.log("readonlyStr : " + h.readonlyStr);
+
+            var x2 = h2.randNum();
+            var x = h.randNum();
+            var y = x;
+            console.log(x + " + " + y + " = " + h.add(x,y));
+            console.log(x + " - " + y + " = " + h.sub(x,y));
+            console.log(x + " * " + y + " = " + h.mul(x,y));
+            try{
+                console.log(x + " / " + y + " = " + h.div(x,y));
+                y = 0;
+                console.log(x + " / " + y + " = " + h.div(x,y));
+            }catch(err){
+                console.log(err);
+                if(err.name == "NS_ERROR_ILLEGAL_VALUE"){
+                    console.log("Can NOT divide by zero!");
+                }
+            }finally{
+                console.log("Finish testing");
+            }
+        }
+
+    </script>
+</head>
+
+<body>
+    <H1>Test Page</H1>
+    <button id="btn">click me</button>
+</body>
+</html>

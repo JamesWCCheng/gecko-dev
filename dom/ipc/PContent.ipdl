@@ -19,6 +19,7 @@ include protocol PExternalHelperApp;
 include protocol PDeviceStorageRequest;
 include protocol PFileDescriptorSet;
 include protocol PFMRadio;
+include protocol PTest;
 include protocol PFileSystemRequest;
 include protocol PHal;
 include protocol PProcessHangMonitor;
@@ -379,6 +380,7 @@ prio(normal upto urgent) sync protocol PContent
     manages PVoicemail;
     manages PJavaScript;
     manages PRemoteSpellcheckEngine;
+    manages PTest;
 
 both:
     // Depending on exactly how the new browser is being created, it might be
@@ -666,6 +668,7 @@ parent:
 
     PAsmJSCacheEntry(OpenMode openMode, WriteParams write, Principal principal);
 
+    PTest();
     // Services remoting
 
     async StartVisitedQuery(URIParams uri);

@@ -266,6 +266,9 @@ public:
     virtual PFMRadioChild* AllocPFMRadioChild() MOZ_OVERRIDE;
     virtual bool DeallocPFMRadioChild(PFMRadioChild* aActor) MOZ_OVERRIDE;
 
+    virtual PTestChild* AllocPTestChild() MOZ_OVERRIDE;
+    virtual bool DeallocPTestChild(PTestChild* aActor) MOZ_OVERRIDE;
+
     virtual PAsmJSCacheEntryChild* AllocPAsmJSCacheEntryChild(
                                  const asmjscache::OpenMode& aOpenMode,
                                  const asmjscache::WriteParams& aWriteParams,

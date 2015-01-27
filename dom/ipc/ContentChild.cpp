@@ -151,6 +151,7 @@
 #include "mozilla/dom/FileSystemTaskBase.h"
 #include "mozilla/dom/bluetooth/PBluetoothChild.h"
 #include "mozilla/dom/PFMRadioChild.h"
+#include "mozilla/dom/PTestChild.h"
 #include "mozilla/ipc/InputStreamUtils.h"
 
 #ifdef MOZ_WEBSPEECH
@@ -1695,6 +1696,19 @@ ContentChild::DeallocPFMRadioChild(PFMRadioChild* aActor)
     NS_RUNTIMEABORT("No support for FMRadio on this platform!");
     return false;
 #endif
+}
+
+PTestChild*
+ContentChild::AllocPTestChild()
+{
+    return nullptr;
+}
+
+bool
+ContentChild::DeallocPTestChild(PTestChild* aActor)
+{
+    delete aActor;
+    return true;
 }
 
 PSpeechSynthesisChild*
