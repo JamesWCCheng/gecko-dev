@@ -14,4 +14,5 @@ interface TestPref : EventTarget {
     attribute EventHandler onerror;
     [Throws]
     Promise<sequence<long>> sort(sequence<long> data);
+    attribute Hello hello;
 };
