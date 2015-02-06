@@ -18,33 +18,8 @@
 
         }
         document.addEventListener('DOMContentLoaded', funcInit);
-
-        console.log("test page is starting...");
-         window.addEventListener('progress', function (e) {
-                 console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-            });
-        var clickHandler = function(){
-            console.log("click trigger");
-
-             var h2 = new Hello('Test STR');
-               console.log(h2);
-           
-            // window.addEventListener('click', function (e) {
-            //      console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-            // });
-            var h = navigator.mypref;
-            console.log(h.hello.add(1, 3));
-
-            console.log(h);
-
-
-            h.sort([1,3,2,45,5]).then(function (result) {
-                console.log(result);
-
-            });
-            //var h2 = new TestPref('Test STR');
-            //var h = new TestPref("Init in JS");
-            h.addEventListener('complete', function (e) {
+        var h = navigator.mypref;
+         h.addEventListener('complete', function (e) {
                 console.log("OnComplete");
                 console.log("isComplete = " + e.isComplete);
                 console.log("percentage = " + e.percentage);
@@ -69,6 +44,32 @@
                 document.getElementById("msg").innerHTML = e.msg;
                 document.getElementById("per").innerHTML = e.percentage;
             });
+        console.log("test page is starting...");
+         window.addEventListener('progress', function (e) {
+                 console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+            });
+        var clickHandler = function(){
+            console.log("click trigger");
+
+             var h2 = new Hello('Test STR');
+               console.log(h2);
+           
+            // window.addEventListener('click', function (e) {
+            //      console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+            // });
+          
+            console.log(h.hello.add(1, 3));
+
+            console.log(h);
+
+
+            h.sort([1,3,2,45,5]).then(function (result) {
+                console.log(result);
+
+            });
+            //var h2 = new TestPref('Test STR');
+            //var h = new TestPref("Init in JS");
+           
             //      h2.addEventListener('complete', function () {
             //     console.log("OnComplete");
             // });

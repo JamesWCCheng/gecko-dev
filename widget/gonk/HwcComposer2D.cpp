@@ -78,7 +78,7 @@ using namespace mozilla::gfx;
 using namespace mozilla::layers;
 
 namespace mozilla {
-
+static bool isExternalAvailable = false;
 #if ANDROID_VERSION >= 17
 static void
 HookInvalidate(const struct hwc_procs* aProcs)
@@ -104,6 +104,8 @@ HookHotplug(const struct hwc_procs* aProcs, int aDisplay,
     // no op
   LOGX("====HookHotplug==== aDisplay = %d, aConnected = %d, at %s : %d\n"
       , aDisplay, aConnected, __FILE__, __LINE__);
+    isExternalAvailable = aConnected;
+
 }
 
 static const hwc_procs_t sHWCProcs = {
@@ -821,10 +823,14 @@ HwcComposer2D::Render(EGLDisplay dpy, EGLSurface sur)
 void
 HwcComposer2D::Prepare(buffer_handle_t fbHandle, int fence)
 {
+    LOGX("====HwcComposer2D::Prepare()====  at %s : %d\n", __FILE__, __LINE__);
     int idx = mList->numHwLayers - 1;
     const hwc_rect_t r = {0, 0, mScreenRect.width, mScreenRect.height};
     hwc_display_contents_1_t *displays[HWC_NUM_DISPLAY_TYPES] = { nullptr };
-
+    if(isExternalAvailable) {
+        LOGX("====HwcComposer2D::Prepare() isExternalAvailable====  at %s : %d\n", __FILE__, __LINE__);
+        displays[HWC_DISPLAY_EXTERNAL] = mList;
+    }
     displays[HWC_DISPLAY_PRIMARY] = mList;
     mList->outbufAcquireFenceFd = -1;
     mList->outbuf = nullptr;
@@ -857,7 +863,10 @@ HwcComposer2D::Commit()
 {
     hwc_display_contents_1_t *displays[HWC_NUM_DISPLAY_TYPES] = { nullptr };
     displays[HWC_DISPLAY_PRIMARY] = mList;
-
+    if(isExternalAvailable) {
+        LOGX("====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = %d, at %s : %d\n", HWC_NUM_DISPLAY_TYPES, __FILE__, __LINE__);
+        displays[HWC_DISPLAY_EXTERNAL] = mList;
+    }
     for (uint32_t j=0; j < (mList->numHwLayers - 1); j++) {
         mList->hwLayers[j].acquireFenceFd = -1;
         if (mHwcLayerMap.IsEmpty() ||
@@ -879,6 +888,7 @@ HwcComposer2D::Commit()
     }
 
     int err = mHwc->set(mHwc, HWC_NUM_DISPLAY_TYPES, displays);
+    LOGX("====HwcComposer2D::Commit()==== HWC_NUM_DISPLAY_TYPES err = %d , at %s : %d\n", err, __FILE__, __LINE__);
 
     mPrevDisplayFence = mPrevRetireFence;
     mPrevRetireFence = Fence::NO_FENCE;
@@ -928,6 +938,7 @@ HwcComposer2D::TryHwComposition()
 bool
 HwcComposer2D::Render(EGLDisplay dpy, EGLSurface sur)
 {
+    LOGX("=====================HwcComposer2D::Render=====================\n");
     return GetGonkDisplay()->SwapBuffers(dpy, sur);
 }
 
@@ -971,6 +982,7 @@ HwcComposer2D::TryRender(Layer* aRoot,
     SendtoLayerScope();
 
     if (!TryHwComposition()) {
+        LOGX("=====================H/W Composition failed=====================\n");
         LOGD("H/W Composition failed");
         LayerScope::CleanLayer();
         return false;

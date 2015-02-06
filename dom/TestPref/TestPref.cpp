@@ -70,7 +70,6 @@ nsresult TestPref::DispatchMyTestEvent(const nsAString& aType, bool aIsComplete,
     nsRefPtr<MyTestEvent> event =
       MyTestEvent::Constructor(this, aType, init);
     event->SetTrusted(true);
-
     return DispatchTrustedEvent(event);
   }
 

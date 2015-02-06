@@ -1624,6 +1624,8 @@ Navigator::GetMypref()
     if (!mWindow) {
       return nullptr;
     }
+    printf("==================Navigator=================   %p \n", this);
+    printf("==================mWindow=================   %p \n", mWindow.get());
     mMyPref = new TestPref(mWindow, nsString(NS_LITERAL_STRING("From Navigator!")));
   }
 
