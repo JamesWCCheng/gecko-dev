@@ -53,7 +53,9 @@
 #undef LOG_TAG
 #endif
 #define LOG_TAG "HWComposer"
-
+#include "android/log.h"
+#define LOGX(args...)                                            \
+    __android_log_print(ANDROID_LOG_INFO, "James" , ## args)
 /*
  * By default the debug message of hwcomposer (LOG_DEBUG level) are undefined,
  * but can be enabled by uncommenting HWC_DEBUG below.
@@ -81,6 +83,8 @@ namespace mozilla {
 static void
 HookInvalidate(const struct hwc_procs* aProcs)
 {
+//  LOGX("====HookInvalidate==== , at %s : %d\n"
+//        ,  __FILE__, __LINE__);
     HwcComposer2D::GetInstance()->Invalidate();
 }
 
@@ -88,6 +92,8 @@ static void
 HookVsync(const struct hwc_procs* aProcs, int aDisplay,
           int64_t aTimestamp)
 {
+//  LOGX("====HookVsync==== aDisplay = %d, at %s : %d\n"
+//        , aDisplay, __FILE__, __LINE__);
     HwcComposer2D::GetInstance()->Vsync(aDisplay, aTimestamp);
 }
 
@@ -96,6 +102,8 @@ HookHotplug(const struct hwc_procs* aProcs, int aDisplay,
             int aConnected)
 {
     // no op
+  LOGX("====HookHotplug==== aDisplay = %d, aConnected = %d, at %s : %d\n"
+      , aDisplay, aConnected, __FILE__, __LINE__);
 }
 
 static const hwc_procs_t sHWCProcs = {
@@ -124,7 +132,10 @@ HwcComposer2D::HwcComposer2D()
     , mLock("mozilla.HwcComposer2D.mLock")
 {
 #if ANDROID_VERSION >= 17
+  LOGX("====RegisterHwcEventCallback==== \n");
+  printf("====RegisterHwcEventCallback==== \n");
     RegisterHwcEventCallback();
+
 #endif
 }
 
@@ -218,6 +229,7 @@ HwcComposer2D::RegisterHwcEventCallback()
         return false;
     }
 
+    LOGX("RegisterHwcEventCallback device->registerProcs\n");
     // Disable Vsync first, and then register callback functions.
     device->eventControl(device, HWC_DISPLAY_PRIMARY, HWC_EVENT_VSYNC, false);
     device->registerProcs(device, &sHWCProcs);

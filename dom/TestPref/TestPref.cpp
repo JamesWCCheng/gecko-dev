@@ -162,7 +162,7 @@ int32_t
 TestPref::RandNum()
 {
   //auto result = InitTimer(3000);
-  auto result2 = InitTimerCallbackFunc(2000);
+  InitTimerCallbackFunc(2000);
    // nsRefPtr<TestPref> thisObject = static_cast<TestPref*>(this);
 
 
@@ -210,12 +210,13 @@ if(NS_SUCCEEDED(rv)) {
 nsCOMPtr<nsITest> jsTester =  do_CreateInstance("@mozilla.org/jstest;1", &rv);
 
 if(NS_SUCCEEDED(rv)) {
-    printf("@@@@@@@@@@@@@@@@@@@ tester3 = %p, tester4 = %p \n", tester3.get(), tester4.get());
+    printf("@@@@@@@@@@@@@@@@@@@ jsTester = %p, tester4  \n", jsTester.get());
     jsTester->Add(10, 600, &result);
  }
 nsCOMPtr<nsITest> jsTester2 =  do_GetService("@mozilla.org/jstest;1", &rv);
+nsCOMPtr<nsITest> jsTester3 =  do_GetService("@mozilla.org/jstest;1", &rv);
 if(NS_SUCCEEDED(rv)) {
-    printf("@@@@@@@@@@@@@@@@@@@ tester3 = %p, tester4 = %p \n", tester3.get(), tester4.get());
+    printf("@@@@@@@@@@@@@@@@@@@ jsTester = %p, jsTester2 = %p \n", jsTester2.get(), jsTester3.get());
     jsTester2->Add(10, 500, &result);
  }
 
@@ -293,7 +294,7 @@ TestPref::Sort(const Sequence<int32_t>& data, ErrorResult& aRv)
 {
    Sequence<int32_t> result;
   std::vector<int32_t> data_clone;
-  for(int i = 0; i < data.Length(); i++) {
+  for(size_t i = 0; i < data.Length(); i++) {
     printf("******************   %d\n", data[i]);
       data_clone.push_back(data[i]);
   }
@@ -313,7 +314,7 @@ TestPref::Sort(const Sequence<int32_t>& data, ErrorResult& aRv)
     result.AppendElement(i);
   }
 
-  for(int i = 0; i < result.Length(); i++) {
+  for(size_t i = 0; i < result.Length(); i++) {
     printf("RRRR******************   %d\n", result[i]);
   }
 

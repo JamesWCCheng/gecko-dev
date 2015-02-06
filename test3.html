@@ -20,24 +20,20 @@
         document.addEventListener('DOMContentLoaded', funcInit);
 
         console.log("test page is starting...");
-         window.addEventListener('progress', function (e) {
-                 console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-            });
+
         var clickHandler = function(){
             console.log("click trigger");
 
              var h2 = new Hello('Test STR');
                console.log(h2);
-           
-            // window.addEventListener('click', function (e) {
-            //      console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-            // });
-            var h = navigator.mypref;
+            var h = new TestPref('Test STR');
             console.log(h.hello.add(1, 3));
 
             console.log(h);
 
-
+            document.addEventListener('progress', function (e) {
+                 console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+            });
             h.sort([1,3,2,45,5]).then(function (result) {
                 console.log(result);
 

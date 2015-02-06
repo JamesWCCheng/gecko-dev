@@ -409,6 +409,10 @@ partial interface Navigator {
   readonly attribute TVManager? tv;
 };
 
+partial interface Navigator {
+  readonly attribute TestPref? mypref;
+};
+
 #ifdef MOZ_EME
 partial interface Navigator {
   [Pref="media.eme.enabled", NewObject]

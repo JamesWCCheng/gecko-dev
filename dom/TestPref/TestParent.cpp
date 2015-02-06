@@ -8,8 +8,8 @@ bool
 TestParent::RecvChildRequest()
 {
   printf(" ==================== RecvChildRequest PID = %d, TID = %uuxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",getpid(),  (unsigned int)pthread_self());
-  SendParentFinish();
-  return true;
+  ;
+  return SendParentFinish();
 }
 
 void

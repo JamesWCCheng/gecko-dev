@@ -28,7 +28,9 @@
 #include "nsXULAppAPI.h"
 #include "nsThreadUtils.h"
 #include "UeventPoller.h"
-
+#include "android/log.h"
+#define LOGX(args...)                                            \
+    __android_log_print(ANDROID_LOG_INFO, "James" , ## args)
 using namespace mozilla::hal;
 
 #define SWITCH_HEADSET_DEVPATH "/devices/virtual/switch/h2w"
@@ -221,6 +223,7 @@ public:
 
   NS_IMETHOD Run()
   {
+    LOGX("SwitchEventRunnable Run, Device = %d, Status = %d", mEvent.device(), mEvent.status());
     NotifySwitchChange(mEvent);
     return NS_OK;
   }
@@ -263,14 +266,17 @@ public:
 
   void Notify(const NetlinkEvent& aEvent)
   {
+
     SwitchState currState;
     
     SwitchDevice device = GetEventInfo(aEvent, currState);
+    LOGX(" Notify(const NetlinkEvent& aEvent) device = %d\n", device);
     if (device == SWITCH_DEVICE_UNKNOWN) {
       return; 
     }
 
     EventInfo& info = mEventInfo[device];
+    LOGX(" Notify(const NetlinkEvent& aEvent) state = %d\n", info.mEvent.status());
     if (currState == info.mEvent.status()) {
       return;
     }
@@ -284,6 +290,7 @@ public:
 
   void Notify(SwitchDevice aDevice, SwitchState aState)
   {
+    LOGX(" Notify(SwitchDevice aDevice, SwitchState aState)\n");
     EventInfo& info = mEventInfo[aDevice];
     if (aState == info.mEvent.status()) {
       return;
@@ -303,6 +310,7 @@ public:
 
   void NotifyAnEvent(SwitchDevice aDevice)
   {
+    LOGX("NotifyAnEvent\n");
     EventInfo& info = mEventInfo[aDevice];
     if (info.mEvent.status() != SWITCH_STATE_UNKNOWN) {
       NS_DispatchToMainThread(new SwitchEventRunnable(info.mEvent));

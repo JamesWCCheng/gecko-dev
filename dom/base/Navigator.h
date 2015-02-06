@@ -97,7 +97,7 @@ class CellBroadcast;
 class Telephony;
 class Voicemail;
 class TVManager;
-
+class TestPref;
 namespace time {
 class TimeManager;
 } // namespace time
@@ -228,6 +228,7 @@ public:
   Telephony* GetMozTelephony(ErrorResult& aRv);
   Voicemail* GetMozVoicemail(ErrorResult& aRv);
   TVManager* GetTv();
+  TestPref* GetMypref();
   network::Connection* GetConnection(ErrorResult& aRv);
   nsDOMCameraManager* GetMozCameras(ErrorResult& aRv);
   MediaDevices* GetMediaDevices(ErrorResult& aRv);
@@ -353,6 +354,7 @@ private:
   nsRefPtr<Telephony> mTelephony;
   nsRefPtr<Voicemail> mVoicemail;
   nsRefPtr<TVManager> mTVManager;
+  nsRefPtr<TestPref> mMyPref;
   nsRefPtr<network::Connection> mConnection;
 #ifdef MOZ_B2G_RIL
   nsRefPtr<MobileConnectionArray> mMobileConnections;

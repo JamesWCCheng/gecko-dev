@@ -41,6 +41,7 @@
 #include "mozilla/dom/Telephony.h"
 #include "mozilla/dom/Voicemail.h"
 #include "mozilla/dom/TVManager.h"
+#include "mozilla/dom/TestPref.h"
 #include "mozilla/dom/VRDevice.h"
 #include "mozilla/Hal.h"
 #include "nsISiteSpecificUserAgent.h"
@@ -177,6 +178,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Navigator)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTelephony)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mVoicemail)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTVManager)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMyPref)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mConnection)
 #ifdef MOZ_B2G_RIL
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMobileConnections)
@@ -262,6 +264,10 @@ Navigator::Invalidate()
 
   if (mTVManager) {
     mTVManager = nullptr;
+  }
+
+  if (mMyPref) {
+    mMyPref = nullptr;
   }
 
   if (mConnection) {
@@ -1609,6 +1615,19 @@ Navigator::GetTv()
   }
 
   return mTVManager;
+}
+
+TestPref*
+Navigator::GetMypref()
+{
+  if (!mMyPref) {
+    if (!mWindow) {
+      return nullptr;
+    }
+    mMyPref = new TestPref(mWindow, nsString(NS_LITERAL_STRING("From Navigator!")));
+  }
+
+  return mMyPref;
 }
 
 #ifdef MOZ_B2G
