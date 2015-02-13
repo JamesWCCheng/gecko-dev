@@ -1,0 +1,71 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title id = "title">JSWebIDL test</title>
+
+
+</head>
+
+<body>
+<script>
+        function Bar(){
+        }
+        // Bar.prototype = 
+        // {
+        //     GG : function(){ console.log('GG');}
+        // }
+        function Foo(){
+            Bar();
+        }
+        Foo.prototype =
+        {
+          __proto__ : Bar.prototype,
+        };
+        funcInit = function(){
+            // After DOM has been loaded....
+            console.log("DOM has been loaded...");
+        }
+        document.addEventListener('DOMContentLoaded', funcInit);
+
+        var foo = new Foo();
+        console.log(foo instanceof Bar);
+        var contact = navigator.mozContacts;
+        // contact.addEventListener('contactchange', function (e) {
+        //         console.log("Oncontact");
+        //         console.log(e.target.info);
+        //     });
+        // contact.oncontactchange = function (e) {
+        //         console.log("Oncontact");
+        //         console.log(e.target);
+        //     };
+        var jswebidl = navigator.jswebidltest;
+        // jswebidl.ongetlocation = function(e) {
+        //     console.log("============OnGetlocation============");
+        //     console.log(e.target.info);
+        // };
+        jswebidl.addEventListener('getlocation', function (e) {
+                console.log("OnGetlocation from addEventListener");
+                console.log(e);
+                console.log(e.target.info);
+            });
+        jswebidl.sort([1,9,5,1]).then(function(sorted_array) {
+                console.log(sorted_array);
+            },
+            function(reject_reason) {
+                console.log("Promise Reject, reason = " + reject_reason);
+            });
+        // var info = jswebidl.info;
+        // console.log(info);
+    </script>
+    <H1 id = "per">Test Page</H1>
+    <p id="msg">Click the button to trigger timer.</p>
+
+    <button id="btn">click me</button>
+
+    <iframe src="http://www.w3schools.com">
+         <p>Your browser does not support iframes.</p>
+    </iframe>
+</body>
+</html>

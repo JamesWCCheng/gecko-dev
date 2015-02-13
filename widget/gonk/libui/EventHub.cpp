@@ -52,7 +52,7 @@
 #include "sha1.h"
 #include "android/log.h"
 #define LOGX(args...)                                            \
-    __android_log_print(ANDROID_LOG_INFO, "James" , ## args)
+    //__android_log_print(ANDROID_LOG_INFO, "James" , ## args)
 
 
 /* this macro is used to tell if "bit" is set in "array"

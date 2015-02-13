@@ -26,6 +26,9 @@
 #include <hardware/power.h>
 #include <suspend/autosuspend.h>
 
+#include "android/log.h"
+#define LOGX(args...)                                            \
+    __android_log_print(ANDROID_LOG_INFO, "James" , ## args)
 #if ANDROID_VERSION == 17
 #include "GraphicBufferAlloc.h"
 #endif
@@ -136,8 +139,13 @@ GonkDisplayJB::GonkDisplayJB()
                                         GRALLOC_USAGE_HW_COMPOSER);
 
     mList = (hwc_display_contents_1_t *)malloc(sizeof(*mList) + (sizeof(hwc_layer_1_t)*2));
-    if (mHwc)
-        mHwc->blank(mHwc, HWC_DISPLAY_PRIMARY, 0);
+    if (mHwc) {
+
+      int result = mHwc->blank(mHwc, HWC_DISPLAY_PRIMARY, 0);
+        //returns 0 on success, negative on error.
+
+        LOGX("======== GonkDisplayJB::GonkDisplayJB() mHwc->blank =========  result = %d \n", result);
+    }
 
     ALOGI("Starting bootanimation with (%d) format framebuffer", surfaceformat);
     StartBootAnimation();
@@ -172,6 +180,7 @@ GonkDisplayJB::SetEnabled(bool enabled)
     }
 
     if (mHwc && mHwc->blank) {
+
         mHwc->blank(mHwc, HWC_DISPLAY_PRIMARY, !enabled);
     } else if (mFBDevice && mFBDevice->enableScreen) {
         mFBDevice->enableScreen(mFBDevice, enabled);
@@ -239,6 +248,8 @@ GonkDisplayJB::Post(buffer_handle_t buf, int fence)
     hwc_display_contents_1_t *displays[HWC_NUM_DISPLAY_TYPES] = {NULL};
     const hwc_rect_t r = { 0, 0, static_cast<int>(mWidth), static_cast<int>(mHeight) };
     displays[HWC_DISPLAY_PRIMARY] = mList;
+    displays[HWC_DISPLAY_EXTERNAL] = mList;
+    LOGX("GonkDisplayJB::Post(buffer_handle_t buf, int fence) \n");
     mList->retireFenceFd = -1;
     mList->numHwLayers = 2;
     mList->flags = HWC_GEOMETRY_CHANGED;
@@ -279,6 +290,7 @@ GonkDisplayJB::Post(buffer_handle_t buf, int fence)
 #endif
     mHwc->prepare(mHwc, HWC_NUM_DISPLAY_TYPES, displays);
     int err = mHwc->set(mHwc, HWC_NUM_DISPLAY_TYPES, displays);
+    LOGX(" int err = mHwc->set(mHwc, HWC_NUM_DISPLAY_TYPES, displays); err = %d \n", err);
     mFBSurface->setReleaseFenceFd(mList->hwLayers[1].releaseFenceFd);
     if (mList->retireFenceFd >= 0)
         close(mList->retireFenceFd);

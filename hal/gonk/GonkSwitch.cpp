@@ -30,7 +30,7 @@
 #include "UeventPoller.h"
 #include "android/log.h"
 #define LOGX(args...)                                            \
-    __android_log_print(ANDROID_LOG_INFO, "James" , ## args)
+    //__android_log_print(ANDROID_LOG_INFO, "James" , ## args)
 using namespace mozilla::hal;
 
 #define SWITCH_HEADSET_DEVPATH "/devices/virtual/switch/h2w"

@@ -1,0 +1,447 @@
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): handle_uevent sending hotplug: connected = 0 and dpy:1
+I/James   (  181): ====HookHotplug==== aDisplay = 1, aConnected = 0, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 107
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): handle_uevent sending hotplug: connected = 1
+I/James   (  181): ====HookHotplug==== aDisplay = 1, aConnected = 1, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 107
+I/James   (  181): hwc_getDisplayAttributes disp = 1, height = 1080
+I/James   (  181): hwc_getDisplayAttributes disp = 1, xdpi = 0
+I/James   (  181): ========hwc->getDisplayAttributes=========  result = -22 width = 1920, height = 1080, xdpi = 0.000000
+I/James   (  181): hwc_blank: Unblanking display: 1
+I/James   (  181): hwc_blank: ctx->dpyAttr[dpy].isActive = 1;
+I/James   (  181): hwc_blank: Done unblanking display: 1
+I/James   (  181): ======== hwc->blank(hwc, HWC_DISPLAY_EXTERNAL, 0);=========  result = 0 
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): ====hwc_prepare_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====HwcComposer2D::Commit()==== isExternalAvailable HWC_NUM_DISPLAY_TYPES = 3, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 890
+I/James   (  181): ====hwc_set_external====Active =  1, Pause = 0, Connected = 1, list !=nullptr = 1, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 482
+I/James   (  181): handle_uevent sending hotplug: connected = 0 and dpy:1
+I/James   (  181): ====HookHotplug==== aDisplay = 1, aConnected = 0, at ../../../../mozilla-central-gecko/widget/gonk/HwcComposer2D.cpp : 107
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): hwc_blank: Blanking display: 0
+I/James   (  181): hwc_blank: ctx->dpyAttr[dpy].isActive = 0;
+I/James   (  181): hwc_blank: Done blanking display: 0
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer/hwc.cpp : 188
+I/James   (  181): ====hwc_prepare_external====Active =  0, Pause = 0, Connected = 0, list !=nullptr = 0, at hardware/qcom/display/msm8974/libhwcomposer

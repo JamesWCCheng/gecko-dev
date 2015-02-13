@@ -79,6 +79,7 @@ using namespace mozilla::layers;
 
 namespace mozilla {
 static bool isExternalAvailable = false;
+static bool isExternalNeedActive = false;
 #if ANDROID_VERSION >= 17
 static void
 HookInvalidate(const struct hwc_procs* aProcs)
@@ -105,6 +106,21 @@ HookHotplug(const struct hwc_procs* aProcs, int aDisplay,
   LOGX("====HookHotplug==== aDisplay = %d, aConnected = %d, at %s : %d\n"
       , aDisplay, aConnected, __FILE__, __LINE__);
     isExternalAvailable = aConnected;
+    if(isExternalAvailable) {
+      isExternalNeedActive = isExternalAvailable;
+
+      auto hwc =  (HwcDevice*)GetGonkDisplay()->GetHWCDevice();
+      int32_t values[3];
+      const uint32_t attrs[] = {
+          HWC_DISPLAY_WIDTH,
+          HWC_DISPLAY_HEIGHT,
+          HWC_DISPLAY_DPI_X,
+          HWC_DISPLAY_NO_ATTRIBUTE
+      };
+      int result = hwc->getDisplayAttributes(hwc, 1, 0, attrs, values); //Get External, so pass 1
+      LOGX("========hwc->getDisplayAttributes=========  result = %d width = %d, height = %d, xdpi = %f\n",
+          result, values[0], values[1], values[2] / 1000.0f);
+    }
 
 }
 
@@ -823,13 +839,20 @@ HwcComposer2D::Render(EGLDisplay dpy, EGLSurface sur)
 void
 HwcComposer2D::Prepare(buffer_handle_t fbHandle, int fence)
 {
-    LOGX("====HwcComposer2D::Prepare()====  at %s : %d\n", __FILE__, __LINE__);
+    //LOGX("====HwcComposer2D::Prepare()====  at %s : %d\n", __FILE__, __LINE__);
     int idx = mList->numHwLayers - 1;
     const hwc_rect_t r = {0, 0, mScreenRect.width, mScreenRect.height};
     hwc_display_contents_1_t *displays[HWC_NUM_DISPLAY_TYPES] = { nullptr };
     if(isExternalAvailable) {
-        LOGX("====HwcComposer2D::Prepare() isExternalAvailable====  at %s : %d\n", __FILE__, __LINE__);
-        displays[HWC_DISPLAY_EXTERNAL] = mList;
+        //LOGX("====HwcComposer2D::Prepare() isExternalAvailable====  at %s : %d\n", __FILE__, __LINE__);
+      if(isExternalNeedActive) {
+                 //returns 0 on success, negative on error.
+                 auto hwc =  (HwcDevice*)GetGonkDisplay()->GetHWCDevice();
+                 int result = hwc->blank(hwc, HWC_DISPLAY_EXTERNAL, 0);
+                 LOGX("======== hwc->blank(hwc, HWC_DISPLAY_EXTERNAL, 0);=========  result = %d \n", result);
+                 isExternalNeedActive = false;
+          }
+      displays[HWC_DISPLAY_EXTERNAL] = mList;
     }
     displays[HWC_DISPLAY_PRIMARY] = mList;
     mList->outbufAcquireFenceFd = -1;
@@ -888,7 +911,7 @@ HwcComposer2D::Commit()
     }
 
     int err = mHwc->set(mHwc, HWC_NUM_DISPLAY_TYPES, displays);
-    LOGX("====HwcComposer2D::Commit()==== HWC_NUM_DISPLAY_TYPES err = %d , at %s : %d\n", err, __FILE__, __LINE__);
+    //LOGX("====HwcComposer2D::Commit()==== HWC_NUM_DISPLAY_TYPES err = %d , at %s : %d\n", err, __FILE__, __LINE__);
 
     mPrevDisplayFence = mPrevRetireFence;
     mPrevRetireFence = Fence::NO_FENCE;

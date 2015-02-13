@@ -364,6 +364,8 @@
 @RESPATH@/components/telemetry.xpt
 
 ; JavaScript components
+@RESPATH@/components/JSWebidlTest.js
+@RESPATH@/components/JSWebidlTest.manifest
 @RESPATH@/components/ChromeNotifications.js
 @RESPATH@/components/ChromeNotifications.manifest
 @RESPATH@/components/ConsoleAPI.manifest

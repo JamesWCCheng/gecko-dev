@@ -66,6 +66,7 @@ DIRS += [
     'html',
     'json',
     'jsurl',
+    'jswebidltest',
     'asmjscache',
     'mathml',
     'media',
