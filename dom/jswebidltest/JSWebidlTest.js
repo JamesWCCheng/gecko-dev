@@ -9,7 +9,6 @@ const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/DOMRequestHelper.jsm");
-
 let debug = (aMsg) => {
   //console.log(aMsg);
   dump(aMsg);
@@ -42,30 +41,26 @@ JSWebidlTest.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISupportsWeakReference,
                                          Ci.nsIObserver,
                                          Ci.nsIDOMGlobalPropertyInitializer]),
+  _latitude: 0.0,
+  _longitude: 0.0,
   get info() {
 
     return {
-      latitude: "123",
-      longitude: "456",
+      latitude: this._latitude,
+      longitude: this._longitude,
       fake: "12345",
      };
   },
-  // get ongetlocation() {
-  //    dump("==================get ongetlocation==================\n");
-  //   return this.__DOM_IMPL__.getEventHandler("ongetlocation");
-  // },
-  // set ongetlocation(aHandler)
-  // {
-  //   dump("==================set ongetlocation==================\n");
-  //   let self = this;
-  //   this.__DOM_IMPL__.setEventHandler("ongetlocation", aHandler);
-  //   this._window.setTimeout(
-  //       function()
-  //       {
-  //         let event = new self._window.Event("getlocation");
-  //         self.__DOM_IMPL__.dispatchEvent(event);
-  //       }, Math.random() * 2000 + 5000);
-  // },
+  get ongetlocation() {
+     dump("==================get ongetlocation==================\n");
+    return this.__DOM_IMPL__.getEventHandler("ongetlocation");
+  },
+  set ongetlocation(aHandler)
+  {
+    dump("==================set ongetlocation==================\n");
+    let self = this;
+    this.__DOM_IMPL__.setEventHandler("ongetlocation", aHandler);
+  },
 
    init: function(aWindow) {
     dump("==================init==================\n");
@@ -83,18 +78,39 @@ JSWebidlTest.prototype = {
    sort: function(unsorted_array) {
        let self = this;
        dump("============unsorted_array========  \n");
-        this._window.setTimeout(
-        function() 
+       var geolocation = Cc["@mozilla.org/geolocation;1"].getService(Ci.nsISupports);
+       geolocation.getCurrentPosition(function(position) 
         {
+          dump("============on location get======== \n\n\n");          
+          self._latitude = position.coords.latitude;
+          self._longitude = position.coords.longitude;
           //let event = new self._window.Event("getlocation");
           //self.__DOM_IMPL__.dispatchEvent(event);
           let event = new self._window.MyTestEvent("getlocation", {isComplete: true,
                                                                   percentage: 100, msg: "javascript is weird"});
           self.__DOM_IMPL__.dispatchEvent(event);
-        }, Math.random() * 2000 + 5000);
+          let detail = {
+              detail: {
+              packageInfo: "orz"
+            }
+          };
+          let event3 = new self._window.CustomEvent("getlocation", Cu.cloneInto(detail, self._window));
+          self.__DOM_IMPL__.dispatchEvent(event3);
+
+          let detail2 = {
+              detail:5566
+          };
+          let event4 = new self._window.CustomEvent("getlocation", detail2);
+          self.__DOM_IMPL__.dispatchEvent(event4);
+
+          let event2 = new self._window.ProgressEvent("getlocation", {lengthComputable: true,
+                                                                 loaded: true,
+                                                                 total: 10});
+          self.__DOM_IMPL__.dispatchEvent(event2);
+        }, function() {dump("error");}, {timeout: 5000});
+
      return this._sendPromise(function(aResolverId) {
         dump("============sort========  " + aResolverId +  "\n");
-        //self.takePromiseResolver(aResolverId).resolve([1,3,5]);
         self._window.setTimeout(
         function() {
           // We fulfill the promise !
