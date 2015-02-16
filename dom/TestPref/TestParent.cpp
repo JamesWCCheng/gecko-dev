@@ -8,14 +8,13 @@ bool
 TestParent::RecvChildRequest()
 {
   printf(" ==================== RecvChildRequest PID = %d, TID = %uuxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",getpid(),  (unsigned int)pthread_self());
-  ;
   return SendParentFinish();
 }
 
 void
 TestParent::ActorDestroy(ActorDestroyReason aWhy)
 {
-  printf(" ==================== TestParent::ActorDestroy() PID = %d, TID = %uuxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",getpid(),  (unsigned int)pthread_self());
+  printf(" ==================== TestParent::ActorDestroy() PID = %d, TID = %uuxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx, why = %d\n",getpid(),  (unsigned int)pthread_self(), aWhy);
 }
 
 MOZ_IMPLICIT TestParent::TestParent()
