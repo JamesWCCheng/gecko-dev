@@ -89,9 +89,18 @@ TestPref::TestPref(nsISupports* aParent, const nsAString& aStr)
   cb = new MyTimerCallback(this);
   //mTimer = do_CreateInstance("@mozilla.org/timer;1");
   mTimer2 = do_CreateInstance("@mozilla.org/timer;1");
-  printf(" ==================== Main Thread Running PID = %d, TID = %uuxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",getpid(),  (unsigned int)pthread_self());
+  printf(" ==================== TestPref::TestPref Main Thread Running PID = %d, TID = %uuxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",getpid(),  (unsigned int)pthread_self());
 }
 
+TestPref::TestPref(nsPIDOMWindow* aWindow, const nsAString& aStr)
+  :DOMEventTargetHelper(aWindow)
+  , hStr(aStr)
+{
+  cb = new MyTimerCallback(this);
+  //mTimer = do_CreateInstance("@mozilla.org/timer;1");
+  mTimer2 = do_CreateInstance("@mozilla.org/timer;1");
+  printf(" ==================== TestPref::TestPref nsPIDOMWindow Main Thread Running PID = %d, TID = %uuxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",getpid(),  (unsigned int)pthread_self());
+}
 
 TestPref::TestPref()
 {
@@ -255,6 +264,7 @@ TestPref::Div(int32_t a, int32_t b, ErrorResult& aRv)
 JSObject*
 TestPref::WrapObject(JSContext* aCx)
 {
+  printf("TestPref::WrapObject \n");
   return TestPrefBinding::Wrap(aCx, this);
 }
 
@@ -298,7 +308,7 @@ TestPref::Sort(const Sequence<int32_t>& data, ErrorResult& aRv)
       data_clone.push_back(data[i]);
   }
 
-  nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(GetParentObject());
+  nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(GetOwner());
     if(global == nullptr) {
     printf("global nullptr *************************GG\n");
   }

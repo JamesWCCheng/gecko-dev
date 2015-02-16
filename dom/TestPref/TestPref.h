@@ -36,6 +36,7 @@ public:
   TestPref();
     TestPref(nsISupports* aParent);
     TestPref(nsISupports* aParent, const nsAString& aStr);
+    TestPref(nsPIDOMWindow* aWindow, const nsAString& aStr);
 
 protected:
   ~TestPref();
