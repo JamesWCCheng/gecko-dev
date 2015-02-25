@@ -267,6 +267,7 @@ Navigator::Invalidate()
   }
 
   if (mMyPref) {
+    printf("++++++++++ mMyPref = nullptr ++++++++++\n");
     mMyPref = nullptr;
   }
 

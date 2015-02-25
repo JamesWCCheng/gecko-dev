@@ -7,8 +7,10 @@ namespace dom {
 bool
 TestParent::RecvChildRequest()
 {
-  printf(" ==================== RecvChildRequest PID = %d, TID = %uuxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",getpid(),  (unsigned int)pthread_self());
-  return SendParentFinish();
+  printf(" ==================== RecvChildRequest this = %p, PID = %d, TID = %uuxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",this, getpid(),  (unsigned int)pthread_self());
+  SendParentFinish();
+  Send__delete__(this);
+  return true;
 }
 
 void

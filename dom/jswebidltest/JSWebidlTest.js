@@ -64,6 +64,7 @@ JSWebidlTest.prototype = {
 
    init: function(aWindow) {
     dump("==================init==================\n");
+     var geolocation = Cc["@mozilla.org/geolocation;1"].getService(Ci.nsISupports);
      this.initDOMRequestHelper(aWindow, []);
    },
 
@@ -79,9 +80,9 @@ JSWebidlTest.prototype = {
        let self = this;
        dump("============unsorted_array========  \n");
        var geolocation = Cc["@mozilla.org/geolocation;1"].getService(Ci.nsISupports);
-       geolocation.getCurrentPosition(function(position) 
+       geolocation.getCurrentPosition(function(position)
         {
-          dump("============on location get======== \n\n\n");          
+          dump("============on location get======== \n\n\n");
           self._latitude = position.coords.latitude;
           self._longitude = position.coords.longitude;
           //let event = new self._window.Event("getlocation");

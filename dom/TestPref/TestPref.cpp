@@ -46,6 +46,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(TestPref, DOMEventTargetHelper, mParent,
 
 NS_IMPL_ISUPPORTS(MyTimerCallback, nsITimerCallback)
 StaticAutoPtr<TestChild> testChild;
+StaticAutoPtr<TestChild> testChild2;
 MyTimerCallback::MyTimerCallback(TestPref* aObj) : mContent(aObj)
 {
 
@@ -104,11 +105,12 @@ TestPref::TestPref(nsPIDOMWindow* aWindow, const nsAString& aStr)
 
 TestPref::TestPref()
 {
-  printf("TestPref::TestPref()");
+  printf("TestPref::TestPref()\n");
 }
 
 TestPref::~TestPref()
 {
+  printf("TestPref::~TestPref()\n");
 }
 
 void
@@ -144,6 +146,10 @@ TestPref::SayHello(nsString& aRetVal)
   testChild = new TestChild();
 
   testChild->SendChildRequest();
+
+  testChild2 = new TestChild();
+
+  testChild2->SendChildRequest();
   printf(" ==================== SendChildRequest PID = %d, TID = %uuxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",getpid(),  (unsigned int)pthread_self());
 }
 // typedef void* (*ThreadPrototype)(void*);

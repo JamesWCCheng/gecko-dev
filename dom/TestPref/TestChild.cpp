@@ -20,6 +20,12 @@ MOZ_IMPLICIT TestChild::TestChild()
     MOZ_COUNT_CTOR(TestChild);
 }
 
+auto TestChild::Recv__delete__() -> bool
+{
+    printf(" ==================== TestChild::Recv__delete__() PID = %d, TID = %uuxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",getpid(),  (unsigned int)pthread_self());
+    return true;
+}
+
 MOZ_IMPLICIT TestChild::~TestChild()
 {
     printf(" ==================== TestChild::~TestChild() PID = %d, TID = %uuxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",getpid(),  (unsigned int)pthread_self());
