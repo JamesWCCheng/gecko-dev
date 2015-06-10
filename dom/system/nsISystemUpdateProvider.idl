@@ -1,0 +1,39 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+[scriptable, uuid(775edbf5-b4a9-400c-b0ad-ea3c3a027097)]
+interface nsISystemUpdateListener : nsISupports
+{
+  // callback for notifying an update package is available for download
+  void onUpdateAvailable(in DOMString type,
+                         in DOMString version,
+                         in DOMString description,
+                         in unsigned long long buildDate,
+                         in unsigned long long size);
+
+  // callback for notifying the download progress
+  void onProgress(in unsigned long long loaded, in unsigned long long total);
+
+  // callback for notifying an update package is ready to apply
+  void onUpdateReady();
+
+  // callback for notifying any error while checking/downloading/applying an update package.
+  void onError(in DOMString errMsg);
+};
+
+[scriptable, uuid(c9b7c166-b9cf-4396-a6de-39275e1c0a36)]
+interface nsISystemUpdateProvider : nsISupports
+{
+  void checkForUpdate();
+  void startDownload();
+  void stopDownload();
+  void applyUpdate();
+  bool setParameter(in DOMString name, in DOMString value);
+  DOMString getParameter(in DOMString name);
+
+  void setListener(in nsISystemUpdateListener listener);
+  void unsetListener();
+};
