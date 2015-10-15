@@ -24,6 +24,7 @@ DIRS += [
     'gmp',
     'gmp-plugin',
     'gmp-plugin-openh264',
+    'gmp-plugin-renderer',
     'imagecapture',
     'mediasink',
     'mediasource',
