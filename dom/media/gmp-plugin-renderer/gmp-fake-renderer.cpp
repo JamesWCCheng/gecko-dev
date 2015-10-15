@@ -119,8 +119,11 @@ class FakeMediaRenderer : public GMPMediaRenderer {
     GMPLOG (GL_DEBUG, "SetRendererCallback");
 
     callback_ = aCallback;
-
-    callback_->SetOverlayImageID(1);
+    if (aCallback == nullptr)
+    {
+      GMPLOG (GL_DEBUG, "\033[1;31m============SetRendererCallback aCallback == nullptr============\n\033[m");
+    }
+    //callback_->SetOverlayImageID(1);
   }
 
   virtual void RenderVideoPacket(GMPVideoEncodedFrame* aInputFrame,
