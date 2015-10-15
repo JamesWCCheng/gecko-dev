@@ -10,6 +10,7 @@
 #include "gmp-video-frame-encoded.h"
 #include "gmp-audio-codec.h"
 #include "gmp-decryption.h"
+#include "gmp-media-render.h"
 
 namespace IPC {
 
@@ -244,6 +245,38 @@ struct ParamTraits<GMPVideoCodec>
                               codecName,
                               aParam.mWidth,
                               aParam.mHeight));
+  }
+};
+
+//For GMP Media Renderer
+template <>
+struct ParamTraits<GMPRect>
+{
+  typedef GMPRect paramType;
+
+  static void Write(Message* aMsg, const paramType& aParam)
+  {
+    WriteParam(aMsg, aParam.mTop);
+    WriteParam(aMsg, aParam.mLeft);
+    WriteParam(aMsg, aParam.mWidth);
+    WriteParam(aMsg, aParam.mHeight);
+  }
+
+  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  {
+    if (ReadParam(aMsg, aIter, &(aResult->mTop)) &&
+        ReadParam(aMsg, aIter, &(aResult->mLeft)) &&
+        ReadParam(aMsg, aIter, &(aResult->mWidth)) &&
+        ReadParam(aMsg, aIter, &(aResult->mHeight))) {
+      return true;
+    }
+    return false;
+  }
+
+  static void Log(const paramType& aParam, std::wstring* aLog)
+  {
+    aLog->append(StringPrintf(L"[%d, %d, %d, %d]", aParam.mTop, aParam.mLeft,
+                              aParam.mWidth, aParam.mHeight));
   }
 };
 

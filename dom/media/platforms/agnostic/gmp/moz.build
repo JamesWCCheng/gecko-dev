@@ -7,15 +7,19 @@
 EXPORTS += [
     'GMPAudioDecoder.h',
     'GMPDecoderModule.h',
+    'GMPMediaRenderer.h',
     'GMPVideoDecoder.h',
     'MediaDataDecoderProxy.h',
+    'MediaDataRendererProxy.h',
 ]
 
 UNIFIED_SOURCES += [
     'GMPAudioDecoder.cpp',
     'GMPDecoderModule.cpp',
+    'GMPMediaRenderer.cpp',
     'GMPVideoDecoder.cpp',
     'MediaDataDecoderProxy.cpp',
+    'MediaDataRendererProxy.cpp',
 ]
 
 # GMPVideoEncodedFrameImpl.h needs IPC
