@@ -692,79 +692,79 @@ var gMetadataTests = [
 
 // Test files for Encrypted Media Extensions
 var gEMETests = [
-  {
-    name:"video-only with 2 keys",
-    tracks: [
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop-cenc-videoinit.mp4",
-                    "bipbop-cenc-video1.m4s",
-                    "bipbop-cenc-video2.m4s",
-                  ]
-      }
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d03" : "7e5733337e5733337e5733337e573333",
-      "7e571d047e571d047e571d047e571d04" : "7e5744447e5744447e5744447e574444",
-    },
-    sessionType:"temporary",
-    sessionCount:1,
-    duration:1.60,
-  },
-  {
-    name:"video-only with 2 keys, CORS",
-    tracks: [
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop-cenc-videoinit.mp4",
-                    "bipbop-cenc-video1.m4s",
-                    "bipbop-cenc-video2.m4s",
-                  ]
-      }
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d03" : "7e5733337e5733337e5733337e573333",
-      "7e571d047e571d047e571d047e571d04" : "7e5744447e5744447e5744447e574444",
-    },
-    sessionType:"temporary",
-    sessionCount:1,
-    crossOrigin:true,
-    duration:1.60,
-  },
-  {
-    name:"audio&video tracks, both with all keys",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[ "bipbop-cenc-audioinit.mp4",
-                    "bipbop-cenc-audio1.m4s",
-                    "bipbop-cenc-audio2.m4s",
-                    "bipbop-cenc-audio3.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop-cenc-videoinit.mp4",
-                    "bipbop-cenc-video1.m4s",
-                    "bipbop-cenc-video2.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d03" : "7e5733337e5733337e5733337e573333",
-      "7e571d047e571d047e571d047e571d04" : "7e5744447e5744447e5744447e574444",
-    },
-    sessionType:"temporary",
-    sessionCount:2,
-    duration:1.60,
-  },
+  // {
+  //   name:"video-only with 2 keys",
+  //   tracks: [
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop-cenc-videoinit.mp4",
+  //                   "bipbop-cenc-video1.m4s",
+  //                   "bipbop-cenc-video2.m4s",
+  //                 ]
+  //     }
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d03" : "7e5733337e5733337e5733337e573333",
+  //     "7e571d047e571d047e571d047e571d04" : "7e5744447e5744447e5744447e574444",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:1,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"video-only with 2 keys, CORS",
+  //   tracks: [
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop-cenc-videoinit.mp4",
+  //                   "bipbop-cenc-video1.m4s",
+  //                   "bipbop-cenc-video2.m4s",
+  //                 ]
+  //     }
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d03" : "7e5733337e5733337e5733337e573333",
+  //     "7e571d047e571d047e571d047e571d04" : "7e5744447e5744447e5744447e574444",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:1,
+  //   crossOrigin:true,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"audio&video tracks, both with all keys",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[ "bipbop-cenc-audioinit.mp4",
+  //                   "bipbop-cenc-audio1.m4s",
+  //                   "bipbop-cenc-audio2.m4s",
+  //                   "bipbop-cenc-audio3.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop-cenc-videoinit.mp4",
+  //                   "bipbop-cenc-video1.m4s",
+  //                   "bipbop-cenc-video2.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d03" : "7e5733337e5733337e5733337e573333",
+  //     "7e571d047e571d047e571d047e571d04" : "7e5744447e5744447e5744447e574444",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:2,
+  //   duration:1.60,
+  // },
   {
     name:"audio&video tracks, both with all keys, CORS",
     tracks: [
@@ -796,485 +796,485 @@ var gEMETests = [
     crossOrigin:true,
     duration:1.60,
   },
-  {
-    name:"400x300 audio&video tracks, each with its key",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[ "bipbop_300_215kbps-cenc-audio-key1-init.mp4",
-                    "bipbop_300_215kbps-cenc-audio-key1-1.m4s",
-                    "bipbop_300_215kbps-cenc-audio-key1-2.m4s",
-                    "bipbop_300_215kbps-cenc-audio-key1-3.m4s",
-                    "bipbop_300_215kbps-cenc-audio-key1-4.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop_300_215kbps-cenc-video-key1-init.mp4",
-                    "bipbop_300_215kbps-cenc-video-key1-1.m4s",
-                    "bipbop_300_215kbps-cenc-video-key1-2.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
-      "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
-    },
-    sessionType:"temporary",
-    sessionCount:2,
-    duration:1.60,
-  },
-  {
-    name:"640x480@624kbps audio&video tracks, each with its key",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[ "bipbop_480_624kbps-cenc-audio-key1-init.mp4",
-                    "bipbop_480_624kbps-cenc-audio-key1-1.m4s",
-                    "bipbop_480_624kbps-cenc-audio-key1-2.m4s",
-                    "bipbop_480_624kbps-cenc-audio-key1-3.m4s",
-                    "bipbop_480_624kbps-cenc-audio-key1-4.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop_480_624kbps-cenc-video-key1-init.mp4",
-                    "bipbop_480_624kbps-cenc-video-key1-1.m4s",
-                    "bipbop_480_624kbps-cenc-video-key1-2.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
-      "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
-    },
-    sessionType:"temporary",
-    sessionCount:2,
-    duration:1.60,
-  },
-  {
-    name:"640x480@959kbps audio&video tracks, each with its key",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[ "bipbop_480_959kbps-cenc-audio-key1-init.mp4",
-                    "bipbop_480_959kbps-cenc-audio-key1-1.m4s",
-                    "bipbop_480_959kbps-cenc-audio-key1-2.m4s",
-                    "bipbop_480_959kbps-cenc-audio-key1-3.m4s",
-                    "bipbop_480_959kbps-cenc-audio-key1-4.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop_480_959kbps-cenc-video-key1-init.mp4",
-                    "bipbop_480_959kbps-cenc-video-key1-1.m4s",
-                    "bipbop_480_959kbps-cenc-video-key1-2.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
-      "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
-    },
-    sessionType:"temporary",
-    sessionCount:2,
-    duration:1.60,
-  },
-  {
-    name:"640x480 then 400x300, same key (1st) per track",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[ "bipbop_480_624kbps-cenc-audio-key1-init.mp4",
-                    "bipbop_480_624kbps-cenc-audio-key1-1.m4s",
-                    "bipbop_480_624kbps-cenc-audio-key1-2.m4s",
-                    "bipbop_480_624kbps-cenc-audio-key1-3.m4s",
-                    "bipbop_480_624kbps-cenc-audio-key1-4.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop_480_624kbps-cenc-video-key1-init.mp4",
-                    "bipbop_480_624kbps-cenc-video-key1-1.m4s",
-                    "bipbop_300_215kbps-cenc-video-key1-init.mp4",
-                    "bipbop_300_215kbps-cenc-video-key1-2.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
-      "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
-    },
-    sessionType:"temporary",
-    sessionCount:3,
-    duration:1.60,
-  },
-  {
-    name:"640x480 then 400x300, same key (2nd) per track",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[ "bipbop_480_624kbps-cenc-audio-key2-init.mp4",
-                    "bipbop_480_624kbps-cenc-audio-key2-1.m4s",
-                    "bipbop_480_624kbps-cenc-audio-key2-2.m4s",
-                    "bipbop_480_624kbps-cenc-audio-key2-3.m4s",
-                    "bipbop_480_624kbps-cenc-audio-key2-4.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop_480_624kbps-cenc-video-key2-init.mp4",
-                    "bipbop_480_624kbps-cenc-video-key2-1.m4s",
-                    "bipbop_300_215kbps-cenc-video-key2-init.mp4",
-                    "bipbop_300_215kbps-cenc-video-key2-2.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d12" : "7e5733337e5733337e5733337e573312",
-      "7e571d047e571d047e571d047e571d22" : "7e5744447e5744447e5744447e574422",
-    },
-    sessionType:"temporary",
-    sessionCount:3,
-    duration:1.60,
-  },
-  {
-    name:"640x480 with 1st keys then 400x300 with 2nd keys",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[ "bipbop_480_624kbps-cenc-audio-key1-init.mp4",
-                    "bipbop_480_624kbps-cenc-audio-key1-1.m4s",
-                    "bipbop_480_624kbps-cenc-audio-key1-2.m4s",
-                    "bipbop_480_624kbps-cenc-audio-key1-3.m4s",
-                    "bipbop_480_624kbps-cenc-audio-key1-4.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop_480_624kbps-cenc-video-key1-init.mp4",
-                    "bipbop_480_624kbps-cenc-video-key1-1.m4s",
-                    "bipbop_300_215kbps-cenc-video-key2-init.mp4",
-                    "bipbop_300_215kbps-cenc-video-key2-2.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
-      "7e571d037e571d037e571d037e571d12" : "7e5733337e5733337e5733337e573312",
-      "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
-    },
-    sessionType:"temporary",
-    sessionCount:3,
-    duration:1.60,
-  },
-  {
-    name:"400x300 with 1st keys then 640x480 with 2nd keys",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[ "bipbop_300_215kbps-cenc-audio-key1-init.mp4",
-                    "bipbop_300_215kbps-cenc-audio-key1-1.m4s",
-                    "bipbop_300_215kbps-cenc-audio-key1-2.m4s",
-                    "bipbop_300_215kbps-cenc-audio-key1-3.m4s",
-                    "bipbop_300_215kbps-cenc-audio-key1-4.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop_300_215kbps-cenc-video-key1-init.mp4",
-                    "bipbop_300_215kbps-cenc-video-key1-1.m4s",
-                    "bipbop_480_624kbps-cenc-video-key2-init.mp4",
-                    "bipbop_480_624kbps-cenc-video-key2-2.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
-      "7e571d037e571d037e571d037e571d12" : "7e5733337e5733337e5733337e573312",
-      "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
-    },
-    sessionType:"temporary",
-    sessionCount:3,
-    duration:1.60,
-  },
-  {
-    name:"640x480@959kbps with 1st keys then 640x480@624kbps with 2nd keys",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[ "bipbop_480_959kbps-cenc-audio-key1-init.mp4",
-                    "bipbop_480_959kbps-cenc-audio-key1-1.m4s",
-                    "bipbop_480_959kbps-cenc-audio-key1-2.m4s",
-                    "bipbop_480_959kbps-cenc-audio-key1-3.m4s",
-                    "bipbop_480_959kbps-cenc-audio-key1-4.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop_480_959kbps-cenc-video-key1-init.mp4",
-                    "bipbop_480_959kbps-cenc-video-key1-1.m4s",
-                    "bipbop_480_624kbps-cenc-video-key2-init.mp4",
-                    "bipbop_480_624kbps-cenc-video-key2-2.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
-      "7e571d037e571d037e571d037e571d12" : "7e5733337e5733337e5733337e573312",
-      "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
-    },
-    sessionType:"temporary",
-    sessionCount:3,
-    duration:1.60,
-  },
-  {
-    name:"640x480@624kbps with 1st keys then 640x480@959kbps with 2nd keys",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[ "bipbop_480_624kbps-cenc-audio-key1-init.mp4",
-                    "bipbop_480_624kbps-cenc-audio-key1-1.m4s",
-                    "bipbop_480_624kbps-cenc-audio-key1-2.m4s",
-                    "bipbop_480_624kbps-cenc-audio-key1-3.m4s",
-                    "bipbop_480_624kbps-cenc-audio-key1-4.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop_480_624kbps-cenc-video-key1-init.mp4",
-                    "bipbop_480_624kbps-cenc-video-key1-1.m4s",
-                    "bipbop_480_959kbps-cenc-video-key2-init.mp4",
-                    "bipbop_480_959kbps-cenc-video-key2-2.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
-      "7e571d037e571d037e571d037e571d12" : "7e5733337e5733337e5733337e573312",
-      "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
-    },
-    sessionType:"temporary",
-    sessionCount:3,
-    duration:1.60,
-  },
-  {
-    name:"400x300 with presentation size 533x300",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[ "bipbop_300wp_227kbps-cenc-audio-key1-init.mp4",
-                    "bipbop_300wp_227kbps-cenc-audio-key1-1.m4s",
-                    "bipbop_300wp_227kbps-cenc-audio-key1-2.m4s",
-                    "bipbop_300wp_227kbps-cenc-audio-key1-3.m4s",
-                    "bipbop_300wp_227kbps-cenc-audio-key1-4.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop_300wp_227kbps-cenc-video-key1-init.mp4",
-                    "bipbop_300wp_227kbps-cenc-video-key1-1.m4s",
-                    "bipbop_300wp_227kbps-cenc-video-key1-2.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
-      "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
-    },
-    sessionType:"temporary",
-    sessionCount:2,
-    duration:1.60,
-  },
-  {
-    name:"400x300 as-is then 400x300 presented as 533x300",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[
-                    "bipbop_300_215kbps-cenc-audio-key1-init.mp4",
-                    "bipbop_300_215kbps-cenc-audio-key1-1.m4s",
-                    "bipbop_300_215kbps-cenc-audio-key1-2.m4s",
-                    "bipbop_300_215kbps-cenc-audio-key1-3.m4s",
-                    "bipbop_300_215kbps-cenc-audio-key1-4.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop_300_215kbps-cenc-video-key1-init.mp4",
-                    "bipbop_300_215kbps-cenc-video-key1-1.m4s",
-                    "bipbop_300wp_227kbps-cenc-video-key1-init.mp4",
-                    "bipbop_300wp_227kbps-cenc-video-key1-2.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
-      "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
-    },
-    sessionType:"temporary",
-    sessionCount:3,
-    duration:1.60,
-  },
-  {
-    name:"400x225",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[ "bipbop_225w_175kbps-cenc-audio-key1-init.mp4",
-                    "bipbop_225w_175kbps-cenc-audio-key1-1.m4s",
-                    "bipbop_225w_175kbps-cenc-audio-key1-2.m4s",
-                    "bipbop_225w_175kbps-cenc-audio-key1-3.m4s",
-                    "bipbop_225w_175kbps-cenc-audio-key1-4.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop_225w_175kbps-cenc-video-key1-init.mp4",
-                    "bipbop_225w_175kbps-cenc-video-key1-1.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
-      "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
-    },
-    sessionType:"temporary",
-    sessionCount:2,
-    duration:1.60,
-  },
-  {
-    name:"640x360",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[ "bipbop_360w_253kbps-cenc-audio-key1-init.mp4",
-                    "bipbop_360w_253kbps-cenc-audio-key1-1.m4s",
-                    "bipbop_360w_253kbps-cenc-audio-key1-2.m4s",
-                    "bipbop_360w_253kbps-cenc-audio-key1-3.m4s",
-                    "bipbop_360w_253kbps-cenc-audio-key1-4.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop_360w_253kbps-cenc-video-key1-init.mp4",
-                    "bipbop_360w_253kbps-cenc-video-key1-1.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
-      "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
-    },
-    sessionType:"temporary",
-    sessionCount:2,
-    duration:1.60,
-  },
-  {
-    name:"400x225 then 640x360",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[ "bipbop_225w_175kbps-cenc-audio-key1-init.mp4",
-                    "bipbop_225w_175kbps-cenc-audio-key1-1.m4s",
-                    "bipbop_225w_175kbps-cenc-audio-key1-2.m4s",
-                    "bipbop_225w_175kbps-cenc-audio-key1-3.m4s",
-                    "bipbop_225w_175kbps-cenc-audio-key1-4.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop_225w_175kbps-cenc-video-key1-init.mp4",
-                    "bipbop_225w_175kbps-cenc-video-key1-1.m4s",
-                    "bipbop_360w_253kbps-cenc-video-key2-init.mp4",
-                    "bipbop_360w_253kbps-cenc-video-key2-1.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
-      "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
-      "7e571d037e571d037e571d037e571d12" : "7e5733337e5733337e5733337e573312",
-    },
-    sessionType:"temporary",
-    sessionCount:3,
-    duration:1.60,
-  },
-  {
-    name:"640x360 then 640x480",
-    tracks: [
-      {
-        name:"audio",
-        type:"audio/mp4; codecs=\"mp4a.40.2\"",
-        fragments:[ "bipbop_360w_253kbps-cenc-audio-key1-init.mp4",
-                    "bipbop_360w_253kbps-cenc-audio-key1-1.m4s",
-                    "bipbop_360w_253kbps-cenc-audio-key1-2.m4s",
-                    "bipbop_360w_253kbps-cenc-audio-key1-3.m4s",
-                    "bipbop_360w_253kbps-cenc-audio-key1-4.m4s",
-                  ],
-      },
-      {
-        name:"video",
-        type:"video/mp4; codecs=\"avc1.64000d\"",
-        fragments:[ "bipbop_360w_253kbps-cenc-video-key1-init.mp4",
-                    "bipbop_360w_253kbps-cenc-video-key1-1.m4s",
-                    "bipbop_480_624kbps-cenc-video-key2-init.mp4",
-                    "bipbop_480_624kbps-cenc-video-key2-2.m4s",
-                  ],
-      },
-    ],
-    keys: {
-      // "keyid" : "key"
-      "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
-      "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
-      "7e571d037e571d037e571d037e571d12" : "7e5733337e5733337e5733337e573312",
-    },
-    sessionType:"temporary",
-    sessionCount:3,
-    duration:1.60,
-  },
+  // {
+  //   name:"400x300 audio&video tracks, each with its key",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[ "bipbop_300_215kbps-cenc-audio-key1-init.mp4",
+  //                   "bipbop_300_215kbps-cenc-audio-key1-1.m4s",
+  //                   "bipbop_300_215kbps-cenc-audio-key1-2.m4s",
+  //                   "bipbop_300_215kbps-cenc-audio-key1-3.m4s",
+  //                   "bipbop_300_215kbps-cenc-audio-key1-4.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop_300_215kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_300_215kbps-cenc-video-key1-1.m4s",
+  //                   "bipbop_300_215kbps-cenc-video-key1-2.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
+  //     "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:2,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"640x480@624kbps audio&video tracks, each with its key",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[ "bipbop_480_624kbps-cenc-audio-key1-init.mp4",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-1.m4s",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-2.m4s",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-3.m4s",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-4.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop_480_624kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_480_624kbps-cenc-video-key1-1.m4s",
+  //                   "bipbop_480_624kbps-cenc-video-key1-2.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
+  //     "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:2,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"640x480@959kbps audio&video tracks, each with its key",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[ "bipbop_480_959kbps-cenc-audio-key1-init.mp4",
+  //                   "bipbop_480_959kbps-cenc-audio-key1-1.m4s",
+  //                   "bipbop_480_959kbps-cenc-audio-key1-2.m4s",
+  //                   "bipbop_480_959kbps-cenc-audio-key1-3.m4s",
+  //                   "bipbop_480_959kbps-cenc-audio-key1-4.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop_480_959kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_480_959kbps-cenc-video-key1-1.m4s",
+  //                   "bipbop_480_959kbps-cenc-video-key1-2.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
+  //     "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:2,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"640x480 then 400x300, same key (1st) per track",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[ "bipbop_480_624kbps-cenc-audio-key1-init.mp4",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-1.m4s",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-2.m4s",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-3.m4s",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-4.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop_480_624kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_480_624kbps-cenc-video-key1-1.m4s",
+  //                   "bipbop_300_215kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_300_215kbps-cenc-video-key1-2.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
+  //     "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:3,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"640x480 then 400x300, same key (2nd) per track",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[ "bipbop_480_624kbps-cenc-audio-key2-init.mp4",
+  //                   "bipbop_480_624kbps-cenc-audio-key2-1.m4s",
+  //                   "bipbop_480_624kbps-cenc-audio-key2-2.m4s",
+  //                   "bipbop_480_624kbps-cenc-audio-key2-3.m4s",
+  //                   "bipbop_480_624kbps-cenc-audio-key2-4.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop_480_624kbps-cenc-video-key2-init.mp4",
+  //                   "bipbop_480_624kbps-cenc-video-key2-1.m4s",
+  //                   "bipbop_300_215kbps-cenc-video-key2-init.mp4",
+  //                   "bipbop_300_215kbps-cenc-video-key2-2.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d12" : "7e5733337e5733337e5733337e573312",
+  //     "7e571d047e571d047e571d047e571d22" : "7e5744447e5744447e5744447e574422",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:3,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"640x480 with 1st keys then 400x300 with 2nd keys",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[ "bipbop_480_624kbps-cenc-audio-key1-init.mp4",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-1.m4s",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-2.m4s",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-3.m4s",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-4.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop_480_624kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_480_624kbps-cenc-video-key1-1.m4s",
+  //                   "bipbop_300_215kbps-cenc-video-key2-init.mp4",
+  //                   "bipbop_300_215kbps-cenc-video-key2-2.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
+  //     "7e571d037e571d037e571d037e571d12" : "7e5733337e5733337e5733337e573312",
+  //     "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:3,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"400x300 with 1st keys then 640x480 with 2nd keys",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[ "bipbop_300_215kbps-cenc-audio-key1-init.mp4",
+  //                   "bipbop_300_215kbps-cenc-audio-key1-1.m4s",
+  //                   "bipbop_300_215kbps-cenc-audio-key1-2.m4s",
+  //                   "bipbop_300_215kbps-cenc-audio-key1-3.m4s",
+  //                   "bipbop_300_215kbps-cenc-audio-key1-4.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop_300_215kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_300_215kbps-cenc-video-key1-1.m4s",
+  //                   "bipbop_480_624kbps-cenc-video-key2-init.mp4",
+  //                   "bipbop_480_624kbps-cenc-video-key2-2.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
+  //     "7e571d037e571d037e571d037e571d12" : "7e5733337e5733337e5733337e573312",
+  //     "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:3,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"640x480@959kbps with 1st keys then 640x480@624kbps with 2nd keys",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[ "bipbop_480_959kbps-cenc-audio-key1-init.mp4",
+  //                   "bipbop_480_959kbps-cenc-audio-key1-1.m4s",
+  //                   "bipbop_480_959kbps-cenc-audio-key1-2.m4s",
+  //                   "bipbop_480_959kbps-cenc-audio-key1-3.m4s",
+  //                   "bipbop_480_959kbps-cenc-audio-key1-4.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop_480_959kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_480_959kbps-cenc-video-key1-1.m4s",
+  //                   "bipbop_480_624kbps-cenc-video-key2-init.mp4",
+  //                   "bipbop_480_624kbps-cenc-video-key2-2.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
+  //     "7e571d037e571d037e571d037e571d12" : "7e5733337e5733337e5733337e573312",
+  //     "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:3,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"640x480@624kbps with 1st keys then 640x480@959kbps with 2nd keys",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[ "bipbop_480_624kbps-cenc-audio-key1-init.mp4",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-1.m4s",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-2.m4s",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-3.m4s",
+  //                   "bipbop_480_624kbps-cenc-audio-key1-4.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop_480_624kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_480_624kbps-cenc-video-key1-1.m4s",
+  //                   "bipbop_480_959kbps-cenc-video-key2-init.mp4",
+  //                   "bipbop_480_959kbps-cenc-video-key2-2.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
+  //     "7e571d037e571d037e571d037e571d12" : "7e5733337e5733337e5733337e573312",
+  //     "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:3,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"400x300 with presentation size 533x300",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[ "bipbop_300wp_227kbps-cenc-audio-key1-init.mp4",
+  //                   "bipbop_300wp_227kbps-cenc-audio-key1-1.m4s",
+  //                   "bipbop_300wp_227kbps-cenc-audio-key1-2.m4s",
+  //                   "bipbop_300wp_227kbps-cenc-audio-key1-3.m4s",
+  //                   "bipbop_300wp_227kbps-cenc-audio-key1-4.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop_300wp_227kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_300wp_227kbps-cenc-video-key1-1.m4s",
+  //                   "bipbop_300wp_227kbps-cenc-video-key1-2.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
+  //     "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:2,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"400x300 as-is then 400x300 presented as 533x300",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[
+  //                   "bipbop_300_215kbps-cenc-audio-key1-init.mp4",
+  //                   "bipbop_300_215kbps-cenc-audio-key1-1.m4s",
+  //                   "bipbop_300_215kbps-cenc-audio-key1-2.m4s",
+  //                   "bipbop_300_215kbps-cenc-audio-key1-3.m4s",
+  //                   "bipbop_300_215kbps-cenc-audio-key1-4.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop_300_215kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_300_215kbps-cenc-video-key1-1.m4s",
+  //                   "bipbop_300wp_227kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_300wp_227kbps-cenc-video-key1-2.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
+  //     "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:3,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"400x225",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[ "bipbop_225w_175kbps-cenc-audio-key1-init.mp4",
+  //                   "bipbop_225w_175kbps-cenc-audio-key1-1.m4s",
+  //                   "bipbop_225w_175kbps-cenc-audio-key1-2.m4s",
+  //                   "bipbop_225w_175kbps-cenc-audio-key1-3.m4s",
+  //                   "bipbop_225w_175kbps-cenc-audio-key1-4.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop_225w_175kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_225w_175kbps-cenc-video-key1-1.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
+  //     "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:2,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"640x360",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[ "bipbop_360w_253kbps-cenc-audio-key1-init.mp4",
+  //                   "bipbop_360w_253kbps-cenc-audio-key1-1.m4s",
+  //                   "bipbop_360w_253kbps-cenc-audio-key1-2.m4s",
+  //                   "bipbop_360w_253kbps-cenc-audio-key1-3.m4s",
+  //                   "bipbop_360w_253kbps-cenc-audio-key1-4.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop_360w_253kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_360w_253kbps-cenc-video-key1-1.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
+  //     "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:2,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"400x225 then 640x360",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[ "bipbop_225w_175kbps-cenc-audio-key1-init.mp4",
+  //                   "bipbop_225w_175kbps-cenc-audio-key1-1.m4s",
+  //                   "bipbop_225w_175kbps-cenc-audio-key1-2.m4s",
+  //                   "bipbop_225w_175kbps-cenc-audio-key1-3.m4s",
+  //                   "bipbop_225w_175kbps-cenc-audio-key1-4.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop_225w_175kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_225w_175kbps-cenc-video-key1-1.m4s",
+  //                   "bipbop_360w_253kbps-cenc-video-key2-init.mp4",
+  //                   "bipbop_360w_253kbps-cenc-video-key2-1.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
+  //     "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
+  //     "7e571d037e571d037e571d037e571d12" : "7e5733337e5733337e5733337e573312",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:3,
+  //   duration:1.60,
+  // },
+  // {
+  //   name:"640x360 then 640x480",
+  //   tracks: [
+  //     {
+  //       name:"audio",
+  //       type:"audio/mp4; codecs=\"mp4a.40.2\"",
+  //       fragments:[ "bipbop_360w_253kbps-cenc-audio-key1-init.mp4",
+  //                   "bipbop_360w_253kbps-cenc-audio-key1-1.m4s",
+  //                   "bipbop_360w_253kbps-cenc-audio-key1-2.m4s",
+  //                   "bipbop_360w_253kbps-cenc-audio-key1-3.m4s",
+  //                   "bipbop_360w_253kbps-cenc-audio-key1-4.m4s",
+  //                 ],
+  //     },
+  //     {
+  //       name:"video",
+  //       type:"video/mp4; codecs=\"avc1.64000d\"",
+  //       fragments:[ "bipbop_360w_253kbps-cenc-video-key1-init.mp4",
+  //                   "bipbop_360w_253kbps-cenc-video-key1-1.m4s",
+  //                   "bipbop_480_624kbps-cenc-video-key2-init.mp4",
+  //                   "bipbop_480_624kbps-cenc-video-key2-2.m4s",
+  //                 ],
+  //     },
+  //   ],
+  //   keys: {
+  //     // "keyid" : "key"
+  //     "7e571d037e571d037e571d037e571d11" : "7e5733337e5733337e5733337e573311",
+  //     "7e571d047e571d047e571d047e571d21" : "7e5744447e5744447e5744447e574421",
+  //     "7e571d037e571d037e571d037e571d12" : "7e5733337e5733337e5733337e573312",
+  //   },
+  //   sessionType:"temporary",
+  //   sessionCount:3,
+  //   duration:1.60,
+  // },
 ];
 
 var gEMENonMSEFailTests = [
