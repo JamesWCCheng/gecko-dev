@@ -1339,6 +1339,7 @@ try {
   let gmpService = Cc["@mozilla.org/gecko-media-plugin-service;1"]
                      .getService(Ci.mozIGeckoMediaPluginChromeService);
   gmpService.addPluginDirectory("/system/b2g/gmp-clearkey/0.1");
+  gmpService.addPluginDirectory("/system/b2g/gmp-fakerenderer/1.0");
 } catch(e) {
   dump("Failed to add clearkey path! " + e + "\n");
 }
