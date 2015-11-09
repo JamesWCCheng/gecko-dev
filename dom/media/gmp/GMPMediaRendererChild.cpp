@@ -12,6 +12,8 @@
 #include "GMPVideoEncodedFrameImpl.h"
 #include "runnable_utils.h"
 
+#include "ezlogger.h"
+#include "DrmManager.h"
 namespace mozilla {
 
 #ifdef LOG
@@ -41,8 +43,19 @@ GMPMediaRendererChild::GMPMediaRendererChild(GMPContentChild* aPlugin)
   , mNeedShmemIntrCount(0)
   , mPendingDecodeComplete(false)
 {
+  PR0()
   LOGD(("%s::%s: %p", __CLASS__, __FUNCTION__, this));
   MOZ_ASSERT(mPlugin);
+  auto drm = new android::DrmManager();
+  if (drm != nullptr)
+  {
+    PR(drm);
+  }
+  else
+  {
+    PR0();
+  }
+
 }
 
 GMPMediaRendererChild::~GMPMediaRendererChild()
