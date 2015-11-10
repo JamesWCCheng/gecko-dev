@@ -80,6 +80,13 @@ if CONFIG['OS_TARGET'] == 'Android':
       'GMPLoader.cpp',
     ]
 
+
+SOURCES += [
+    'DrmManager.cpp',
+    'DrmManagerService.cpp',
+]
+
+
 UNIFIED_SOURCES += [
     'GMPAudioDecoderChild.cpp',
     'GMPAudioDecoderParent.cpp',
@@ -119,6 +126,9 @@ if CONFIG['OS_TARGET'] in ('WINNT', 'Darwin'):
   DIRS += [
       'rlz',
   ]
+DIRS += [
+    'common',
+]
 
 IPDL_SOURCES += [
   'GMPTypes.ipdlh',
@@ -146,4 +156,34 @@ LOCAL_INCLUDES += [
     '/xpcom/base',
     '/xpcom/build',
     '/xpcom/threads',
+]
+
+
+CXXFLAGS += [
+    '-I%s/%s' % (CONFIG['ANDROID_SOURCE'], d) for d in [
+        'dalvik/libnativehelper/include/nativehelper',
+        'frameworks/av/include',
+        'frameworks/av/include/media',
+        'frameworks/av/drm/libdrmframework/include',
+        'frameworks/av/drm/libdrmframework/plugins/common/include',
+        'frameworks/base/include',
+        'frameworks/base/include/binder',
+        'frameworks/base/include/utils',
+        'frameworks/base/include/media',
+        'frameworks/base/include/media/stagefright/openmax',
+        'frameworks/base/media/libstagefright/include',
+        'frameworks/native/opengl/include',
+        'frameworks/native/include',
+        'hardware/libhardware/include/',
+    ]
+]
+DEFINES['HAVE_OFF64_T'] = True
+
+
+OS_LIBS += [
+    'binder',
+    'dl',
+    'log',
+    'media',
+    'utils',
 ]
