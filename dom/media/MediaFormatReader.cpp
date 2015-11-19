@@ -20,6 +20,9 @@
 
 #include <algorithm>
 
+#define MOZ_LOG_886
+#include "ezlogger.h"
+
 #ifdef MOZ_EME
 #include "mozilla/CDMProxy.h"
 #endif
@@ -549,7 +552,7 @@ MediaFormatReader::EnsureDecodersCreated()
         ANDLOG("\033[1;32m============done GMPMediaRenderer ContentChangedAND============\n\033[m");
         //rendererProxy->ShutDown();
         //LOGV("\033[1;32m============done GMPMediaRenderer ShutDown============\n\033[m");
-        isInitialed = true;
+        //isInitialed = true;
       },
       [] (MediaDataDecoder::DecoderFailureReason aResult) {
         printf_stderr("\033[1;32m============Init Renderer Failure, aResult = %d============\n\033[m", aResult);

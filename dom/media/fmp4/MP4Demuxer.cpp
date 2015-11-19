@@ -20,6 +20,9 @@
 #include "mp4_demuxer/AnnexB.h"
 #include "mp4_demuxer/H264.h"
 
+#define MOZ_LOG_886
+#include "ezlogger.h"
+
 PRLogModuleInfo* GetDemuxerLog() {
   static PRLogModuleInfo* log = nullptr;
   if (!log) {

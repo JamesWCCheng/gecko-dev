@@ -91,6 +91,9 @@
 #include <algorithm>
 #include <cmath>
 
+#define MOZ_LOG_886
+#include "ezlogger.h"
+
 static PRLogModuleInfo* gMediaElementLog;
 static PRLogModuleInfo* gMediaElementEventsLog;
 #define LOG(type, msg) MOZ_LOG(gMediaElementLog, type, msg)
@@ -980,7 +983,7 @@ void HTMLMediaElement::NotifyMediaTrackEnabled(MediaTrack* aTrack)
     return;
   }
 
-  LOG(LogLevel::Debug, ("MediaElement %p MediaStreamTrack %p enabled", this));
+  LOG(LogLevel::Debug, ("MediaElement %p MediaStreamTrack enabled", this));
 
   // TODO: We are dealing with single audio track and video track for now.
   if (AudioTrack* track = aTrack->AsAudioTrack()) {
@@ -3716,6 +3719,7 @@ bool HTMLMediaElement::IsCORSSameOrigin()
 void
 HTMLMediaElement::UpdateReadyStateInternal()
 {
+  PR(mReadyState.Ref());
   if (!mDecoder && !mSrcStream) {
     // Not initialized - bail out.
     LOG(LogLevel::Debug, ("MediaElement %p UpdateReadyStateInternal() "
@@ -3818,6 +3822,7 @@ HTMLMediaElement::UpdateReadyStateInternal()
   if (!mFirstFrameLoaded) {
     // We haven't yet loaded the first frame, making us unable to determine
     // if we have enough valid data at the present stage.
+    PR(mFirstFrameLoaded);
     return;
   }
 

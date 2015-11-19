@@ -34,6 +34,10 @@
 #include "nsProxyRelease.h"
 #include "nsIContentPolicy.h"
 
+
+#define MOZ_LOG_886
+#include "ezlogger.h"
+
 using mozilla::media::TimeUnit;
 
 PRLogModuleInfo* gMediaResourceLog;
@@ -928,6 +932,7 @@ ChannelMediaResource::CacheClientNotifySuspendedStatusChanged()
 nsresult
 ChannelMediaResource::CacheClientSeek(int64_t aOffset, bool aResume)
 {
+  PR(mChannel.get(), aResume);
   NS_ASSERTION(NS_IsMainThread(), "Don't call on non-main thread");
 
   CMLOG("CacheClientSeek requested for aOffset [%lld] for decoder [%p]",
@@ -940,18 +945,21 @@ ChannelMediaResource::CacheClientSeek(int64_t aOffset, bool aResume)
   // Don't report close of the channel because the channel is not closed for
   // download ended, but for internal changes in the read position.
   mIgnoreClose = true;
-
+  PR(aResume);
   if (aResume) {
+    PR0();
     mSuspendAgent.Resume();
   }
 
   // Don't create a new channel if we are still suspended. The channel will
   // be recreated when we are resumed.
   if (mSuspendAgent.IsSuspended()) {
+    PR0();
     return NS_OK;
   }
 
   nsresult rv = RecreateChannel();
+  PR(rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
   return OpenChannel(nullptr);
@@ -1082,6 +1090,7 @@ ChannelSuspendAgent::SuspendInternal()
     if (NS_SUCCEEDED(rv) && isPending && !mIsChannelSuspended) {
       mChannel->Suspend();
       mIsChannelSuspended = true;
+      PR(mIsChannelSuspended);
     }
   }
 }
@@ -1096,6 +1105,7 @@ ChannelSuspendAgent::Resume()
     if (mChannel && mIsChannelSuspended) {
       mChannel->Resume();
       mIsChannelSuspended = false;
+      PR(mIsChannelSuspended);
     }
     return true;
   }
@@ -1126,6 +1136,7 @@ ChannelSuspendAgent::NotifyChannelClosing()
   if (mIsChannelSuspended) {
     mChannel->Resume();
     mIsChannelSuspended = false;
+    PR(mIsChannelSuspended);
   }
   mChannel = nullptr;
 }

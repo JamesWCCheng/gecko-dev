@@ -22,6 +22,9 @@
 #include "mozilla/Services.h"
 #include <algorithm>
 
+#define MOZ_LOG_886
+#include "ezlogger.h"
+
 namespace mozilla {
 
 PRLogModuleInfo* gMediaCacheLog;

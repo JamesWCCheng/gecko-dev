@@ -48,6 +48,9 @@
 #include "VideoSegment.h"
 #include "VideoUtils.h"
 
+#define MOZ_LOG_886
+#include "ezlogger.h"
+
 namespace mozilla {
 
 using namespace mozilla::dom;
@@ -1526,7 +1529,7 @@ void
 MediaDecoderStateMachine::DispatchDecodeTasksIfNeeded()
 {
   MOZ_ASSERT(OnTaskQueue());
-
+  PR0(mState);
   if (mState != DECODER_STATE_DECODING &&
       mState != DECODER_STATE_BUFFERING &&
       mState != DECODER_STATE_SEEKING) {
@@ -1584,6 +1587,7 @@ void
 MediaDecoderStateMachine::InitiateSeek()
 {
   MOZ_ASSERT(OnTaskQueue());
+  PR0();
 
   mCurrentSeek.RejectIfExists(__func__);
   mCurrentSeek.Steal(mPendingSeek);
@@ -1660,15 +1664,17 @@ MediaDecoderStateMachine::EnsureAudioDecodeTaskQueued()
 
   SAMPLE_LOG("EnsureAudioDecodeTaskQueued isDecoding=%d status=%s",
               IsAudioDecoding(), AudioRequestStatus());
-
+  PR(mState.Ref());
   if (mState != DECODER_STATE_DECODING &&
       mState != DECODER_STATE_BUFFERING &&
       mState != DECODER_STATE_SEEKING) {
+    PR0();
     return NS_OK;
   }
 
   if (!IsAudioDecoding() || mAudioDataRequest.Exists() ||
       mAudioWaitRequest.Exists() || mSeekRequest.Exists()) {
+    PR0();
     return NS_OK;
   }
 
@@ -1711,13 +1717,15 @@ MediaDecoderStateMachine::DispatchVideoDecodeTaskIfNeeded()
   MOZ_ASSERT(OnTaskQueue());
 
   if (IsShutdown()) {
+    PR0();
     return NS_ERROR_FAILURE;
   }
 
   if (NeedToDecodeVideo()) {
+    PR0();
     return EnsureVideoDecodeTaskQueued();
   }
-
+  PR0();
   return NS_OK;
 }
 
@@ -1728,18 +1736,21 @@ MediaDecoderStateMachine::EnsureVideoDecodeTaskQueued()
 
   SAMPLE_LOG("EnsureVideoDecodeTaskQueued isDecoding=%d status=%s",
              IsVideoDecoding(), VideoRequestStatus());
-
+  PR(mState.Ref());
   if (mState != DECODER_STATE_DECODING &&
       mState != DECODER_STATE_BUFFERING &&
       mState != DECODER_STATE_SEEKING) {
+    PR0();
     return NS_OK;
   }
 
   if (!IsVideoDecoding() || mVideoDataRequest.Exists() ||
       mVideoWaitRequest.Exists() || mSeekRequest.Exists()) {
+    PR0();
     return NS_OK;
   }
 
+  PR0();
   RequestVideoData();
   return NS_OK;
 }
@@ -2103,7 +2114,6 @@ MediaDecoderStateMachine::SeekCompleted()
 {
   MOZ_ASSERT(OnTaskQueue());
   MOZ_ASSERT(mState == DECODER_STATE_SEEKING);
-
   int64_t seekTime = mCurrentSeek.mTarget.mTime;
   int64_t newCurrentTime = seekTime;
 
@@ -2704,6 +2714,7 @@ void MediaDecoderStateMachine::UpdateNextFrameStatus()
   }
 
   mNextFrameStatus = status;
+  PR(mNextFrameStatus.Ref());
 }
 
 bool MediaDecoderStateMachine::JustExitedQuickBuffering()

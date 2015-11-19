@@ -32,7 +32,7 @@
 
 #include "DrmManager.h"
 #include "ReadWriteUtils.h"
-
+#include "ezlogger.h"
 #define DECRYPT_FILE_ERROR -1
 
 using namespace android;
@@ -102,9 +102,13 @@ status_t DrmManager::loadPlugIns(const String8& plugInDirPath) {
     mPlugInManager.loadPlugIns(plugInDirPath);
     Vector<String8> plugInPathList = mPlugInManager.getPlugInIdList();
     for (unsigned int i = 0; i < plugInPathList.size(); ++i) {
+        PR(plugInPathList.size());
+        PR0();
         String8 plugInPath = plugInPathList[i];
         DrmSupportInfo* info = mPlugInManager.getPlugIn(plugInPath).getSupportInfo(0);
         if (NULL != info) {
+            PR0();
+            PR((const char*)plugInPath);
             if (mSupportInfoToPlugInIdMap.indexOfKey(*info) < 0) {
                 mSupportInfoToPlugInIdMap.add(*info, plugInPath);
             }

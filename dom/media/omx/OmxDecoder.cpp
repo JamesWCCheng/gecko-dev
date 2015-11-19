@@ -33,6 +33,8 @@
 #include "OMXCodecProxy.h"
 #include "OmxDecoder.h"
 
+#define MOZ_LOG_886
+#include "ezlogger.h"
 #include <android/log.h>
 #define OD_LOG(...) __android_log_print(ANDROID_LOG_DEBUG, "OmxDecoder", __VA_ARGS__)
 
@@ -576,12 +578,14 @@ bool OmxDecoder::ReadVideo(VideoFrame *aFrame, int64_t aTimeUs,
       findNextBuffer = false;
       if (mIsVideoSeeking) {
         err = mVideoSource->read(&mVideoBuffer, &options);
+        PR(mIsVideoSeeking, err);
         Mutex::Autolock autoLock(mSeekLock);
         mIsVideoSeeking = false;
         PostReleaseVideoBuffer(nullptr, FenceHandle());
       }
       else {
-	err = mVideoSource->read(&mVideoBuffer);
+	      err = mVideoSource->read(&mVideoBuffer);
+        PR(err);
       }
 
       // If there is no next Keyframe, jump to the previous key frame.
@@ -592,8 +596,10 @@ bool OmxDecoder::ReadVideo(VideoFrame *aFrame, int64_t aTimeUs,
           Mutex::Autolock autoLock(mSeekLock);
           mIsVideoSeeking = true;
         }
+        PR0();
         continue;
       } else if (err != OK) {
+        PR("=======", err, aTimeUs);
         OD_LOG("Unexpected error when seeking to %lld", aTimeUs);
         break;
       }
@@ -607,6 +613,7 @@ bool OmxDecoder::ReadVideo(VideoFrame *aFrame, int64_t aTimeUs,
     aDoSeek = false;
   } else {
     err = mVideoSource->read(&mVideoBuffer);
+    PR(err);
   }
 
   aFrame->mSize = 0;

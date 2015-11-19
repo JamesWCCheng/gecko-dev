@@ -43,13 +43,16 @@ GMPMediaRendererChild::GMPMediaRendererChild(GMPContentChild* aPlugin)
   , mNeedShmemIntrCount(0)
   , mPendingDecodeComplete(false)
 {
-  PR0()
+  PR0();
   LOGD(("%s::%s: %p", __CLASS__, __FUNCTION__, this));
   MOZ_ASSERT(mPlugin);
   auto drm = new android::DrmManager();
   if (drm != nullptr)
   {
     PR(drm);
+    auto err = drm->loadPlugIns();
+    PR(err);
+
   }
   else
   {
