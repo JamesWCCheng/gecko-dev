@@ -1,0 +1,85 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+include protocol PGMPContent;
+include GMPTypes;
+
+using GMPVideoCodec from "gmp-video-codec.h";
+using GMPErr from "gmp-errors.h";
+using GMPRect from "gmp-media-render.h";
+
+include "GMPMessageUtils.h";
+
+namespace mozilla {
+namespace gmp {
+
+intr protocol PGMPMediaRenderer
+{
+  manager PGMPContent;
+child:
+  // GMPMediaRenderer
+  // Init Renderer for video, passing the video spec to child.
+  async InitVideoRenderer(GMPVideoCodec aVideoCodecSettings,
+                          uint8_t[] aCodecSpecific,
+                          int32_t aCoreCount,
+                          GMPRect aDisplayRect);
+  // Init Renderer for audio, passing the audio spec to child.
+  async InitAudioRenderer(GMPAudioCodecData aAudioCodecSettings);
+  // Bypass the encoded/encrypt video frame to child for rendering.
+  async RenderVideoPacket(GMPVideoEncodedFrameData aInputFrame,
+                          bool aMissingFrames,
+                          uint8_t[] aCodecSpecificInfo);
+  // Bypass the encoded/encrypt audio sample to child.
+  async RenderAudioPacket(GMPAudioEncodedSampleData aInput);
+  async SetPlaybackRate(double aRate);
+  async SetVolume(double aVolume);
+  async SetPreservesPitch(bool aPreservesPitch);
+  // Close the HW_CDM, e.g. entering dormant state / closing player.
+  async Shutdown();
+  // Notify CDM to begin a playback session.
+  async Start(int64_t  aStartTime);
+  // Notify CDM a playback session is finished.
+  async Stop();
+  // Notify CDM that the new stream content is received.
+  // The next sample to come is guaranteed to be a keyframe and
+  // that it needs to decode all frames and drop all those whose time is < aTime
+  // and to start to redisplay from aTime only.
+  async ContentChanged(int64_t aTime);
+  //GMPHWRenderer
+  // Notify updated layout information to GMPChild.
+  async SetDisplayPosition(GMPRect aDisplayRect);
+  async ChildShmemForPool(Shmem aFrameBuffer);
+parent:
+  async __delete__();
+  //GMPMediaRendererCallback
+
+  // Notify current media time in HW_CDM in microseconds.
+  async TimeUpdate(int64_t aElapsedTime);
+  // Notify last media frame is rendered (EOS encountered)
+  async AudioRenderReachedEOS();
+  async VideoRenderReachedEOS();
+  // Notify parent-side to request more data and send to child.
+  // AudioInputDataExhausted() / VideoInputDataExhausted() is expected to be
+  // called repeatedly to get more audio / video frame.
+  async AudioInputDataExhausted();
+  async VideoInputDataExhausted();
+  // Notify parent that task of shutdown is done.
+  async ShutdownComplete();
+  // Notify parent that Stop command is completed.
+  async StopComplete();
+  // Notify any error.
+  async Error(GMPErr aErr);
+  // MDSM needs to wait CDM resource including this information
+  // if HW_CDM is gonna do rendering by itself.
+  async SetOverlayImageID(uint32_t aId);
+
+  async ParentShmemForPool(Shmem aEncodedBuffer);
+  // MUST be intr - if sync and we create a new Shmem, when the returned
+  // Shmem is received in the Child it will fail to Deserialize
+  intr NeedShmem(uint32_t aFrameBufferSize) returns (Shmem aMem);
+};
+
+} // namespace gmp
+} // namespace mozilla

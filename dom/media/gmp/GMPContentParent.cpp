@@ -10,6 +10,7 @@
 #include "GMPServiceChild.h"
 #include "GMPVideoDecoderParent.h"
 #include "GMPVideoEncoderParent.h"
+#include "GMPMediaRendererParent.h"
 #include "mozIGeckoMediaPluginService.h"
 #include "mozilla/Logging.h"
 #include "mozilla/unused.h"
@@ -70,7 +71,8 @@ GMPContentParent::ActorDestroy(ActorDestroyReason aWhy)
   MOZ_ASSERT(mAudioDecoders.IsEmpty() &&
              mDecryptors.IsEmpty() &&
              mVideoDecoders.IsEmpty() &&
-             mVideoEncoders.IsEmpty());
+             mVideoEncoders.IsEmpty() &&
+             mMediaRenderers.IsEmpty());
   NS_DispatchToCurrentThread(new ReleaseGMPContentParent(this));
 }
 
@@ -119,12 +121,23 @@ GMPContentParent::DecryptorDestroyed(GMPDecryptorParent* aSession)
 }
 
 void
+GMPContentParent::MediaRendererDestroyed(GMPMediaRendererParent* aRenderer)
+{
+  MOZ_ASSERT(GMPThread() == NS_GetCurrentThread());
+
+  // If the constructor fails, we'll get called before it's added
+  Unused << NS_WARN_IF(!mMediaRenderers.RemoveElement(aRenderer));
+  CloseIfUnused();
+}
+
+void
 GMPContentParent::CloseIfUnused()
 {
   if (mAudioDecoders.IsEmpty() &&
       mDecryptors.IsEmpty() &&
       mVideoDecoders.IsEmpty() &&
-      mVideoEncoders.IsEmpty()) {
+      mVideoEncoders.IsEmpty() &&
+      mMediaRenderers.IsEmpty()) {
     RefPtr<GMPContentParent> toClose;
     if (mParent) {
       toClose = mParent->ForgetGMPContentParent();
@@ -213,6 +226,24 @@ GMPContentParent::GetGMPVideoDecoder(GMPVideoDecoderParent** aGMPVD)
 }
 
 nsresult
+GMPContentParent::GetGMPMediaRenderer(GMPMediaRendererParent** aGMPMR)
+{
+  // returned with one anonymous AddRef that locks it until Destroy
+  PGMPMediaRendererParent* pmrp = SendPGMPMediaRendererConstructor();
+  if (!pmrp) {
+    return NS_ERROR_FAILURE;
+  }
+  GMPMediaRendererParent *mrp = static_cast<GMPMediaRendererParent*>(pmrp);
+  // This addref corresponds to the Proxy pointer the consumer is returned.
+  // It's dropped by calling Close() on the interface.
+  NS_ADDREF(mrp);
+  *aGMPMR = mrp;
+  mMediaRenderers.AppendElement(mrp);
+
+  return NS_OK;
+}
+
+nsresult
 GMPContentParent::GetGMPVideoEncoder(GMPVideoEncoderParent** aGMPVE)
 {
   // returned with one anonymous AddRef that locks it until Destroy
@@ -245,6 +276,23 @@ GMPContentParent::DeallocPGMPVideoDecoderParent(PGMPVideoDecoderParent* aActor)
   NS_RELEASE(vdp);
   return true;
 }
+
+PGMPMediaRendererParent*
+GMPContentParent::AllocPGMPMediaRendererParent()
+{
+  GMPMediaRendererParent* mrp = new GMPMediaRendererParent(this);
+  NS_ADDREF(mrp);
+  return mrp;
+}
+
+bool
+GMPContentParent::DeallocPGMPMediaRendererParent(PGMPMediaRendererParent* aActor)
+{
+  GMPMediaRendererParent* mrp = static_cast<GMPMediaRendererParent*>(aActor);
+  NS_RELEASE(mrp);
+  return true;
+}
+
 
 PGMPVideoEncoderParent*
 GMPContentParent::AllocPGMPVideoEncoderParent()

@@ -11,6 +11,7 @@
 #include "GMPVideoEncoderChild.h"
 #include "GMPAudioDecoderChild.h"
 #include "GMPDecryptorChild.h"
+#include "GMPMediaRendererChild.h"
 #include "GMPVideoHost.h"
 #include "nsDebugImpl.h"
 #include "nsIFile.h"

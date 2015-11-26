@@ -456,6 +456,51 @@ GeckoMediaPluginService::GetGMPVideoDecoder(nsTArray<nsCString>* aTags,
   return NS_OK;
 }
 
+class GetGMPContentParentForMediaRendererDone : public GetGMPContentParentCallback
+{
+public:
+  explicit GetGMPContentParentForMediaRendererDone(UniquePtr<GetGMPMediaRendererCallback>&& aCallback)
+   : mCallback(Move(aCallback))
+  {
+  }
+
+  virtual void Done(GMPContentParent* aGMPParent) override
+  {
+    GMPMediaRendererParent* gmpMRP = nullptr;
+    GMPVideoHostImpl* videoHost = nullptr;
+    if (aGMPParent && NS_SUCCEEDED(aGMPParent->GetGMPMediaRenderer(&gmpMRP))) {
+      videoHost = &gmpMRP->Host();
+    }
+    mCallback->Done(gmpMRP, videoHost);
+  }
+
+private:
+  UniquePtr<GetGMPMediaRendererCallback> mCallback;
+};
+
+NS_IMETHODIMP
+GeckoMediaPluginService::GetGMPMediaRenderer(nsTArray<nsCString>* aTags,
+                                            const nsACString& aNodeId,
+                                            UniquePtr<GetGMPMediaRendererCallback>&& aCallback)
+{
+  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  NS_ENSURE_ARG(aTags && aTags->Length() > 0);
+  NS_ENSURE_ARG(aCallback);
+
+  if (mShuttingDownOnGMPThread) {
+    return NS_ERROR_FAILURE;
+  }
+
+  UniquePtr<GetGMPContentParentCallback> callback(
+    new GetGMPContentParentForMediaRendererDone(Move(aCallback)));
+  if (!GetContentParentFrom(aNodeId, NS_LITERAL_CSTRING(GMP_API_MEDIA_RENDERER),
+                            *aTags, Move(callback))) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return NS_OK;
+}
+
 class GetGMPContentParentForVideoEncoderDone : public GetGMPContentParentCallback
 {
 public:

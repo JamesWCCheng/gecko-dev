@@ -18,6 +18,7 @@ class GMPDecryptorParent;
 class GMPParent;
 class GMPVideoDecoderParent;
 class GMPVideoEncoderParent;
+class GMPMediaRendererParent;
 
 class GMPContentParent final : public PGMPContentParent,
                                public GMPSharedMem
@@ -38,6 +39,9 @@ public:
 
   nsresult GetGMPAudioDecoder(GMPAudioDecoderParent** aGMPAD);
   void AudioDecoderDestroyed(GMPAudioDecoderParent* aDecoder);
+
+  nsresult GetGMPMediaRenderer(GMPMediaRendererParent** aGMPMR);
+  void MediaRendererDestroyed(GMPMediaRendererParent* aRenderer);
 
   nsIThread* GMPThread();
 
@@ -78,6 +82,9 @@ private:
   virtual PGMPAudioDecoderParent* AllocPGMPAudioDecoderParent() override;
   virtual bool DeallocPGMPAudioDecoderParent(PGMPAudioDecoderParent* aActor) override;
 
+  virtual PGMPMediaRendererParent* AllocPGMPMediaRendererParent() override;
+  virtual bool DeallocPGMPMediaRendererParent(PGMPMediaRendererParent* aActor) override;
+
   void CloseIfUnused();
   // Needed because NS_NewRunnableMethod tried to use the class that the method
   // lives on to store the receiver, but PGMPContentParent isn't refcounted.
@@ -90,6 +97,7 @@ private:
   nsTArray<RefPtr<GMPVideoEncoderParent>> mVideoEncoders;
   nsTArray<RefPtr<GMPDecryptorParent>> mDecryptors;
   nsTArray<RefPtr<GMPAudioDecoderParent>> mAudioDecoders;
+  nsTArray<RefPtr<GMPMediaRendererParent>> mMediaRenderers;
   nsCOMPtr<nsIThread> mGMPThread;
   RefPtr<GMPParent> mParent;
   nsCString mDisplayName;
