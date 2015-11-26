@@ -3,6 +3,8 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+#include "MediaDataRendererProxy.h"
+#include "GMPMediaRenderer.h"
 
 #include "mozilla/dom/HTMLMediaElement.h"
 #include "mozilla/Preferences.h"
@@ -33,6 +35,12 @@ static mozilla::LazyLogModule sFormatDecoderLog("MediaFormatReader");
 #define LOG(arg, ...) MOZ_LOG(sFormatDecoderLog, mozilla::LogLevel::Debug, ("MediaFormatReader(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 #define LOGV(arg, ...) MOZ_LOG(sFormatDecoderLog, mozilla::LogLevel::Verbose, ("MediaFormatReader(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 
+#ifdef MOZ_WIDGET_GONK
+#include <android/log.h>
+#define ANDLOG(...) __android_log_print(ANDROID_LOG_DEBUG, "MFR", __VA_ARGS__)
+#else
+#define ANDLOG(...)
+#endif
 namespace mozilla {
 
 static const char*
@@ -52,7 +60,11 @@ TrackTypeToStr(TrackInfo::TrackType aTrack)
     return "Unknown";
   }
 }
-
+VideoInfo* videoInfo = nullptr;
+AudioInfo* audioInfo = nullptr;
+RefPtr<MediaDataRendererProxy> rendererProxy = nullptr;
+bool isCreated = false;
+bool isInitialed = false;
 MediaFormatReader::MediaFormatReader(AbstractMediaDecoder* aDecoder,
                                      MediaDataDemuxer* aDemuxer,
                                      VideoFrameContainer* aVideoFrameContainer,
@@ -380,6 +392,7 @@ MediaFormatReader::EnsureDecoderCreated(TrackType aTrack)
                                    mInfo.mAudio,
                                  decoder.mTaskQueue,
                                  decoder.mCallback);
+        audioInfo = mInfo.mAudio.Clone().release()->GetAsAudioInfo();
       break;
     case TrackType::kVideoTrack:
       // Decoders use the layers backend to decide if they can use hardware decoding,
@@ -393,10 +406,160 @@ MediaFormatReader::EnsureDecoderCreated(TrackType aTrack)
                                  mHardwareAccelerationDisabled ? LayersBackend::LAYERS_NONE :
                                  mLayersBackendType,
                                  GetImageContainer());
+        videoInfo = mInfo.mVideo.Clone().release()->GetAsVideoInfo();
       break;
     default:
       break;
   }
+
+  class RendererCallback : public MediaDataRendererCallback
+  {
+  public:
+    RendererCallback()
+    {
+    }
+    virtual void TimeUpdate(const int64_t aElapsedTimeMs) override
+    {
+      NS_WARNING("\033[1;32m============TimeUpdateNS============\n\033[m");
+      LOGV("\033[1;32m============TimeUpdate============\n\033[m");
+      printf_stderr("\033[1;32m============TimeUpdateP============\n\033[m");
+      ANDLOG("\033[1;32m============TimeUpdateAND============\n\033[m");
+    }
+    virtual void AudioRenderReachedEOS() override
+    {
+      NS_WARNING("\033[1;32m============AudioRenderReachedEOSNS============\n\033[m");
+      LOGV("\033[1;32m============AudioRenderReachedEOS============\n\033[m");
+      printf_stderr("\033[1;32m============AudioRenderReachedEOSP============\n\033[m");
+      ANDLOG("\033[1;32m============AudioRenderReachedEOSAND============\n\033[m");
+    }
+    virtual void VideoRenderReachedEOS() override
+    {
+      NS_WARNING("\033[1;32m============VideoRenderReachedEOSNS============\n\033[m");
+      LOGV("\033[1;32m============VideoRenderReachedEOS============\n\033[m");
+      printf_stderr("\033[1;32m============VideoRenderReachedEOSP============\n\033[m");
+      ANDLOG("\033[1;32m============VideoRenderReachedEOSAND============\n\033[m");
+    }
+    virtual void AudioInputDataExhausted() override
+    {
+      NS_WARNING("\033[1;32m============AudioInputDataExhaustedNS============\n\033[m");
+      LOGV("\033[1;32m============AudioInputDataExhausted============\n\033[m");
+      printf_stderr("\033[1;32m============AudioInputDataExhaustedP============\n\033[m");
+      ANDLOG("\033[1;32m============AudioInputDataExhaustedAND============\n\033[m");
+    }
+    virtual void VideoInputDataExhausted() override
+    {
+      NS_WARNING("\033[1;32m============VideoInputDataExhaustedNS============\n\033[m");
+      LOGV("\033[1;32m============VideoInputDataExhausted============\n\033[m");
+      printf_stderr("\033[1;32m============VideoInputDataExhaustedP============\n\033[m");
+      ANDLOG("\033[1;32m============VideoInputDataExhaustedAND============\n\033[m");
+    }
+    virtual void ShutdownComplete() override
+    {
+      NS_WARNING("\033[1;32m============ShutdownCompleteNS============\n\033[m");
+      LOGV("\033[1;32m============ShutdownComplete============\n\033[m");
+      printf_stderr("\033[1;32m============ShutdownCompleteP============\n\033[m");
+      ANDLOG("\033[1;32m============ShutdownCompleteAND============\n\033[m");
+    }
+    virtual void StopComplete() override
+    {
+      NS_WARNING("\033[1;32m============StopCompleteNS============\n\033[m");
+      LOGV("\033[1;32m============StopComplete============\n\033[m");
+      printf_stderr("\033[1;32m============StopCompleteP============\n\033[m");
+      ANDLOG("\033[1;32m============StopCompletePAND============\n\033[m");
+    }
+    virtual void SetOverlayImageID(const uint32_t aId) override
+    {
+      NS_WARNING("\033[1;32m============SetOverlayImageIDNS============\n\033[m");
+      LOGV("\033[1;32m============SetOverlayImageID============\n\033[m");
+      printf_stderr("\033[1;32m============SetOverlayImageIDP============\n\033[m");
+      ANDLOG("\033[1;32m============SetOverlayImageIDAND============\n\033[m");
+    }
+    virtual void Error() override
+    {
+      NS_WARNING("\033[1;32m============GMP ErrorNS============\n\033[m");
+      LOGV("\033[1;32m============GMP Error============\n\033[m");
+      printf_stderr("\033[1;32m============GMP ErrorP============\n\033[m");
+      ANDLOG("\033[1;32m============GMP ErrorAND============\n\033[m");
+    }
+  };
+
+  if (videoInfo && audioInfo && !isCreated)
+  {
+    isCreated = true;
+    RendererCallback* renderCallback = new RendererCallback();
+    // MediaDataRendererCallbackProxy* proxyCallback =
+    //   new MediaDataRendererCallbackProxy(renderCallback);
+    nsCOMPtr<mozIGeckoMediaPluginService> gmpService = do_GetService("@mozilla.org/gecko-media-plugin-service;1");
+    if (!gmpService) {
+      return false;
+    }
+    NS_WARNING("\033[1;32m============done get gmp serviceNS============\n\033[m");
+    LOGV("\033[1;32m============done get gmp service============\n\033[m");
+    printf_stderr("\033[1;32m============done get gmp serviceP============\n\033[m");
+    ANDLOG("\033[1;32m============done get gmp serviceAND============\n\033[m");
+    nsCOMPtr<nsIThread> thread;
+    nsresult rv = gmpService->GetThread(getter_AddRefs(thread));
+    if (NS_FAILED(rv)) {
+      return false;
+    }
+    NS_WARNING("\033[1;32m============done get gmp threadNS============\n\033[m");
+    LOGV("\033[1;32m============done get gmp thread============\n\033[m");
+    printf_stderr("\033[1;32m============done get gmp threadP============\n\033[m");
+    ANDLOG("\033[1;32m============done get gmp threadAND============\n\033[m");
+    rendererProxy = new MediaDataRendererProxy(thread, renderCallback);
+
+    GMPRect displayInfo = {
+      0, //mTop
+      0,//mLeft
+      5120,//mWidth
+      2160,//mHeight
+    };
+    NS_WARNING("\033[1;32m============new GMPMediaRendererNS============\n\033[m");
+    LOGV("\033[1;32m============new GMPMediaRenderer============\n\033[m");
+    printf_stderr("\033[1;32m============new GMPMediaRendererP============\n\033[m");
+    ANDLOG("\033[1;32m============new GMPMediaRendererAND============\n\033[m");
+    MediaDataRenderer *mRenderer = new mozilla::GMPMediaRenderer(*audioInfo,
+                                                                 *videoInfo,
+                                                                 mLayersBackendType,
+                                                                 mDecoder->GetImageContainer(),
+                                                                 displayInfo,
+                                                                 mVideo.mTaskQueue,
+                                                                 rendererProxy->Callback());
+    rendererProxy->SetProxyTarget(mRenderer);
+    rendererProxy->Init()->Then(OwnerThread(), __func__,
+      [displayInfo] (TrackType aTrack) {
+        NS_WARNING(nsPrintfCString("\033[1;32m============Init Renderer Success aTrack = %d============\n\033[m", aTrack).get());
+
+        rendererProxy->SetVolume(123);
+        NS_WARNING("\033[1;32m============done GMPMediaRenderer SetVolumeNS============\n\033[m");
+        printf_stderr("\033[1;32m============done GMPMediaRenderer SetVolumeP============\n\033[m");
+        ANDLOG("\033[1;32m============done GMPMediaRenderer SetVolumeAND============\n\033[m");
+        rendererProxy->SetPlaybackRate(5566);
+        NS_WARNING("\033[1;32m============done GMPMediaRenderer SetPlaybackRate============\n\033[m");
+        printf_stderr("\033[1;32m============done GMPMediaRenderer SetPlaybackRateP============\n\033[m");
+        ANDLOG("\033[1;32m============done GMPMediaRenderer SetPlaybackRateAND============\n\033[m");
+        rendererProxy->Start(7788);
+        NS_WARNING("\033[1;32m============done GMPMediaRenderer StartNS============\n\033[m");
+        printf_stderr("\033[1;32m============done GMPMediaRenderer StartP============\n\033[m");
+        ANDLOG("\033[1;32m============done GMPMediaRenderer StartAND============\n\033[m");
+        rendererProxy->SetDisplayPosition(displayInfo);
+        NS_WARNING("\033[1;32m============done GMPMediaRenderer SetDisplayPositionNS============\n\033[m");
+        printf_stderr("\033[1;32m============done GMPMediaRenderer SetDisplayPositionP============\n\033[m");
+        ANDLOG("\033[1;32m============done GMPMediaRenderer SetDisplayPositionAND============\n\033[m");
+        rendererProxy->ContentChanged(1234);
+        NS_WARNING("\033[1;32m============done GMPMediaRenderer ContentChangedNS============\n\033[m");
+        printf_stderr("\033[1;32m============done GMPMediaRenderer ContentChangedP============\n\033[m");
+        ANDLOG("\033[1;32m============done GMPMediaRenderer ContentChangedAND============\n\033[m");
+        //rendererProxy->ShutDown();
+        //LOGV("\033[1;32m============done GMPMediaRenderer ShutDown============\n\033[m");
+        isInitialed = true;
+      },
+      [] (MediaDataDecoder::DecoderFailureReason aResult) {
+        printf_stderr("\033[1;32m============Init Renderer Failure, aResult = %d============\n\033[m", aResult);
+      });
+    //NS_ProcessNextEvent(thread);
+  } // if
+
   return decoder.mDecoder != nullptr;
 }
 
@@ -417,6 +580,7 @@ MediaFormatReader::EnsureDecoderInitialized(TrackType aTrack)
   decoder.mInitPromise.Begin(decoder.mDecoder->Init()
        ->Then(OwnerThread(), __func__,
               [self] (TrackType aTrack) {
+                printf_stderr("\033[1;32m============aTrack = %d, decoder.mInitPromise.Begin(decoder.mDecoder->Init()============\n\033[m", aTrack);
                 auto& decoder = self->GetDecoderData(aTrack);
                 decoder.mInitPromise.Complete();
                 decoder.mDecoderInitialized = true;
@@ -944,6 +1108,26 @@ MediaFormatReader::HandleDemuxedSamples(TrackType aTrack,
       return;
     }
     samplesPending = true;
+
+    if (aTrack == TrackInfo::kVideoTrack) {
+      if (isInitialed) {
+        LOGV("\033[1;32m============RenderVideoPacket============\n\033[m");
+        NS_WARNING("\033[1;32m============RenderVideoPacketNS============\n\033[m");
+        printf_stderr("\033[1;32m============RenderVideoPacketP============\n\033[m");
+        ANDLOG("\033[1;32m============RenderVideoPacketAND============\n\033[m");
+        rendererProxy->RenderVideoPacket(sample);
+      }
+    }
+    else if (aTrack == TrackInfo::kAudioTrack)
+    {
+      if (isInitialed) {
+        LOGV("\033[1;32m============RenderAudioPacket============\n\033[m");
+        NS_WARNING("\033[1;32m============RenderAudioPacketNS============\n\033[m");
+        printf_stderr("\033[1;32m============RenderAudioPacketP============\n\033[m");
+        ANDLOG("\033[1;32m============RenderAudioPacketAND============\n\033[m");
+        rendererProxy->RenderAudioPacket(sample);
+      }
+    }
   }
 
   // We have serviced the decoder's request for more data.
