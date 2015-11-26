@@ -93,6 +93,7 @@ GMP_TEST_PLUGIN_DIRS := \
   $(DIST_BIN)/gmp-fake \
   $(DIST_BIN)/gmp-fakeopenh264 \
   $(DIST_BIN)/gmp-clearkey \
+  $(DIST_BIN)/gmp-fakerenderer \
   $(NULL)
 
 $(_DEST_DIR):

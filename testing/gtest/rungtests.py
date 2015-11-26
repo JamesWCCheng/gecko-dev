@@ -69,7 +69,7 @@ class GTests(object):
         env["MOZ_XRE_DIR"] = self.xre_path
         env["MOZ_GMP_PATH"] = os.pathsep.join(
             os.path.join(self.xre_path, p, "1.0")
-            for p in ('gmp-fake', 'gmp-fakeopenh264')
+            for p in ('gmp-fake', 'gmp-fakeopenh264', 'gmp-fakerenderer')
         )
         env["XPCOM_DEBUG_BREAK"] = "stack-and-abort"
         env["MOZ_CRASHREPORTER_NO_REPORT"] = "1"

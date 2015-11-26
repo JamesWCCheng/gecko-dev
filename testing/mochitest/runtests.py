@@ -1717,6 +1717,7 @@ class MochitestDesktop(MochitestBase):
             os.path.join('gmp-fake', '1.0'),
             os.path.join('gmp-fakeopenh264', '1.0'),
             os.path.join('gmp-clearkey', '0.1'),
+            os.path.join('gmp-fakerenderer', '1.0'),
         ]
 
         gmp_paths = [os.path.join(parent, sub)
