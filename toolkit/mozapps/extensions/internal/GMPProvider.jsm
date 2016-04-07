@@ -40,6 +40,9 @@ const NS_GRE_DIR             = "GreD";
 const CLEARKEY_PLUGIN_ID     = "gmp-clearkey";
 const CLEARKEY_VERSION       = "0.1";
 
+const MEDIARENDERER_PLUGIN_ID     = "gmp-fakerenderer";
+const MEDIARENDERER_VERSION       = "1.0";
+
 const GMP_LICENSE_INFO       = "gmp_license_info";
 const GMP_PRIVACY_INFO       = "gmp_privacy_info";
 const GMP_LEARN_MORE         = "learn_more_label";
@@ -614,6 +617,18 @@ var GMPProvider = {
         gmpService.addPluginDirectory(clearkeyPath);
       } catch (e) {
         this._log.warn("startup - adding clearkey CDM failed", e);
+      }
+      try {
+        let greDir = Services.dirsvc.get(NS_GRE_DIR,
+                                         Ci.nsILocalFile);
+        let mediarendererPath = OS.Path.join(greDir.path,
+                                        MEDIARENDERER_PLUGIN_ID,
+                                        MEDIARENDERER_VERSION);
+        dump("startup - adding mediarenderer CDM directory " +
+                       mediarendererPath);
+        gmpService.addPluginDirectory(mediarendererPath);
+      } catch (e) {
+        dump("startup - adding mediarenderer CDM failed", e);
       }
     }
   },

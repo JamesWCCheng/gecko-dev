@@ -1,0 +1,4 @@
+Name: fakerenderer
+Description: Fake GMP Renderer Plugin
+Version: 1.0
+APIs: render-media[external.renderer:fake]
