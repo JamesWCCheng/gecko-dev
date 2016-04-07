@@ -110,6 +110,21 @@ GMPContentChild::DeallocPGMPVideoEncoderChild(PGMPVideoEncoderChild* aActor)
   return true;
 }
 
+PGMPMediaRendererChild*
+GMPContentChild::AllocPGMPMediaRendererChild()
+{
+  GMPMediaRendererChild* actor = new GMPMediaRendererChild(this);
+  actor->AddRef();
+  return actor;
+}
+
+bool
+GMPContentChild::DeallocPGMPMediaRendererChild(PGMPMediaRendererChild* aActor)
+{
+  static_cast<GMPMediaRendererChild*>(aActor)->Release();
+  return true;
+}
+
 bool
 GMPContentChild::RecvPGMPDecryptorConstructor(PGMPDecryptorChild* aActor)
 {
@@ -186,6 +201,23 @@ GMPContentChild::RecvPGMPVideoEncoderConstructor(PGMPVideoEncoderChild* aActor)
   return true;
 }
 
+bool
+GMPContentChild::RecvPGMPMediaRendererConstructor(PGMPMediaRendererChild* aActor)
+{
+  auto mrc = static_cast<GMPMediaRendererChild*>(aActor);
+
+  void* mr = nullptr;
+  GMPErr err = mGMPChild->GetAPI(GMP_API_MEDIA_RENDERER, &mrc->Host(), &mr);
+  if (err != GMPNoErr || !mr) {
+    NS_WARNING("GMPGetAPI call failed trying to construct media renderer.");
+    return false;
+  }
+
+  mrc->Init(static_cast<GMPMediaRenderer*>(mr));
+
+  return true;
+}
+
 void
 GMPContentChild::CloseActive()
 {
@@ -213,6 +245,15 @@ GMPContentChild::CloseActive()
   for (auto iter = videoEncoders.ConstIter(); !iter.Done(); iter.Next()) {
     iter.Get()->GetKey()->SendShutdown();
   }
+
+  //[TODO] consider to add shutdown send from child?
+  // Current design is when gecko needs to close the player, send a Shutdown to
+  // gmp content process for closing and callback by ShutdownComplete event.
+  // const ManagedContainer<PGMPMediaRendererChild>& mediaRenderers =
+  //   ManagedPGMPMediaRendererChild();
+  // for (auto iter = mediaRenderers.ConstIter(); !iter.Done(); iter.Next()) {
+  //   iter.Get()->GetKey()->SendShutdown();
+  // }
 }
 
 bool
@@ -221,7 +262,8 @@ GMPContentChild::IsUsed()
   return !ManagedPGMPAudioDecoderChild().IsEmpty() ||
          !ManagedPGMPDecryptorChild().IsEmpty() ||
          !ManagedPGMPVideoDecoderChild().IsEmpty() ||
-         !ManagedPGMPVideoEncoderChild().IsEmpty();
+         !ManagedPGMPVideoEncoderChild().IsEmpty() ||
+         !ManagedPGMPMediaRendererChild().IsEmpty();
 }
 
 } // namespace gmp

@@ -27,6 +27,7 @@ public:
   bool RecvPGMPDecryptorConstructor(PGMPDecryptorChild* aActor) override;
   bool RecvPGMPVideoDecoderConstructor(PGMPVideoDecoderChild* aActor) override;
   bool RecvPGMPVideoEncoderConstructor(PGMPVideoEncoderChild* aActor) override;
+  bool RecvPGMPMediaRendererConstructor(PGMPMediaRendererChild* aActor) override;
 
   PGMPAudioDecoderChild* AllocPGMPAudioDecoderChild() override;
   bool DeallocPGMPAudioDecoderChild(PGMPAudioDecoderChild* aActor) override;
@@ -39,6 +40,9 @@ public:
 
   PGMPVideoEncoderChild* AllocPGMPVideoEncoderChild() override;
   bool DeallocPGMPVideoEncoderChild(PGMPVideoEncoderChild* aActor) override;
+
+  PGMPMediaRendererChild* AllocPGMPMediaRendererChild() override;
+  bool DeallocPGMPMediaRendererChild(PGMPMediaRendererChild* aActor) override;
 
   void ActorDestroy(ActorDestroyReason aWhy) override;
   void ProcessingError(Result aCode, const char* aReason) override;
