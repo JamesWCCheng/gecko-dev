@@ -2,7 +2,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
 #include <stdint.h>
 #include <time.h>
 #include <cstdio>
@@ -12,6 +11,12 @@
 #include <memory>
 #include <assert.h>
 #include <limits.h>
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sstream>
+#include <string>
 
 #include "gmp-platform.h"
 #include "gmp-video-host.h"
@@ -57,6 +62,27 @@ const char* kLogStrings[] = {
   "Info",
   "Debug"
 };
+
+#define NAMED_PIPE "/tmp/np_external_renderer"
+int FIFO_HANDLE = 0;
+template <class T>
+std::string ConvertToString(T value) {
+  std::stringstream ss;
+  ss << value;
+  return ss.str();
+}
+
+void SendMsg(std::string aData)
+{
+  GMPLOG(GL_DEBUG, "Send data, content = "<<aData);
+
+  GMPLOG(GL_DEBUG, "Writing data to the pipe... \n");
+  int num = 0;
+  num = write(FIFO_HANDLE, &aData[0], aData.length() + 1);
+  if (num < 0) {
+    GMPLOG(GL_DEBUG, "[W] Write to pipe error ...\n");
+  }
+}
 
 
 GMPPlatformAPI* g_platform_api = NULL;
@@ -107,11 +133,13 @@ class FakeMediaRenderer : public GMPMediaRenderer {
                                  GMPRect aDisplayRect)
   {
     GMPLOG (GL_DEBUG, "InitVideoRenderer");
+    SendMsg(std::string(__FUNCTION__));
   }
 
   virtual void InitAudioRenderer(const GMPAudioCodec& aAudioCodecSettings)
   {
     GMPLOG (GL_DEBUG, "InitAudioRenderer");
+    SendMsg(std::string(__FUNCTION__));
   }
 
   virtual void SetRendererCallback(GMPMediaRendererCallback* aCallback)
@@ -124,6 +152,7 @@ class FakeMediaRenderer : public GMPMediaRenderer {
       GMPLOG (GL_DEBUG, "\033[1;31m============SetRendererCallback aCallback == nullptr============\n\033[m");
     }
     //callback_->SetOverlayImageID(1);
+    SendMsg(std::string(__FUNCTION__));
   }
 
   virtual void RenderVideoPacket(GMPVideoEncodedFrame* aInputFrame,
@@ -133,27 +162,32 @@ class FakeMediaRenderer : public GMPMediaRenderer {
   {
     GMPLOG (GL_DEBUG, "RenderVideoPacket");
     g_platform_api->runonmainthread(new FakeRendererVideoTask(this, aInputFrame));
+    SendMsg(std::string(__FUNCTION__));
   }
 
   virtual void RenderAudioPacket(GMPAudioSamples* aEncodedSamples)
   {
     GMPLOG (GL_DEBUG, "RenderAudioPacket");
     g_platform_api->runonmainthread(new FakeRendererAudioTask(this, aEncodedSamples));
+    SendMsg(std::string(__FUNCTION__));
   }
 
   virtual void SetPlaybackRate(double aRate)
   {
     GMPLOG (GL_DEBUG, "SetPlaybackRate");
+    SendMsg(std::string(__FUNCTION__));
   }
 
   virtual void SetVolume(double aVolume)
   {
     GMPLOG (GL_DEBUG, "SetVolume");
+    SendMsg(std::string(__FUNCTION__));
   }
 
   virtual void SetPreservesPitch(bool aPreservesPitch)
   {
     GMPLOG (GL_DEBUG, "SetPreservesPitch");
+    SendMsg(std::string(__FUNCTION__));
   }
 
   virtual void Shutdown()
@@ -162,6 +196,7 @@ class FakeMediaRenderer : public GMPMediaRenderer {
     //PerformShutdown...
 
     GMPLOG (GL_DEBUG, "\033[1;31m============ShutdownComplete============\n\033[m");
+    SendMsg(std::string(__FUNCTION__));
     callback_->ShutdownComplete();
   }
 
@@ -235,6 +270,22 @@ extern "C" {
   GMPInit (GMPPlatformAPI* aPlatformAPI) {
     GMPLOG (GL_DEBUG, "GMPInit");
     g_platform_api = aPlatformAPI;
+    int status;
+    status = mkfifo(NAMED_PIPE, 0666);
+    if (status < 0) {
+      if (errno == EEXIST) {
+          GMPLOG(GL_DEBUG, "create named pipe failed - existing!");
+      } else {
+          GMPLOG(GL_DEBUG, "create named pipe failed - unknown!, errno = "<<errno);
+          unlink(NAMED_PIPE);
+          return GMPGenericErr;
+      }
+    }
+    FIFO_HANDLE = open(NAMED_PIPE, O_WRONLY);
+    if (FIFO_HANDLE < 0) {
+      GMPLOG(GL_DEBUG, "open named pipe failed !\n");
+      return GMPGenericErr;
+    }
     return GMPNoErr;
   }
 
@@ -252,6 +303,8 @@ extern "C" {
   PUBLIC_FUNC void
   GMPShutdown (void) {
     g_platform_api = NULL;
+    close(FIFO_HANDLE);
+    unlink(NAMED_PIPE);
   }
 
 } // extern "C"
