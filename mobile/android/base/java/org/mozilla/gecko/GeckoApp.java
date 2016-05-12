@@ -809,7 +809,7 @@ public abstract class GeckoApp
             Log.w(LOGTAG, "Already have a fullscreen plugin view");
             return;
         }
-
+        Log.e("James", "!!!!!!!!!!!!!!!!!!! addFullScreenPluginView");
         setFullScreen(true);
 
         view.setWillNotDraw(false);

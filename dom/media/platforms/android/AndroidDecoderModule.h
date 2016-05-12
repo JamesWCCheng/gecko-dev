@@ -13,6 +13,8 @@
 #include "mozilla/Monitor.h"
 
 #include <deque>
+#include "mozilla/CDMProxy.h"
+#include "ezlogger.h"
 
 namespace mozilla {
 
@@ -35,7 +37,7 @@ public:
                      DecoderDoctorDiagnostics* aDiagnostics) override;
 
 
-  AndroidDecoderModule() {}
+  AndroidDecoderModule(CDMProxy *aProxy = nullptr) :mProxy(aProxy){}
   virtual ~AndroidDecoderModule() {}
 
   bool SupportsMimeType(const nsACString& aMimeType,
@@ -43,6 +45,8 @@ public:
 
   ConversionRequired
   DecoderNeedsConversion(const TrackInfo& aConfig) const override;
+private:
+  RefPtr<CDMProxy> mProxy;
 };
 
 class MediaCodecDataDecoder : public MediaDataDecoder {
@@ -51,7 +55,9 @@ public:
   MediaCodecDataDecoder(MediaData::Type aType,
                         const nsACString& aMimeType,
                         widget::sdk::MediaFormat::Param aFormat,
-                        MediaDataDecoderCallback* aCallback);
+                        MediaDataDecoderCallback* aCallback,
+                        TaskQueue* mTaskQueue,
+                        CDMProxy* aProxy);
 
   virtual ~MediaCodecDataDecoder();
 
@@ -82,17 +88,13 @@ protected:
 
   virtual nsresult InitDecoder(widget::sdk::Surface::Param aSurface);
 
+  // Video go here
   virtual nsresult Output(widget::sdk::BufferInfo::Param aInfo, void* aBuffer,
-      widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration)
-  {
-    return NS_OK;
-  }
+      widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration);
 
+  // Audio go here
   virtual nsresult PostOutput(widget::sdk::BufferInfo::Param aInfo,
-      widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration)
-  {
-    return NS_OK;
-  }
+      widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration);
 
   virtual void Cleanup() {};
 
@@ -138,6 +140,13 @@ protected:
   SampleQueue mQueue;
   // Durations are stored in microseconds.
   std::deque<media::TimeUnit> mDurations;
+
+  // Test For DRM.
+  RefPtr<SamplesWaitingForKey> mSamplesWaitingForKey;
+  RefPtr<CDMProxy> mProxy;
+  widget::sdk::SurfaceView::GlobalRef mSurfaceView;
+  widget::sdk::SurfaceHolder::GlobalRef mSurfaceHolder;
+  widget::sdk::Surface::GlobalRef mSurfaceV;
 };
 
 } // namespace mozilla

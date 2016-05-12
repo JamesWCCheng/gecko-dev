@@ -94,13 +94,19 @@ import android.view.Display;
 import android.view.HapticFeedbackConstants;
 import android.view.Surface;
 import android.view.SurfaceView;
+import android.view.SurfaceHolder;
+import android.view.SurfaceHolder.Callback;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
 import android.widget.AbsoluteLayout;
-
+import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
+import android.media.MediaCodec;
+import android.media.MediaCodec.CryptoException;
+import android.media.MediaCodec.CryptoInfo;
 public class GeckoAppShell
 {
     private static final String LOGTAG = "GeckoAppShell";
@@ -1677,6 +1683,7 @@ public class GeckoAppShell
 
     public static void setApplicationContext(final Context context) {
         sApplicationContext = context;
+        Log.e("James", "!!!!!!!!!!!!!!!!setApplicationContext!!!!!!!!!!!!!!!!!!!!!!!");
     }
 
     public static SharedPreferences getSharedPreferences() {
@@ -2332,5 +2339,96 @@ public class GeckoAppShell
             sScreenSize = new Rect(0, 0, disp.getWidth(), disp.getHeight());
         }
         return sScreenSize;
+    }
+
+    static SurfaceView sSurfaceView = null;
+    static SurfaceHolder sSurfaceHolder = null;
+    static Object sLocker = new Object();
+    @WrapForJNI
+    public static synchronized void CreateSurfaceView() {
+      Log.e("James", "!!!!!!!!!!!CreateSurfaceView !!!!!!!!!!!!!!!!!!!!");
+
+      Runnable sCallbackRunnable = new Runnable() {
+        @Override
+        public void run() {
+          if (sSurfaceView == null) {
+            Log.e("James", "!!!!!!!!!!!CreateSurfaceView !!!!!!!!!!!!!!!!!!!!");
+            sSurfaceView = new SurfaceView(getContext());
+            // getLayerView().addView(sSurfaceView, new ViewGroup.LayoutParams(
+            //             ViewGroup.LayoutParams.MATCH_PARENT,
+            //             ViewGroup.LayoutParams.MATCH_PARENT));
+            //sSurfaceView = new SurfaceView(getApplicationContext());
+            getGeckoInterface().addPluginView(sSurfaceView, new RectF(0, 0, 100, 100), false);
+            SurfaceHolder.Callback holderCallback = new SurfaceHolder.Callback() {
+              @Override
+              public void surfaceCreated(SurfaceHolder arg0) {
+                Log.e("James", "!!!!!!!!!!!surfaceCreated callback !!!!!!!!!!!!!!!!!!!!");
+              }
+              @Override
+              public void surfaceDestroyed(SurfaceHolder holder) {
+                Log.e("James", "!!!!!!!!!!!surfaceDestroyed callback !!!!!!!!!!!!!!!!!!!!");
+              }
+              @Override
+              public void surfaceChanged (SurfaceHolder holder,
+                    int format,
+                    int width,
+                    int height) {
+                Log.i("James", "format = " + format + ", width = " + width + ", height = " + height);
+                Log.e("James", "!!!!!!!!!!!surfaceChanged callback !!!!!!!!!!!!!!!!!!!!");
+
+                synchronized(sLocker) {
+                  sLocker.notify();
+                  Log.e("James", "!!!!!!!!!!!surfaceChanged sLocker.notify(); !!!!!!!!!!!!!!!!!!!!");
+                }
+              }
+            };
+            sSurfaceHolder=sSurfaceView.getHolder();
+            sSurfaceHolder.addCallback(holderCallback);
+            Log.e("James", "!!!!!!!!!!!CreateSurfaceView 88 !!!!!!!!!!!!!!!!!!!!");
+          }
+        }
+      };
+
+      ThreadUtils.getUiHandler().post(sCallbackRunnable);
+    }
+
+    @WrapForJNI
+    public static SurfaceView GetSurfaceView() {
+      Log.e("James", "!!!!!!!!!!!!!!!!GetSurfaceView!!!!!!!!!!!!!!!!!!!!!");
+      if (sSurfaceView != null) return sSurfaceView;
+      try {
+          Log.e("James", "!!!!!!!!!!!!!!!!GetSurfaceView Wait!!!!!!!!!!!!!!!!!!!!!");
+          CreateSurfaceView();
+          synchronized(sLocker) {
+            sLocker.wait();
+            Log.e("James", "!!!!!!!!!!!surfaceChanged sLocker.wait(); !!!!!!!!!!!!!!!!!!!!");
+          }
+      }
+      catch(InterruptedException e) {
+          e.printStackTrace();
+          Log.e("James", "!!!!!!!!!!!!!!!!GetSurfaceView InterruptedException!!!!!!!!!!!!!!!!!!!!!");
+      }
+
+
+      Log.e("James", "!!!!!!!!!!!!!!!!GetSurfaceView 88 !!!!!!!!!!!!!!!!!!!!!");
+      return sSurfaceView;
+    }
+
+    @WrapForJNI
+    public static void CallQueueSecureInputBuffer(MediaCodec mc, CryptoInfo ci,
+      int index,
+                int offset,
+                long presentationTimeUs,
+                int flags)
+    {
+      try {
+        mc.queueSecureInputBuffer(index, offset, ci, presentationTimeUs, flags);
+          Log.e("James", "!!!!!!!!!!!!!!!!CallQueueSecureInputBuffer !!!!!!!!!!!!!!!!!!!!");
+      }
+      catch(CryptoException e) {
+          e.printStackTrace();
+          Log.e("James", "!!!!!!!!!!!!!!!!GetSurfaceView MediaCodec.CryptoException!!!!!!!!!!!!!!!!!!!!!" + e.getErrorCode());
+          Log.e("James", "!!!!!!!!!!!!!!!!GetSurfaceView MediaCodec.CryptoException!!!!!!!!!!!!!!!!!!!!!" + e.getMessage());
+      }
     }
 }

@@ -24,6 +24,9 @@ EXPORTS.mozilla += [
     'CDMProxy.h',
     'DetailedPromise.h',
     'EMEUtils.h',
+    'FennecCDMProxy.h',
+    'GMPCDMProxy.h',
+    'MediaDrmAdaptor.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -32,6 +35,9 @@ UNIFIED_SOURCES += [
     'CDMProxy.cpp',
     'DetailedPromise.cpp',
     'EMEUtils.cpp',
+    'FennecCDMProxy.cpp',
+    'GMPCDMProxy.cpp',
+    'MediaDrmAdaptor.cpp',
     'MediaEncryptedEvent.cpp',
     'MediaKeyError.cpp',
     'MediaKeyMessageEvent.cpp',
