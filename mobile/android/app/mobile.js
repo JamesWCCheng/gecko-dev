@@ -664,6 +664,8 @@ pref("media.mediasource.enabled", true);
 // Enable EME(Encrypted media extensions)
 pref("media.eme.enabled", true);
 pref("media.eme.apiVisible", true);
+// Enable widevine for testing.
+pref("media.gmp-widevinecdm.enabled", true);
 
 // optimize images memory usage
 pref("image.downscale-during-decode.enabled", true);

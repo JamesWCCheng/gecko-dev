@@ -13,8 +13,17 @@
 #include "mozilla/Monitor.h"
 
 #include <deque>
+#include "mozilla/CDMProxy.h"
+#include "ezlogger.h"
 
 namespace mozilla {
+
+LogModule* GetADMLog();
+#undef ADM_LOGD
+#define ADM_LOGD(...) MOZ_LOG(GetADMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+#undef ADM_LOGV
+#define ADM_LOGV(...) MOZ_LOG(GetADMLog(), mozilla::LogLevel::Verbose, (__VA_ARGS__))
+
 
 typedef std::deque<RefPtr<MediaRawData>> SampleQueue;
 
@@ -35,7 +44,7 @@ public:
                      DecoderDoctorDiagnostics* aDiagnostics) override;
 
 
-  AndroidDecoderModule() {}
+  AndroidDecoderModule(CDMProxy *aProxy = nullptr);
   virtual ~AndroidDecoderModule() {}
 
   bool SupportsMimeType(const nsACString& aMimeType,
@@ -43,6 +52,8 @@ public:
 
   ConversionRequired
   DecoderNeedsConversion(const TrackInfo& aConfig) const override;
+private:
+  RefPtr<CDMProxy> mProxy;
 };
 
 class MediaCodecDataDecoder : public MediaDataDecoder {
@@ -51,7 +62,9 @@ public:
   MediaCodecDataDecoder(MediaData::Type aType,
                         const nsACString& aMimeType,
                         widget::sdk::MediaFormat::Param aFormat,
-                        MediaDataDecoderCallback* aCallback);
+                        MediaDataDecoderCallback* aCallback,
+                        TaskQueue* mTaskQueue,
+                        CDMProxy* aProxy);
 
   virtual ~MediaCodecDataDecoder();
 
@@ -82,17 +95,13 @@ protected:
 
   virtual nsresult InitDecoder(widget::sdk::Surface::Param aSurface);
 
+  // Video go here
   virtual nsresult Output(widget::sdk::BufferInfo::Param aInfo, void* aBuffer,
-      widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration)
-  {
-    return NS_OK;
-  }
+      widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration);
 
+  // Audio go here
   virtual nsresult PostOutput(widget::sdk::BufferInfo::Param aInfo,
-      widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration)
-  {
-    return NS_OK;
-  }
+      widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration);
 
   virtual void Cleanup() {};
 
@@ -101,6 +110,7 @@ protected:
 
   nsresult GetInputBuffer(JNIEnv* env, int index, jni::Object::LocalRef* buffer);
   bool WaitForInput();
+  void WaitForDecryptorKey(MediaRawData* aSample);
   already_AddRefed<MediaRawData> PeekNextSample();
   nsresult QueueSample(const MediaRawData* aSample);
   nsresult QueueEOS();
@@ -138,6 +148,13 @@ protected:
   SampleQueue mQueue;
   // Durations are stored in microseconds.
   std::deque<media::TimeUnit> mDurations;
+
+  // Test For DRM.
+  RefPtr<CDMProxy> mProxy;
+  RefPtr<SamplesWaitingForKey> mSamplesWaitingForKey;
+  widget::sdk::SurfaceView::GlobalRef mSurfaceView;
+  widget::sdk::SurfaceHolder::GlobalRef mSurfaceHolder;
+  widget::sdk::Surface::GlobalRef mSurfaceFromSurfaceView;
 };
 
 } // namespace mozilla

@@ -13,8 +13,9 @@
 #include "mozilla/dom/MediaKeySession.h"
 #include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/UnionTypes.h"
-#include "mozilla/CDMProxy.h"
+#include "mozilla/GMPCDMProxy.h"
 #include "mozilla/EMEUtils.h"
+#include "mozilla/FennecCDMProxy.h"
 #include "nsContentUtils.h"
 #include "nsIScriptObjectPrincipal.h"
 #include "mozilla/Preferences.h"
@@ -294,7 +295,12 @@ MediaKeys::Init(ErrorResult& aRv)
     return nullptr;
   }
 
-  mProxy = new CDMProxy(this, mKeySystem);
+  mProxy =
+#ifdef MOZ_WIDGET_ANDROID
+    new FennecCDMProxy(this, mKeySystem);
+#else
+    new GMPCDMProxy(this, mKeySystem);
+#endif
 
   // Determine principal (at creation time) of the MediaKeys object.
   nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(GetParentObject());
@@ -353,7 +359,7 @@ MediaKeys::Init(ErrorResult& aRv)
           NS_ConvertUTF16toUTF8(topLevelOrigin).get(),
           (inPrivateBrowsing ? "PrivateBrowsing" : "NonPrivateBrowsing"));
 
-  // The CDMProxy's initialization is asynchronous. The MediaKeys is
+  // The GMPCDMProxy's initialization is asynchronous. The MediaKeys is
   // refcounted, and its instance is returned to JS by promise once
   // it's been initialized. No external refs exist to the MediaKeys while
   // we're waiting for the promise to be resolved, so we must hold a

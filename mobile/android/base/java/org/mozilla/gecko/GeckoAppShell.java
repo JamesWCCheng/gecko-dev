@@ -101,6 +101,15 @@ import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
 import android.widget.AbsoluteLayout;
 
+// Testing code.
+import android.view.SurfaceHolder;
+import android.view.SurfaceHolder.Callback;
+import android.media.MediaCodec;
+import android.media.MediaCodec.CryptoException;
+import android.media.MediaCodec.CryptoInfo;
+import java.lang.IllegalStateException;
+import android.media.MediaCodecInfo;
+import android.os.Build;
 public class GeckoAppShell
 {
     private static final String LOGTAG = "GeckoAppShell";
@@ -2332,5 +2341,112 @@ public class GeckoAppShell
             sScreenSize = new Rect(0, 0, disp.getWidth(), disp.getHeight());
         }
         return sScreenSize;
+    }
+
+    // Testing Code for using java code to create surface view.
+    static SurfaceView sSurfaceView = null;
+    static SurfaceHolder sSurfaceHolder = null;
+    static Object sLocker = new Object();
+    @WrapForJNI
+    public static synchronized void CreateSurfaceView() {
+
+      Runnable sCallbackRunnable = new Runnable() {
+        @Override
+        public void run() {
+          if (sSurfaceView == null) {
+            sSurfaceView = new SurfaceView(getContext());
+            getGeckoInterface().addPluginView(sSurfaceView, new RectF(0, 0, 300, 300), false);
+            SurfaceHolder.Callback holderCallback = new SurfaceHolder.Callback() {
+              @Override
+              public void surfaceCreated(SurfaceHolder arg0) {
+                Log.e(LOGTAG, "!!!!!!!!!!!surfaceCreated callback !!!!!!!!!!!!!!!!!!!!");
+              }
+              @Override
+              public void surfaceDestroyed(SurfaceHolder holder) {
+                Log.e(LOGTAG, "!!!!!!!!!!!surfaceDestroyed callback !!!!!!!!!!!!!!!!!!!!");
+              }
+              @Override
+              public void surfaceChanged (SurfaceHolder holder,
+                    int format,
+                    int width,
+                    int height) {
+                Log.i(LOGTAG, "format = " + format + ", width = " + width + ", height = " + height);
+                Log.e(LOGTAG, "!!!!!!!!!!!surfaceChanged callback !!!!!!!!!!!!!!!!!!!!");
+
+                synchronized(sLocker) {
+                  sLocker.notify();
+                  Log.e(LOGTAG, "!!!!!!!!!!!surfaceChanged sLocker.notify(); !!!!!!!!!!!!!!!!!!!!");
+                }
+              }
+            };
+            sSurfaceHolder=sSurfaceView.getHolder();
+            sSurfaceHolder.addCallback(holderCallback);
+            Log.e(LOGTAG, "!!!!!!!!!!!CreateSurfaceView -- !!!!!!!!!!!!!!!!!!!!");
+          }
+        }
+      };
+
+      ThreadUtils.getUiHandler().post(sCallbackRunnable);
+    }
+
+    @WrapForJNI
+    public static SurfaceView GetSurfaceView() {
+      Log.e(LOGTAG, "!!!!!!!!!!!!!!!!GetSurfaceView!!!!!!!!!!!!!!!!!!!!!");
+      if (sSurfaceView != null) return sSurfaceView;
+      try {
+          CreateSurfaceView();
+          synchronized(sLocker) {
+            Log.e(LOGTAG, "!!!!!!!!!!!surfaceChanged sLocker.wait(); !!!!!!!!!!!!!!!!!!!!");
+            sLocker.wait();
+          }
+      }
+      catch(InterruptedException e) {
+          e.printStackTrace();
+          Log.e(LOGTAG, "!!!!!!!!!!!!!!!!GetSurfaceView InterruptedException!!!!!!!!!!!!!!!!!!!!!");
+      }
+      return sSurfaceView;
+    }
+
+    @WrapForJNI
+    public static void CallQueueSecureInputBuffer(MediaCodec mc,
+                                                  CryptoInfo ci,
+                                                  int index,
+                                                  int offset,
+                                                  long presentationTimeUs,
+                                                  int flags)
+    {
+      try {
+        mc.queueSecureInputBuffer(index, offset, ci, presentationTimeUs, flags);
+      }
+      catch(CryptoException e) {
+          e.printStackTrace();
+          Log.e(LOGTAG, "!!!!!!!!!!!!!!!!CallQueueSecureInputBuffer MediaCodec.CryptoException getErrorCode = " + e.getErrorCode());
+          Log.e(LOGTAG, "!!!!!!!!!!!!!!!!CallQueueSecureInputBuffer MediaCodec.CryptoException getMessage = " + e.getMessage());
+      }
+      catch(IllegalStateException e) {
+          e.printStackTrace();
+          Log.e(LOGTAG, "!!!!!!!!!!!!!!!!CallQueueSecureInputBuffer MediaCodec.IllegalStateException getMessage = " + e.getMessage());
+      }
+    }
+
+    @WrapForJNI
+    public static boolean CheckIsAdaptivePlayback(MediaCodec mediaCodec, String mime) {
+       if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT || mediaCodec == null) {
+        Log.e(LOGTAG, "!!!!!!!!!!!!!!!!CheckIsAdaptivePlayback is encoder!!!!!!!!!!!!!!!!!!!!!" + Build.VERSION.SDK_INT + "," +Build.VERSION_CODES.KITKAT);
+           return false;
+       }
+       try {
+           MediaCodecInfo info = mediaCodec.getCodecInfo();
+           if (info.isEncoder()) {
+            Log.e(LOGTAG, "!!!!!!!!!!!!!!!!CheckIsAdaptivePlayback is encoder");
+               return false;
+           }
+           MediaCodecInfo.CodecCapabilities capabilities = info.getCapabilitiesForType(mime);
+           return (capabilities != null) && capabilities.isFeatureSupported(
+                   MediaCodecInfo.CodecCapabilities.FEATURE_AdaptivePlayback);
+       } catch (IllegalArgumentException e) {
+             Log.e(LOGTAG, "!!!!!!!!!!!!!!!!CheckIsAdaptivePlayback IllegalArgumentException getMessage =" + e.getMessage());
+       }
+       return false;
     }
 }

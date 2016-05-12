@@ -50,6 +50,38 @@ auto DownloadsIntegration::ScanMedia(mozilla::jni::String::Param a0, mozilla::jn
 template<> const char mozilla::jni::Context<GeckoAppShell, jobject>::name[] =
         "org/mozilla/gecko/GeckoAppShell";
 
+constexpr char GeckoAppShell::CallQueueSecureInputBuffer_t::name[];
+constexpr char GeckoAppShell::CallQueueSecureInputBuffer_t::signature[];
+
+auto GeckoAppShell::CallQueueSecureInputBuffer(mozilla::jni::Object::Param a0, mozilla::jni::Object::Param a1, int32_t a2, int32_t a3, int64_t a4, int32_t a5) -> void
+{
+    return mozilla::jni::Method<CallQueueSecureInputBuffer_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1, a2, a3, a4, a5);
+}
+
+constexpr char GeckoAppShell::CheckIsAdaptivePlayback_t::name[];
+constexpr char GeckoAppShell::CheckIsAdaptivePlayback_t::signature[];
+
+auto GeckoAppShell::CheckIsAdaptivePlayback(mozilla::jni::Object::Param a0, mozilla::jni::String::Param a1) -> bool
+{
+    return mozilla::jni::Method<CheckIsAdaptivePlayback_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1);
+}
+
+constexpr char GeckoAppShell::CreateSurfaceView_t::name[];
+constexpr char GeckoAppShell::CreateSurfaceView_t::signature[];
+
+auto GeckoAppShell::CreateSurfaceView() -> void
+{
+    return mozilla::jni::Method<CreateSurfaceView_t>::Call(GeckoAppShell::Context(), nullptr);
+}
+
+constexpr char GeckoAppShell::GetSurfaceView_t::name[];
+constexpr char GeckoAppShell::GetSurfaceView_t::signature[];
+
+auto GeckoAppShell::GetSurfaceView() -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetSurfaceView_t>::Call(GeckoAppShell::Context(), nullptr);
+}
+
 constexpr char GeckoAppShell::AddPluginViewWrapper_t::name[];
 constexpr char GeckoAppShell::AddPluginViewWrapper_t::signature[];
 
@@ -1795,6 +1827,123 @@ constexpr char AudioFocusAgent::NotifyStoppedPlaying_t::signature[];
 auto AudioFocusAgent::NotifyStoppedPlaying() -> void
 {
     return mozilla::jni::Method<NotifyStoppedPlaying_t>::Call(AudioFocusAgent::Context(), nullptr);
+}
+
+template<> const char mozilla::jni::Context<MediaDrmBridge, jobject>::name[] =
+        "org/mozilla/gecko/media/MediaDrmBridge";
+
+constexpr char MediaDrmBridge::New_t::name[];
+constexpr char MediaDrmBridge::New_t::signature[];
+
+auto MediaDrmBridge::New(mozilla::jni::Object::Param a0) -> MediaDrmBridge::LocalRef
+{
+    return mozilla::jni::Constructor<New_t>::Call(MediaDrmBridge::Context(), nullptr, a0);
+}
+
+constexpr char MediaDrmBridge::CloseSession_t::name[];
+constexpr char MediaDrmBridge::CloseSession_t::signature[];
+
+auto MediaDrmBridge::CloseSession(mozilla::jni::String::Param a0) const -> void
+{
+    return mozilla::jni::Method<CloseSession_t>::Call(MediaDrmBridge::mCtx, nullptr, a0);
+}
+
+constexpr char MediaDrmBridge::CreateSession_t::name[];
+constexpr char MediaDrmBridge::CreateSession_t::signature[];
+
+auto MediaDrmBridge::CreateSession(int32_t a0, int32_t a1, mozilla::jni::String::Param a2, mozilla::jni::ByteArray::Param a3) const -> bool
+{
+    return mozilla::jni::Method<CreateSession_t>::Call(MediaDrmBridge::mCtx, nullptr, a0, a1, a2, a3);
+}
+
+constexpr char MediaDrmBridge::Destroy_t::name[];
+constexpr char MediaDrmBridge::Destroy_t::signature[];
+
+auto MediaDrmBridge::Destroy() const -> void
+{
+    return mozilla::jni::Method<Destroy_t>::Call(MediaDrmBridge::mCtx, nullptr);
+}
+
+constexpr char MediaDrmBridge::GetMediaCrypto_t::name[];
+constexpr char MediaDrmBridge::GetMediaCrypto_t::signature[];
+
+auto MediaDrmBridge::GetMediaCrypto() const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetMediaCrypto_t>::Call(MediaDrmBridge::mCtx, nullptr);
+}
+
+constexpr char MediaDrmBridge::Init_t::name[];
+constexpr char MediaDrmBridge::Init_t::signature[];
+
+auto MediaDrmBridge::Init(mozilla::jni::Object::Param a0) const -> bool
+{
+    return mozilla::jni::Method<Init_t>::Call(MediaDrmBridge::mCtx, nullptr, a0);
+}
+
+constexpr char MediaDrmBridge::IsAllowPlayback_t::name[];
+constexpr char MediaDrmBridge::IsAllowPlayback_t::signature[];
+
+auto MediaDrmBridge::IsAllowPlayback() const -> bool
+{
+    return mozilla::jni::Method<IsAllowPlayback_t>::Call(MediaDrmBridge::mCtx, nullptr);
+}
+
+constexpr char MediaDrmBridge::IsSchemeMIMESupported_t::name[];
+constexpr char MediaDrmBridge::IsSchemeMIMESupported_t::signature[];
+
+auto MediaDrmBridge::IsSchemeMIMESupported(mozilla::jni::String::Param a0, mozilla::jni::String::Param a1) -> bool
+{
+    return mozilla::jni::Method<IsSchemeMIMESupported_t>::Call(MediaDrmBridge::Context(), nullptr, a0, a1);
+}
+
+constexpr char MediaDrmBridge::IsSchemeSupported_t::name[];
+constexpr char MediaDrmBridge::IsSchemeSupported_t::signature[];
+
+auto MediaDrmBridge::IsSchemeSupported(mozilla::jni::String::Param a0) -> bool
+{
+    return mozilla::jni::Method<IsSchemeSupported_t>::Call(MediaDrmBridge::Context(), nullptr, a0);
+}
+
+constexpr char MediaDrmBridge::IsSchemeSupportedInitDataType_t::name[];
+constexpr char MediaDrmBridge::IsSchemeSupportedInitDataType_t::signature[];
+
+auto MediaDrmBridge::IsSchemeSupportedInitDataType(mozilla::jni::String::Param a0, mozilla::jni::String::Param a1) -> bool
+{
+    return mozilla::jni::Method<IsSchemeSupportedInitDataType_t>::Call(MediaDrmBridge::Context(), nullptr, a0, a1);
+}
+
+constexpr char MediaDrmBridge::IsSecureDecoderComonentRequired_t::name[];
+constexpr char MediaDrmBridge::IsSecureDecoderComonentRequired_t::signature[];
+
+auto MediaDrmBridge::IsSecureDecoderComonentRequired(mozilla::jni::String::Param a0) const -> bool
+{
+    return mozilla::jni::Method<IsSecureDecoderComonentRequired_t>::Call(MediaDrmBridge::mCtx, nullptr, a0);
+}
+
+constexpr char MediaDrmBridge::OnSessionClosed_t::name[];
+constexpr char MediaDrmBridge::OnSessionClosed_t::signature[];
+
+constexpr char MediaDrmBridge::OnSessionCreated_t::name[];
+constexpr char MediaDrmBridge::OnSessionCreated_t::signature[];
+
+constexpr char MediaDrmBridge::OnSessionError_t::name[];
+constexpr char MediaDrmBridge::OnSessionError_t::signature[];
+
+constexpr char MediaDrmBridge::OnSessionKeyChanged_t::name[];
+constexpr char MediaDrmBridge::OnSessionKeyChanged_t::signature[];
+
+constexpr char MediaDrmBridge::OnSessionMessage_t::name[];
+constexpr char MediaDrmBridge::OnSessionMessage_t::signature[];
+
+constexpr char MediaDrmBridge::OnSessionUpdated_t::name[];
+constexpr char MediaDrmBridge::OnSessionUpdated_t::signature[];
+
+constexpr char MediaDrmBridge::UpdateSession_t::name[];
+constexpr char MediaDrmBridge::UpdateSession_t::signature[];
+
+auto MediaDrmBridge::UpdateSession(int32_t a0, mozilla::jni::String::Param a1, mozilla::jni::ByteArray::Param a2) const -> bool
+{
+    return mozilla::jni::Method<UpdateSession_t>::Call(MediaDrmBridge::mCtx, nullptr, a0, a1, a2);
 }
 
 template<> const char mozilla::jni::Context<Restrictions, jobject>::name[] =

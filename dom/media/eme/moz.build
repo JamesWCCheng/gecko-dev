@@ -24,6 +24,8 @@ EXPORTS.mozilla += [
     'CDMProxy.h',
     'DetailedPromise.h',
     'EMEUtils.h',
+    'FennecCDMProxy.h',
+    'GMPCDMProxy.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -32,6 +34,8 @@ UNIFIED_SOURCES += [
     'CDMProxy.cpp',
     'DetailedPromise.cpp',
     'EMEUtils.cpp',
+    'FennecCDMProxy.cpp',
+    'GMPCDMProxy.cpp',
     'MediaEncryptedEvent.cpp',
     'MediaKeyError.cpp',
     'MediaKeyMessageEvent.cpp',
@@ -41,6 +45,9 @@ UNIFIED_SOURCES += [
     'MediaKeySystemAccess.cpp',
     'MediaKeySystemAccessManager.cpp',
 ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
+	DIRS += ['android']
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
