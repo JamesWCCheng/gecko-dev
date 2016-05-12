@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/jni/Types.h"
 #include "AndroidDecoderModule.h"
 #include "AndroidBridge.h"
 #include "AndroidSurfaceTexture.h"
@@ -19,7 +20,26 @@
 #include "prlog.h"
 
 #include <jni.h>
+#include "nsTArray.h"
 
+#include "ezlogger.h"
+using namespace mozilla::widget::sdk;
+using namespace mozilla;
+static UUID::LocalRef GenDrmUUID(int64_t m, int64_t l)
+{
+  UUID::LocalRef uuid;
+  auto rv = UUID::New(m, l, &uuid);
+  PR(rv);
+  return uuid;
+}
+template<class T>
+static jbyteArray FillJByteArray(const T& data, jsize length)
+{
+  JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
+  jbyteArray result = jenv->NewByteArray(length);
+  jenv->SetByteArrayRegion(result, 0, length, reinterpret_cast<jbyte*>(data));
+  return result;
+}
 static PRLogModuleInfo* AndroidDecoderModuleLog()
 {
   static PRLogModuleInfo* sLogModule = nullptr;
@@ -41,6 +61,20 @@ using media::TimeUnit;
 
 namespace mozilla {
 
+template<class T>
+auto ToStringHelper(T&& arg) -> nsString
+{
+  mozilla::jni::String::LocalRef str;
+  arg->ToString(&str);
+  return str->ToString();
+}
+template<class T>
+auto ToCStringHelper(T&& arg) -> nsCString
+{
+  mozilla::jni::String::LocalRef str;
+  arg->ToString(&str);
+  return str->ToCString();
+}
 #define INVOKE_CALLBACK(Func, ...) \
   if (mCallback) { \
     mCallback->Func(__VA_ARGS__); \
@@ -383,7 +417,44 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
   }
 
   nsresult rv;
-  NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, nullptr, 0), rv);
+  //Clearkey: 0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL
+  auto clearkeyUUID = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
+
+  auto uuidStr = ToStringHelper(clearkeyUUID);
+  PB(uuidStr);
+  MediaDrm::LocalRef mediadrm;
+  auto rvmediadrm = MediaDrm::New(clearkeyUUID, &mediadrm);
+  PG(rvmediadrm);
+  mozilla::jni::ByteArray::LocalRef sessionid;
+  auto rvopensession = mediadrm->OpenSession(&sessionid);
+  PG(rvopensession);
+  PG(sessionid->GetElements());
+
+  auto sidarr = sessionid->GetElements();
+  JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
+  jbyteArray sessionidArray = FillJByteArray(&sidarr[0], sidarr.Length());
+
+
+  MediaCrypto::LocalRef mediacrypto;
+  auto rvmediacrypto = MediaCrypto::New(clearkeyUUID, mozilla::jni::ByteArray::Ref::From(sessionidArray), &mediacrypto);
+  PG(rvmediacrypto);
+  bool isCryptoSchemeSupported = false;
+  auto rvIscryptosupported =
+    mediacrypto->IsCryptoSchemeSupported(clearkeyUUID, &isCryptoSchemeSupported);
+  PG(isCryptoSchemeSupported);
+  auto rvconfigure = mDecoder->Configure(mFormat, aSurface, mediacrypto, 0);
+  PG(rvconfigure);
+
+  // JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
+  // jbyteArray bytearray = jenv->NewByteArray(5566);
+
+  // mozilla::jni::ByteArray::LocalRef keysetid;
+
+  // const auto& qq = mozilla::jni::ByteArray::Ref::From(bytearray);
+  // auto rvprovide = mediadrm->ProvideKeyResponse(sessionid, qq, &keysetid);
+  // PG(rvprovide);
+
+  //NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, nullptr, 0), rv);
   NS_ENSURE_SUCCESS(rv = mDecoder->Start(), rv);
 
   NS_ENSURE_SUCCESS(rv = ResetInputBuffers(), rv);
@@ -505,6 +576,16 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
 
   res = mDecoder->QueueInputBuffer(inputIndex, 0, aSample->Size(),
                                    aSample->mTime, 0);
+  // Test DRM
+  CryptoInfo::LocalRef cryptoInfo;
+  auto rvcryptoInfo = CryptoInfo::New(&cryptoInfo);
+  PG(rvcryptoInfo);
+
+  //set (int newNumSubSamples, int[] newNumBytesOfClearData, int[] newNumBytesOfEncryptedData, byte[] newKey, byte[] newIV, int newMode)
+  // cryptoInfo->Set();
+  // res = mDecoder->QueueSecureInputBuffer(inputIndex, 0,cryptoInfo,
+  //                                  aSample->mTime, 0);
+
   if (NS_FAILED(res)) {
     return res;
   }
