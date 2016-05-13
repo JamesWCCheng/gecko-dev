@@ -13,6 +13,7 @@
 #include "mozilla/Monitor.h"
 
 #include <deque>
+#include "mozilla/CDMProxy.h"
 
 namespace mozilla {
 
@@ -35,7 +36,7 @@ public:
                      DecoderDoctorDiagnostics* aDiagnostics) override;
 
 
-  AndroidDecoderModule() {}
+  AndroidDecoderModule(CDMProxy *aProxy = nullptr) :mProxy(aProxy){}
   virtual ~AndroidDecoderModule() {}
 
   bool SupportsMimeType(const nsACString& aMimeType,
@@ -43,6 +44,8 @@ public:
 
   ConversionRequired
   DecoderNeedsConversion(const TrackInfo& aConfig) const override;
+private:
+  RefPtr<CDMProxy> mProxy;
 };
 
 class MediaCodecDataDecoder : public MediaDataDecoder {
@@ -51,7 +54,9 @@ public:
   MediaCodecDataDecoder(MediaData::Type aType,
                         const nsACString& aMimeType,
                         widget::sdk::MediaFormat::Param aFormat,
-                        MediaDataDecoderCallback* aCallback);
+                        MediaDataDecoderCallback* aCallback,
+                        TaskQueue* mTaskQueue,
+                        CDMProxy* aProxy);
 
   virtual ~MediaCodecDataDecoder();
 
@@ -138,6 +143,10 @@ protected:
   SampleQueue mQueue;
   // Durations are stored in microseconds.
   std::deque<media::TimeUnit> mDurations;
+
+  // Test For DRM.
+  RefPtr<SamplesWaitingForKey> mSamplesWaitingForKey;
+  RefPtr<CDMProxy> mProxy;
 };
 
 } // namespace mozilla

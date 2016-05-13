@@ -23,6 +23,7 @@
 #include "nsTArray.h"
 
 #include "ezlogger.h"
+const char * mimetype = nullptr;
 using namespace mozilla::widget::sdk;
 using namespace mozilla;
 static UUID::LocalRef GenDrmUUID(int64_t m, int64_t l)
@@ -37,7 +38,15 @@ static jbyteArray FillJByteArray(const T& data, jsize length)
 {
   JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
   jbyteArray result = jenv->NewByteArray(length);
-  jenv->SetByteArrayRegion(result, 0, length, reinterpret_cast<jbyte*>(data));
+  jenv->SetByteArrayRegion(result, 0, length, reinterpret_cast<const jbyte*>(const_cast<T>(data)));
+  return result;
+}
+template<class T>
+static jintArray FillJIntArray(const T& data, jsize length)
+{
+  JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
+  jintArray result = jenv->NewIntArray(length);
+  jenv->SetIntArrayRegion(result, 0, length, reinterpret_cast<const jint*>(const_cast<T>(data)));
   return result;
 }
 static PRLogModuleInfo* AndroidDecoderModuleLog()
@@ -86,19 +95,29 @@ static const char*
 TranslateMimeType(const nsACString& aMimeType)
 {
   if (VPXDecoder::IsVPX(aMimeType, VPXDecoder::VP8)) {
-    return "video/x-vnd.on2.vp8";
+    return "video/x-vnd.on2.vp8.secure";
   } else if (VPXDecoder::IsVPX(aMimeType, VPXDecoder::VP9)) {
-    return "video/x-vnd.on2.vp9";
+    return "video/x-vnd.on2.vp9.secure";
   }
-  return PromiseFlatCString(aMimeType).get();
+  nsCString mimetype(aMimeType);
+  PG0();
+  mimetype.AppendLiteral(".secure");
+  PG0();
+
+
+  return mimetype.get();
+  //return PromiseFlatCString(aMimeType).get();
 }
 
 static MediaCodec::LocalRef
 CreateDecoder(const nsACString& aMimeType)
 {
+  mimetype = TranslateMimeType(aMimeType);
   MediaCodec::LocalRef codec;
-  NS_ENSURE_SUCCESS(MediaCodec::CreateDecoderByType(TranslateMimeType(aMimeType),
-                    &codec), nullptr);
+  // NS_ENSURE_SUCCESS(MediaCodec::CreateDecoderByType(aMimeType,
+  //                   &codec), nullptr);
+  auto rvCreateByCodecName = MediaCodec::CreateByCodecName(mimetype, &codec);
+  PR(rvCreateByCodecName);
   return codec;
 }
 
@@ -120,13 +139,15 @@ public:
   VideoDataDecoder(const VideoInfo& aConfig,
                    MediaFormat::Param aFormat,
                    MediaDataDecoderCallback* aCallback,
-                   layers::ImageContainer* aImageContainer)
+                   layers::ImageContainer* aImageContainer,
+                   TaskQueue* aTaskQueue,
+                   CDMProxy* aProxy)
     : MediaCodecDataDecoder(MediaData::Type::VIDEO_DATA, aConfig.mMimeType,
-                            aFormat, aCallback)
+                            aFormat, aCallback, aTaskQueue, aProxy)
     , mImageContainer(aImageContainer)
     , mConfig(aConfig)
   {
-
+    PG(mSamplesWaitingForKey.get());
   }
 
   const char* GetDescriptionName() const override
@@ -197,15 +218,18 @@ protected:
   layers::ImageContainer* mImageContainer;
   const VideoInfo& mConfig;
   RefPtr<AndroidSurfaceTexture> mSurfaceTexture;
+  RefPtr<TaskQueue> mTaskQueue;
 };
 
 class AudioDataDecoder : public MediaCodecDataDecoder
 {
 public:
   AudioDataDecoder(const AudioInfo& aConfig, MediaFormat::Param aFormat,
-                   MediaDataDecoderCallback* aCallback)
+                   MediaDataDecoderCallback* aCallback,
+                   TaskQueue* aTaskQueue,
+                   CDMProxy* aProxy)
     : MediaCodecDataDecoder(MediaData::Type::AUDIO_DATA, aConfig.mMimeType,
-                            aFormat, aCallback)
+                            aFormat, aCallback, aTaskQueue, aProxy)
   {
     JNIEnv* const env = jni::GetEnvForThread();
 
@@ -220,6 +244,7 @@ public:
       NS_ENSURE_SUCCESS_VOID(aFormat->SetByteBuffer(NS_LITERAL_STRING("csd-0"),
                                                     buffer));
     }
+    PG(mSamplesWaitingForKey.get());
   }
 
   const char* GetDescriptionName() const override
@@ -278,6 +303,8 @@ public:
     INVOKE_CALLBACK(Output, data);
     return NS_OK;
   }
+private:
+  RefPtr<TaskQueue> mTaskQueue;
 };
 
 bool
@@ -330,9 +357,10 @@ AndroidDecoderModule::CreateVideoDecoder(
       aConfig.mDisplay.width,
       aConfig.mDisplay.height,
       &format), nullptr);
-
+  auto rvsetfeaturevideo = format->SetFeatureEnabled("secure-playback", true);
+  PR(rvsetfeaturevideo);
   RefPtr<MediaDataDecoder> decoder =
-    new VideoDataDecoder(aConfig, format, aCallback, aImageContainer);
+    new VideoDataDecoder(aConfig, format, aCallback, aImageContainer, aVideoTaskQueue, mProxy);
 
   return decoder.forget();
 }
@@ -355,9 +383,10 @@ AndroidDecoderModule::CreateAudioDecoder(
       aConfig.mRate,
       aConfig.mChannels,
       &format), nullptr);
-
+  auto rvsetfeatureaudio = format->SetFeatureEnabled("secure-playback", true);
+  PR(rvsetfeatureaudio);
   RefPtr<MediaDataDecoder> decoder =
-    new AudioDataDecoder(aConfig, format, aCallback);
+    new AudioDataDecoder(aConfig, format, aCallback, aAudioTaskQueue, mProxy);
 
   return decoder.forget();
 }
@@ -374,7 +403,9 @@ AndroidDecoderModule::DecoderNeedsConversion(const TrackInfo& aConfig) const
 MediaCodecDataDecoder::MediaCodecDataDecoder(MediaData::Type aType,
                                              const nsACString& aMimeType,
                                              MediaFormat::Param aFormat,
-                                             MediaDataDecoderCallback* aCallback)
+                                             MediaDataDecoderCallback* aCallback,
+                                             TaskQueue* aTaskQueue,
+                                             CDMProxy* aProxy)
   : mType(aType)
   , mMimeType(aMimeType)
   , mFormat(aFormat)
@@ -383,8 +414,10 @@ MediaCodecDataDecoder::MediaCodecDataDecoder(MediaData::Type aType,
   , mOutputBuffers(nullptr)
   , mMonitor("MediaCodecDataDecoder::mMonitor")
   , mState(kDecoding)
+  , mProxy(aProxy)
+  , mSamplesWaitingForKey(new SamplesWaitingForKey(this, aTaskQueue, aProxy))
 {
-
+  PG(mSamplesWaitingForKey.get());
 }
 
 MediaCodecDataDecoder::~MediaCodecDataDecoder()
@@ -442,17 +475,32 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
   auto rvIscryptosupported =
     mediacrypto->IsCryptoSchemeSupported(clearkeyUUID, &isCryptoSchemeSupported);
   PG(isCryptoSchemeSupported);
+  bool isRequiresSecureDecoderComponent = false;
+  auto rvRequiresSecureDecoderComponent = mediacrypto->RequiresSecureDecoderComponent(mimetype, &isRequiresSecureDecoderComponent);
+  PG(rvRequiresSecureDecoderComponent, isRequiresSecureDecoderComponent);
   auto rvconfigure = mDecoder->Configure(mFormat, aSurface, mediacrypto, 0);
   PG(rvconfigure);
 
+  // Do Configure again to test different crypto instance.
+  // mozilla::jni::ByteArray::LocalRef sessionid2;
+  // auto rvopensession2 = mediadrm->OpenSession(&sessionid2);
+  // PG(rvopensession2);
+  // PG(sessionid2->GetElements());
+  // MediaCrypto::LocalRef mediacrypto2;
+  // auto rvmediacrypto2 = MediaCrypto::New(clearkeyUUID, sessionid2, &mediacrypto2);
+  // PG(rvmediacrypto2);
+  // auto rvconfigure2 = mDecoder->Configure(mFormat, aSurface, mediacrypto2, 0);
+  // PG(rvconfigure2);
   // JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
   // jbyteArray bytearray = jenv->NewByteArray(5566);
 
-  // mozilla::jni::ByteArray::LocalRef keysetid;
+  mozilla::jni::ByteArray::LocalRef keysetid;
+  unsigned char response[] = {0x7b,0x22,0x6b,0x65,0x79,0x73,0x22,0x3a,0x5b,0x7b,0x22,0x6b,0x74,0x79,0x22,0x3a,0x22,0x6f,0x63,0x74,0x22,0x2c,0x22,0x6b,0x69,0x64,0x22,0x3a,0x22,0x59,0x41,0x59,0x65,0x41,0x58,0x35,0x48,0x66,0x6f,0x64,0x2b,0x56,0x39,0x41,0x4e,0x48,0x74,0x41,0x4e,0x48,0x67,0x22,0x2c,0x22,0x6b,0x22,0x3a,0x22,0x47,0x6f,0x6f,0x67,0x6c,0x65,0x54,0x65,0x73,0x74,0x4b,0x65,0x79,0x42,0x61,0x73,0x65,0x36,0x34,0x67,0x67,0x67,0x22,0x7d,0x5d,0x7d};
+  unsigned char *responsedata = response;
+  auto responsearray = FillJByteArray(responsedata, sizeof(response));
 
-  // const auto& qq = mozilla::jni::ByteArray::Ref::From(bytearray);
-  // auto rvprovide = mediadrm->ProvideKeyResponse(sessionid, qq, &keysetid);
-  // PG(rvprovide);
+  auto rvprovide = mediadrm->ProvideKeyResponse(sessionid, mozilla::jni::ByteArray::Ref::From(responsearray), &keysetid);
+  PG(rvprovide);
 
   //NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, nullptr, 0), rv);
   NS_ENSURE_SUCCESS(rv = mDecoder->Start(), rv);
@@ -574,17 +622,85 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
 
   PodCopy(static_cast<uint8_t*>(directBuffer), aSample->Data(), aSample->Size());
 
-  res = mDecoder->QueueInputBuffer(inputIndex, 0, aSample->Size(),
-                                   aSample->mTime, 0);
+  
+  PG0();
   // Test DRM
-  CryptoInfo::LocalRef cryptoInfo;
-  auto rvcryptoInfo = CryptoInfo::New(&cryptoInfo);
-  PG(rvcryptoInfo);
+  if (aSample->mCrypto.mValid) {
+    PG0();
+    if (mSamplesWaitingForKey->WaitIfKeyNotUsable(const_cast<MediaRawData*>(aSample))) {
+      return NS_OK;
+    }
 
-  //set (int newNumSubSamples, int[] newNumBytesOfClearData, int[] newNumBytesOfEncryptedData, byte[] newKey, byte[] newIV, int newMode)
-  // cryptoInfo->Set();
-  // res = mDecoder->QueueSecureInputBuffer(inputIndex, 0,cryptoInfo,
-  //                                  aSample->mTime, 0);
+    nsAutoPtr<MediaRawDataWriter> writer(const_cast<MediaRawData*>(aSample)->CreateWriter());
+    mProxy->GetSessionIdsForKeyId(aSample->mCrypto.mKeyId,
+                                  writer->mCrypto.mSessionIds);
+    CryptoInfo::LocalRef cryptoInfo;
+    auto rvcryptoInfo = CryptoInfo::New(&cryptoInfo);
+    PG(rvcryptoInfo);
+    auto& cryptoObj = aSample->mCrypto;
+    //https://dxr.mozilla.org/mozilla-central/rev/3461f3cae78495f100a0f7d3d2e0b89292d3ec02/dom/media/gmp/GMPEncryptedBufferDataImpl.cpp#89
+    int newNumSubSamples = std::min<uint32_t>(cryptoObj.mPlainSizes.Length(), cryptoObj.mEncryptedSizes.Length());
+
+    // mPlainSizes is uint16_t, need to transform to uint32_t first
+    nsTArray<uint32_t> clearData;
+    for (auto& clear : cryptoObj.mPlainSizes) {
+      clearData.AppendElement(clear);
+    }
+    PR(newNumSubSamples);
+    PR(clearData);
+    PR(cryptoObj.mEncryptedSizes);
+    PR(cryptoObj.mIV);
+    auto snapshotIV(cryptoObj.mIV);
+    PR(snapshotIV);
+    PR(snapshotIV.Length());
+    auto length = snapshotIV.Length();
+    if (snapshotIV.Length() < 16) {
+      for (size_t i = 0; i < (16 - length); i++) {
+
+        snapshotIV.AppendElement(0); //pad with 0
+        PG(snapshotIV);
+      }
+    }
+    PR(snapshotIV);
+    auto newNumBytesOfClearData = FillJIntArray(&clearData[0], clearData.Length());
+    auto newNumBytesOfEncryptedData = FillJIntArray(&cryptoObj.mEncryptedSizes[0], cryptoObj.mEncryptedSizes.Length());
+    auto newIV = FillJByteArray(&snapshotIV[0], snapshotIV.Length());
+    auto newKey = FillJByteArray(&cryptoObj.mKeyId[0], cryptoObj.mKeyId.Length());
+    /*
+    // Take EMEMediaDataDecoderProxy::Input(MediaRawData* aSample) for reference.
+    //auto Set(int32_t, mozilla::jni::IntArray::Param, mozilla::jni::IntArray::Param, mozilla::jni::ByteArray::Param, mozilla::jni::ByteArray::Param, int32_t) const -> nsresult;
+    //set (int newNumSubSamples, int[] newNumBytesOfClearData, int[] newNumBytesOfEncryptedData, byte[] newKey, byte[] newIV, int newMode)
+    // cryptoInfo->Set();
+    // res = mDecoder->QueueSecureInputBuffer(inputIndex, 0,cryptoInfo,
+    //                                  aSample->mTime, 0);
+    nsTArray<uint8_t> mKeyId;
+    nsTArray<uint16_t> mPlainSizes;
+    nsTArray<uint32_t> mEncryptedSizes;
+    nsTArray<uint8_t> mIV;
+    nsTArray<nsCString> mSessionIds;
+    */
+
+    // cryptoObj.mKeyId
+    // cryptoObj.mIV
+    // cryptoObj.mPlainSizes
+    // cryptoObj.mEncryptedSizes
+    auto rvcryptoset = cryptoInfo->Set(newNumSubSamples,
+                    mozilla::jni::IntArray::Ref::From(newNumBytesOfClearData),
+                    mozilla::jni::IntArray::Ref::From(newNumBytesOfEncryptedData),
+                    mozilla::jni::ByteArray::Ref::From(newKey),
+                    mozilla::jni::ByteArray::Ref::From(newIV),
+                    1/*CRYPTO_MODE_AES_CTR*/);
+    PG(rvcryptoset);
+    res = mDecoder->QueueSecureInputBuffer(inputIndex, 0,cryptoInfo,
+                                           aSample->mTime, 0);
+    PG(res);
+  } else {
+    PG0();
+    PG(mProxy.get());
+    res = mDecoder->QueueInputBuffer(inputIndex, 0, aSample->Size(),
+                                   aSample->mTime, 0);
+  }
+
 
   if (NS_FAILED(res)) {
     return res;
@@ -869,6 +985,15 @@ MediaCodecDataDecoder::Shutdown()
     mDecoder->Stop();
     mDecoder->Release();
     mDecoder = nullptr;
+  }
+
+  if (mSamplesWaitingForKey) {
+   mSamplesWaitingForKey->BreakCycles();
+   mSamplesWaitingForKey = nullptr;
+  }
+
+  if (mProxy) {
+    mProxy = nullptr;
   }
 
   return NS_OK;

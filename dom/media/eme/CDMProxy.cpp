@@ -19,7 +19,7 @@
 #include "mozilla/CDMCallbackProxy.h"
 #include "MediaData.h"
 #include "nsPrintfCString.h"
-
+#include "ezlogger.h"
 namespace mozilla {
 
 CDMProxy::CDMProxy(dom::MediaKeys* aKeys, const nsAString& aKeySystem)
@@ -362,7 +362,7 @@ CDMProxy::UpdateSession(const nsAString& aSessionId,
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mGMPThread);
   NS_ENSURE_TRUE_VOID(!mKeys.IsNull());
-
+  PR(aResponse);
   nsAutoPtr<UpdateSessionData> data(new UpdateSessionData());
   data->mPromiseId = aPromiseId;
   data->mSessionId = NS_ConvertUTF16toUTF8(aSessionId);

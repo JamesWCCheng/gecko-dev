@@ -388,7 +388,7 @@ PDMFactory::SetCDMProxy(CDMProxy* aProxy)
   RefPtr<PDMFactory> m = new PDMFactory();
 
   //mEMEPDM = new EMEDecoderModule(aProxy, m);
-  mEMEPDM = new AndroidDecoderModule();
+  mEMEPDM = new AndroidDecoderModule(aProxy);
 }
 #endif
 
