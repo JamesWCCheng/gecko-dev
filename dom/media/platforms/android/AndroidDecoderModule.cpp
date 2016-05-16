@@ -23,7 +23,7 @@
 #include "nsTArray.h"
 
 #include "ezlogger.h"
-const char * mimetype = nullptr;
+nsCString mimetype;
 using namespace mozilla::widget::sdk;
 using namespace mozilla;
 static UUID::LocalRef GenDrmUUID(int64_t m, int64_t l)
@@ -48,6 +48,79 @@ static jintArray FillJIntArray(const T& data, jsize length)
   jintArray result = jenv->NewIntArray(length);
   jenv->SetIntArrayRegion(result, 0, length, reinterpret_cast<const jint*>(const_cast<T>(data)));
   return result;
+}
+
+void PrintSecureDecoderNameForMime() {
+  using namespace mozilla::widget::sdk;
+  int codec_num = 0;
+  auto rvGetCodecCount = MediaCodecList::GetCodecCount(&codec_num);
+  PR(rvGetCodecCount);
+  for (int i = 0; i < codec_num; ++i) {
+    mozilla::jni::Object::LocalRef info;
+    auto rvGetCodecInfoAt = MediaCodecList::GetCodecInfoAt(i, &info);
+    MediaCodecInfo::LocalRef mediainfo = MediaCodecInfo::LocalRef::Adopt(info.Forget());
+    PR(rvGetCodecInfoAt);
+    bool isEncoder = false;
+    mediainfo->IsEncoder(&isEncoder);
+    if (isEncoder) {
+        continue;
+    }
+    mozilla::jni::ObjectArray::LocalRef supportedTypes;
+    auto rvGetSupportedTypes = mediainfo->GetSupportedTypes(&supportedTypes);
+    mozilla::jni::String::LocalRef nameStr;
+    mediainfo->GetName(&nameStr);
+    PR(nameStr->ToCString());
+    PR(rvGetSupportedTypes);
+    JNIEnv* const env = jni::GetEnvForThread();
+    jsize length = env->GetArrayLength(supportedTypes.Get());
+    for (int j = 0; j < length; ++j) {
+      auto supportType =
+        nsJNIString(
+            static_cast<jstring>(env->GetObjectArrayElement(supportedTypes.Get(), j)), env);
+        PG(supportType);
+    }
+  }
+}
+
+nsCString GetSecureDecoderNameForMime(const nsACString& aMime)
+{
+  using namespace mozilla::widget::sdk;
+  int codec_num = 0;
+  auto rvGetCodecCount = MediaCodecList::GetCodecCount(&codec_num);
+  PR(rvGetCodecCount);
+  for (int i = 0; i < codec_num; ++i) {
+    mozilla::jni::Object::LocalRef info;
+    auto rvGetCodecInfoAt = MediaCodecList::GetCodecInfoAt(i, &info);
+    MediaCodecInfo::LocalRef mediainfo = MediaCodecInfo::LocalRef::Adopt(info.Forget());
+    PR(rvGetCodecInfoAt);
+    bool isEncoder = false;
+    mediainfo->IsEncoder(&isEncoder);
+    if (isEncoder) {
+        continue;
+    }
+    mozilla::jni::ObjectArray::LocalRef supportedTypes;
+    auto rvGetSupportedTypes = mediainfo->GetSupportedTypes(&supportedTypes);
+    mozilla::jni::String::LocalRef nameStr;
+    mediainfo->GetName(&nameStr);
+    auto codecName = nameStr->ToCString();
+    PR(codecName);
+    PR(rvGetSupportedTypes);
+    JNIEnv* const env = jni::GetEnvForThread();
+    jsize length = env->GetArrayLength(supportedTypes.Get());
+    for (int j = 0; j < length; ++j) {
+      auto supportType =
+        nsJNIString(
+            static_cast<jstring>(env->GetObjectArrayElement(supportedTypes.Get(), j)), env);
+        PG(supportType);
+        NS_ConvertUTF16toUTF8 mime(supportType);
+        if (mime.EqualsIgnoreCase(PromiseFlatCString(aMime).get())) {
+           codecName.AppendLiteral(".secure");
+           PR(codecName);
+           return codecName;
+        }
+    }
+  }
+  return NS_LITERAL_CSTRING("");
 }
 static PRLogModuleInfo* AndroidDecoderModuleLog()
 {
@@ -91,32 +164,29 @@ auto ToCStringHelper(T&& arg) -> nsCString
     NS_WARNING("Callback not set"); \
   }
 
-static const char*
+nsCString
 TranslateMimeType(const nsACString& aMimeType)
 {
   if (VPXDecoder::IsVPX(aMimeType, VPXDecoder::VP8)) {
-    return "video/x-vnd.on2.vp8.secure";
+    return NS_LITERAL_CSTRING("video/x-vnd.on2.vp8");
   } else if (VPXDecoder::IsVPX(aMimeType, VPXDecoder::VP9)) {
-    return "video/x-vnd.on2.vp9.secure";
+    return NS_LITERAL_CSTRING("video/x-vnd.on2.vp9");
   }
   nsCString mimetype(aMimeType);
-  PG0();
-  mimetype.AppendLiteral(".secure");
-  PG0();
-
-
-  return mimetype.get();
+  return mimetype;
   //return PromiseFlatCString(aMimeType).get();
 }
 
 static MediaCodec::LocalRef
 CreateDecoder(const nsACString& aMimeType)
 {
+  PrintSecureDecoderNameForMime();
   mimetype = TranslateMimeType(aMimeType);
   MediaCodec::LocalRef codec;
   // NS_ENSURE_SUCCESS(MediaCodec::CreateDecoderByType(aMimeType,
   //                   &codec), nullptr);
-  auto rvCreateByCodecName = MediaCodec::CreateByCodecName(mimetype, &codec);
+  auto codecName = GetSecureDecoderNameForMime(mimetype);
+  auto rvCreateByCodecName = MediaCodec::CreateByCodecName(codecName, &codec);
   PR(rvCreateByCodecName);
   return codec;
 }
@@ -448,7 +518,11 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
     INVOKE_CALLBACK(Error);
     return NS_ERROR_FAILURE;
   }
-
+  const uint8_t kWidevineUUID[16] = {
+    0xed,0xef,0x8b,0xa9,0x79,0xd6,0x4a,0xce,
+    0xa3,0xc8,0x27,0xdc,0xd5,0x1d,0x21,0xed
+  };
+  auto widevineUUID = GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
   nsresult rv;
   //Clearkey: 0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL
   auto clearkeyUUID = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
@@ -480,6 +554,34 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
   PG(rvRequiresSecureDecoderComponent, isRequiresSecureDecoderComponent);
   auto rvconfigure = mDecoder->Configure(mFormat, aSurface, mediacrypto, 0);
   PG(rvconfigure);
+
+
+  // auto uuidStrwidevine = ToStringHelper(widevineUUID);
+  // PB(uuidStrwidevine);
+  // MediaDrm::LocalRef mediadrmwidevine;
+  // auto rvmediadrmwidevine = MediaDrm::New(widevineUUID, &mediadrmwidevine);
+  // PG(rvmediadrmwidevine);
+  //   auto rvSecurityLevel = mediadrmwidevine->SetPropertyString("securityLevel", "L3");
+  //   PG(rvSecurityLevel);
+  // mozilla::jni::ByteArray::LocalRef sessionidwidevine;
+  // auto rvopensessionwidevine = mediadrmwidevine->OpenSession(&sessionidwidevine);
+  // PG(rvopensessionwidevine);
+  // PG(sessionidwidevine->GetElements());
+
+  // auto sidarrwidevine = sessionidwidevine->GetElements();
+  // jbyteArray sessionidArraywidevine = FillJByteArray(&sidarrwidevine[0], sidarrwidevine.Length());
+  // MediaCrypto::LocalRef mediacryptowidevine;
+  // auto rvmediacryptowidevine = MediaCrypto::New(widevineUUID, mozilla::jni::ByteArray::Ref::From(sessionidArraywidevine), &mediacryptowidevine);
+  // PG(rvmediacryptowidevine);
+  // bool isCryptoSchemeSupportedwidevine = false;
+  // auto rvIscryptosupportedwidevine =
+  //   mediacryptowidevine->IsCryptoSchemeSupported(widevineUUID, &isCryptoSchemeSupportedwidevine);
+  // PG(isCryptoSchemeSupportedwidevine);
+  // bool isRequiresSecureDecoderComponentwidevine = false;
+  // auto rvRequiresSecureDecoderComponentwidevine = mediacrypto->RequiresSecureDecoderComponent(mimetype, &isRequiresSecureDecoderComponentwidevine);
+  // PG(rvRequiresSecureDecoderComponentwidevine, isRequiresSecureDecoderComponentwidevine);
+  // auto rvconfigure = mDecoder->Configure(mFormat, aSurface, mediacryptowidevine, 0);
+  // PG(rvconfigure);
 
   // Do Configure again to test different crypto instance.
   // mozilla::jni::ByteArray::LocalRef sessionid2;
