@@ -24,14 +24,15 @@ EXPORTS.mozilla += [
     'CDMProxy.h',
     'DetailedPromise.h',
     'EMEUtils.h',
+    'GMPCDMProxy.h',
 ]
 
 UNIFIED_SOURCES += [
     'CDMCallbackProxy.cpp',
     'CDMCaps.cpp',
-    'CDMProxy.cpp',
     'DetailedPromise.cpp',
     'EMEUtils.cpp',
+    'GMPCDMProxy.cpp',
     'MediaEncryptedEvent.cpp',
     'MediaKeyError.cpp',
     'MediaKeyMessageEvent.cpp',

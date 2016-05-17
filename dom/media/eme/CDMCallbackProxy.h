@@ -7,7 +7,7 @@
 #ifndef CDMCallbackProxy_h_
 #define CDMCallbackProxy_h_
 
-#include "mozilla/CDMProxy.h"
+#include "mozilla/GMPCDMProxy.h"
 #include "gmp-decryption.h"
 #include "GMPDecryptorProxy.h"
 
@@ -56,7 +56,7 @@ public:
   ~CDMCallbackProxy() {}
 
 private:
-  friend class CDMProxy;
+  friend class GMPCDMProxy;
   explicit CDMCallbackProxy(CDMProxy* aProxy);
 
   // Warning: Weak ref.
