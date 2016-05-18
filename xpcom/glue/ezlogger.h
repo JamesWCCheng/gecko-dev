@@ -1,5 +1,8 @@
 #ifndef __EZLOGGER_H__
 #define __EZLOGGER_H__
+#if defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
 #include <stdio.h>
 #include <utility>
 #include <string>
@@ -60,6 +63,15 @@ namespace {
   }
 
   std::string bin2hex(const char *bin, size_t len) {
+    auto forcelyunsigned = reinterpret_cast<const unsigned char*>(bin);
+    std::ostringstream oss;
+    for (size_t i = 0; i < len; i++) {
+      oss << std::setfill('0') << std::setw(2) << std::hex << static_cast<unsigned int>(forcelyunsigned[i]);
+    }
+    return oss.str();
+  }
+
+  std::string bin2hex(const signed char *bin, size_t len) {
     auto forcelyunsigned = reinterpret_cast<const unsigned char*>(bin);
     std::ostringstream oss;
     for (size_t i = 0; i < len; i++) {
@@ -344,14 +356,14 @@ namespace {
   void printInternal(const std::vector<uint8_t>& aVec, const char* const aObjName)
   {
     auto hexString = bin2hex(aVec);
-    printf_stderr("%s = %s, unsgined vector length = %lu", aObjName, hexString.c_str(), aVec.size());
+    printf_stderr("%s = %s, unsgined vector length = %u", aObjName, hexString.c_str(), aVec.size());
   }
 
   template<>
   void printInternal(const std::vector<char>& aVec, const char* const aObjName)
   {
     auto hexString = bin2hex(aVec);
-    printf_stderr("%s = %s, signed vector length = %lu", aObjName, hexString.c_str(), aVec.size());
+    printf_stderr("%s = %s, signed vector length = %u", aObjName, hexString.c_str(), aVec.size());
   }
 
   template<class Key, class Value>
@@ -408,6 +420,12 @@ namespace {
     printf_stderr("%s = %s", aObjName, aStr);
     printf_stderr("hex form %s = %s", aObjName, bin2hex(aStr, strlen(reinterpret_cast<const char*>(aStr))).c_str());
   }
+  void printInternal(const signed char* aStr, const char* const aObjName)
+  {
+    printf_stderr("%s = %s", aObjName, aStr);
+    printf_stderr("hex form %s = %s", aObjName, bin2hex(aStr, strlen(reinterpret_cast<const char*>(aStr))).c_str());
+  }
+
   // For float
   void printInternal(float aVal, const char* const aObjName)
   {
