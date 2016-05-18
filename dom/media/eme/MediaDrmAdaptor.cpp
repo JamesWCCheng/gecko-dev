@@ -2,6 +2,8 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsTArray.h"
 #include "ezlogger.h"
 #include "MediaDrmAdaptor.h"
 
@@ -20,13 +22,17 @@ extern const uint8_t kWidevineUUID[16];
 
 extern std::string byteArrayToHexString(const unsigned char *bytes, int len);
 
-static UUID::LocalRef GenDrmUUID(int64_t aFront, int64_t aRear)
+static
+UUID::LocalRef GenDrmUUID(int64_t aFront, int64_t aRear)
 {
   UUID::LocalRef uuid;
   auto rv = UUID::New(aFront, aRear, &uuid);
   PR(rv);
   return uuid;
 }
+
+static UUID::GlobalRef clearkeyUUID;
+static UUID::GlobalRef widevineUUID;
 
 template<class T>
 auto ToStringHelper(T&& arg) -> nsString
@@ -41,6 +47,22 @@ auto ToCStringHelper(T&& arg) -> nsCString
   mozilla::jni::String::LocalRef str;
   arg->ToString(&str);
   return str->ToCString();
+}
+template<class T>
+static jbyteArray FillJByteArray(const T& data, jsize length)
+{
+  JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
+  jbyteArray result = jenv->NewByteArray(length);
+  jenv->SetByteArrayRegion(result, 0, length, reinterpret_cast<const jbyte*>(const_cast<T>(data)));
+  return result;
+}
+template<class T>
+static jintArray FillJIntArray(const T& data, jsize length)
+{
+  JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
+  jintArray result = jenv->NewIntArray(length);
+  jenv->SetIntArrayRegion(result, 0, length, reinterpret_cast<const jint*>(const_cast<T>(data)));
+  return result;
 }
 
 namespace mozilla {
@@ -73,14 +95,10 @@ private:
 MediaDrmAdaptor::MediaDrmAdaptor()
   : mKeySystem{0}
   , mProvisioning(false)
+  , mMediaDrm(nullptr)
+  , mMediaCrypto(nullptr)
 {
-//  DRMLOG("[%s][%s]", __CLASS__, __FUNCTION__);
-//  AddRef();
-//
-//  if (GetPlatform()->createthread(&mThread) != GMPNoErr) {
-//    DRMLOG("failed to create thread in key cdm");
-//    mThread = nullptr;
-//  }
+  DRMLOG("[%s][%s]", __CLASS__, __FUNCTION__);
 }
 
 MediaDrmAdaptor::~MediaDrmAdaptor()
@@ -91,6 +109,7 @@ MediaDrmAdaptor::~MediaDrmAdaptor()
 uint32_t
 MediaDrmAdaptor::GetPluginId() const
 {
+  DRMLOG("[%s][%s]", __CLASS__, __FUNCTION__);
   return 0;
 }
 
@@ -101,21 +120,10 @@ MediaDrmAdaptor::Init(GMPDecryptorProxyCallback* aCallback)
 
   mCallback = aCallback;
 
-  //Clearkey: 0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL
-  auto clearkeyUUID = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
-
-  auto uuidStr = ToStringHelper(clearkeyUUID);
-  PB(uuidStr);
-  MediaDrm::LocalRef mediadrm;
-  auto rvmediadrm = MediaDrm::New(clearkeyUUID, &mediadrm);
-  PG(rvmediadrm);
-
-//  if (CanDecode()) {
-//    // TODO : Find a way obtain capabilities from android mediadrm plugin.
-//  } else {
-//    mCallback->SetCapabilities(GMP_EME_CAP_DECRYPT_AUDIO |
-//                               GMP_EME_CAP_DECRYPT_VIDEO);
-//  }
+  if (!EnsureMediaDRMCreated()) {
+    DRMLOG("[%s][%s] Init error !! ", __CLASS__, __FUNCTION__);
+    return NS_ERROR_FAILURE;
+  }
   return NS_OK;
 }
 
@@ -136,17 +144,15 @@ MediaDrmAdaptor::CreateSession(uint32_t aCreateSessionToken,
 {
   DRMLOG("[%s][%s] type:%s", __CLASS__, __FUNCTION__, aInitDataType.get());
 
-//  string initDataType(aInitDataType, aInitDataType + aInitDataTypeSize);
-//
-//  // initDataType must be "cenc", "keyids", or "webm".
-//  if (initDataType != "cenc" && initDataType != "keyids" &&
-//      initDataType != "webm") {
-//    string message = "'" + initDataType +
-//      "' is an unsupported type for EME.";
-//    mCallback->RejectPromise(aPromiseId, kGMPNotSupportedError,
-//                             message.c_str(), message.size());
-//    return;
-//  }
+  if (!aInitDataType.EqualsLiteral("cenc") &&
+      !aInitDataType.EqualsLiteral("keyids") &&
+      !aInitDataType.EqualsLiteral("webm")) {
+    string type(aInitDataType.get());
+    string message = "'" + type + "' is an unsupported type for EME.";
+    mCallback->RejectPromise(aPromiseId, NS_ERROR_DOM_NOT_SUPPORTED_ERR,
+                             nsCString(message.c_str(), message.size()));
+    return;
+  }
 //
 //  Vector<uint8_t> uInitData;
 //  MediaDrmAdaptorUtils::Assign(uInitData, aInitData, aInitDataSize);
@@ -160,31 +166,41 @@ MediaDrmAdaptor::CreateSession(uint32_t aCreateSessionToken,
 //    return;
 //  }
 //
-//  GMPErr gmpErr = EnsureDRMInstanceCreated(initDataType,
-//                                           aInitData,
-//                                           aInitDataSize);
-//  if (GMP_FAILED(gmpErr)) {
-//    string message = " DRM scheme NOT supported !! Plugin NOT created !!";
-//    mCallback->RejectPromise(aPromiseId, kGMPNotSupportedError,
-//                             message.c_str(), message.size());
-//    return;
-//  }
-//
-//  Vector<uint8_t> uSessionId;
-//  // TODO: check more error code from openSession.
-//  status_t err = mDRMInstance->openSession(uSessionId);
-//  if (err == android::ERROR_DRM_NOT_PROVISIONED) {
-//    SavePendingInitData(aCreateSessionToken, aPromiseId, mimeType,
-//                        uInitData, aSessionType);
-//    StartProvisioning(aCreateSessionToken);
-//    return;
-//  }
-//  string hexSessionId = byteArrayToHexString(uSessionId.array(), uSessionId.size());
-//  DRMLOG("[%s][%s] openSession obtain SesionID(%s).",
-//         __CLASS__, __FUNCTION__, hexSessionId.c_str());
-//
-//  GenerateKeyRequest(uSessionId, aCreateSessionToken, aPromiseId,
-//                     mimeType, uInitData, aSessionType);
+  bool created = EnsureMediaDRMCreated();
+  if (!created) {
+    mCallback->RejectPromise(aPromiseId, NS_ERROR_DOM_NOT_SUPPORTED_ERR,
+      NS_LITERAL_CSTRING(" DRM scheme NOT supported !! Plugin NOT created !!"));
+    return;
+  }
+
+  // TODO : Need to handle NOT Provisioned exception
+  mozilla::jni::ByteArray::LocalRef sessionId;
+  nsresult rv = mMediaDrm->OpenSession(&sessionId);
+  if (NS_FAILED(rv)) {
+    mCallback->RejectPromise(aPromiseId, NS_ERROR_DOM_NOT_SUPPORTED_ERR,
+      NS_LITERAL_CSTRING(" MediaDrm OpenSession Failed !! "));
+    return;
+  }
+  //
+  //  Vector<uint8_t> uSessionId;
+  //  // TODO: check more error code from openSession.
+  //  status_t err = mDRMInstance->openSession(uSessionId);
+  //  if (err == android::ERROR_DRM_NOT_PROVISIONED) {
+  //    SavePendingInitData(aCreateSessionToken, aPromiseId, mimeType,
+  //                        uInitData, aSessionType);
+  //    StartProvisioning(aCreateSessionToken);
+  //    return;
+  //  }
+
+  NS_ENSURE_SUCCESS_VOID(rv);
+  PG(sessionId->GetElements());
+
+  auto sidarr = sessionId->GetElements();
+  JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
+  jbyteArray sessionIdArray = FillJByteArray(&sidarr[0], sidarr.Length());
+
+  GenerateKeyRequest(sessionId, aInitData, aInitDataType,
+                     aCreateSessionToken, aPromiseId);
 }
 
 
@@ -225,7 +241,32 @@ MediaDrmAdaptor::UpdateSession(uint32_t aPromiseId,
  */
 {
   DRMLOG("[%s][%s]", __CLASS__, __FUNCTION__);
-//  assert(mDRMInstance.get());
+  MOZ_ASSERT(mMediaDrm);
+
+  nsresult rv;
+
+  mozilla::jni::ByteArray::LocalRef keysetid;
+  auto jBASessionId = FillJByteArray((uint8_t*)aSessionId.Data(), aSessionId.Length());
+  auto jBAReponse = FillJByteArray(aResponse.Elements(), aResponse.Length());
+
+  rv = mMediaDrm->ProvideKeyResponse(mozilla::jni::ByteArray::Ref::From(jBASessionId),
+                                     mozilla::jni::ByteArray::Ref::From(jBAReponse),
+                                     &keysetid);
+  if (NS_FAILED(rv)) {
+    DRMLOG("[%s][%s] provideKeyResponse Err(%d).", __CLASS__, __FUNCTION__, rv);
+    mCallback->RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                             NS_LITERAL_CSTRING(" ProvideKeyResponse error !!!"));
+    return;
+  }
+
+  HashMap::LocalRef lHashMap;
+  rv= mMediaDrm->QueryKeyStatus(mozilla::jni::ByteArray::Ref::From(jBASessionId),
+                                ReturnTo(&lHashMap));
+  if (NS_FAILED(rv)) {
+    DRMLOG("[%s][%s] QueryKeyStatus Err(%d).", __CLASS__, __FUNCTION__, rv);
+  }
+  mCallback->ResolvePromise(aPromiseId);
+
 //
 //  // TODO : Need to notify key status via Drm::getKeyStatus!!
 //  Vector<uint8_t> uSessionId;
@@ -257,7 +298,7 @@ MediaDrmAdaptor::UpdateSession(uint32_t aPromiseId,
 //         keySetId.c_str());
 //  if (err != OK) {
 //    DRMLOG("[%s][%s] provideKeyResponse Err(%d).", __CLASS__, __FUNCTION__, err);
-//    mCallback->RejectPromise(aPromiseId, kGMPInvalidAccessError, nullptr, 0);
+//    mCallback->RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_ACCESS_ERR, nullptr, 0);
 //    return;
 //  }
 //
@@ -306,7 +347,7 @@ MediaDrmAdaptor::CloseSession(uint32_t aPromiseId, const nsCString& aSessionId)
 //    auto sessionId = byteArrayToHexString(uSessionId.array(), uSessionId.size());
 //    DRMLOG("[%s][%s] Session(%s) can NOT be closed correctly.",
 //           __CLASS__, __FUNCTION__, sessionId.c_str());
-//    mCallback->RejectPromise(aPromiseId, kGMPNotFoundError, nullptr, 0);
+//    mCallback->RejectPromise(aPromiseId, NS_ERROR_DOM_NOT_FOUND_ERR, nullptr, 0);
 //    return;
 //  }
 //
@@ -327,7 +368,7 @@ MediaDrmAdaptor::RemoveSession(uint32_t aPromiseId,
 
 //  string sessionId(aSessionId, aSessionId + aSessionIdLength);
 //  // TODO : remove session from DRM
-//  //mCallback->RejectPromise(aPromiseId, kGMPNotFoundError, nullptr, 0);
+//  //mCallback->RejectPromise(aPromiseId, NS_ERROR_DOM_NOT_FOUND_ERR, nullptr, 0);
 //  mCallback->ResolvePromise(aPromiseId);
 }
 
@@ -357,7 +398,7 @@ MediaDrmAdaptor::SetServerCertificate(uint32_t aPromiseId,
 //    ResumePendingInitProcedure();
 //  } else {
 //    string message = " Provide provision Error.";
-//    mCallback->RejectPromise(aPromiseId, kGMPInvalidStateError,
+//    mCallback->RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
 //                             message.c_str(), message.size());
 //    ReleaseInitDataPackages();
 //  }
@@ -478,146 +519,113 @@ MediaDrmAdaptor::Shutdown()
 //  Release();
 //}
 
-GMPErr
-MediaDrmAdaptor::EnsureDRMInstanceCreated(const string& aInitDataType,
-                                          const uint8_t* aInitData,
-                                          uint32_t aInitDataSize)
+bool
+MediaDrmAdaptor::EnsureMediaDRMCreated()
 {
   DRMLOG("[%s][%s]", __CLASS__, __FUNCTION__);
-//  assert(!aInitDataType.empty());
-//
-//  if (!mDRMInstance.get()) {
-//    mDRMInstance = new android::Drm();
-//  }
-//  assert(mDRMInstance.get());
-//
-//  if (aInitDataType == "cenc") {
-//    // TODO : How to identify this, is it possible for adaptor to know for which
-//    //        key system it's loaded for ?
-//    memcpy(mKeySystem, kWidevineUUID, sizeof(kWidevineUUID));
-//
-//    // NOTE : Parsing keyIds is only for CDMProxy continuing the process after
-//    //        receiving keyStatusChanged. If we don't check the keyId consistency
-//    //        in CDMProxy, we shall not need this function and the whole adaptor
-//    //        will become much simpler !!
-//    MediaDrmAdaptorUtils::ParseCENCInitDataForKeySystem(mKeySystem,
-//                                                        aInitData,
-//                                                        aInitDataSize,
-//                                                        mKeyIds);
-//
-//  } else if (aInitDataType == "webm" && aInitDataSize == 16) {
-//    // "webm" initData format is simply the raw bytes of the keyId.
-//    // TODO: Check if there is a better way to get system key id.
-//    memcpy(mKeySystem, kWidevineUUID, sizeof(kWidevineUUID));
-//
-//    vector<uint8_t> keyId;
-//    keyId.assign(aInitData, aInitData+aInitDataSize);
-//    mKeyIds.push_back(keyId);
-//    auto keyidstr = byteArrayToHexString(&keyId[0], keyId.size());
-//    DRMLOG("[%s][%s] webm keyid = %s", __CLASS__, __FUNCTION__, keyidstr.c_str());
-//  } else {
-//    return GMPNotImplementedErr;
-//  }
-//
-//  String8 mimeType(aInitDataType.data());
-//  bool pluginExist = mDRMInstance->isCryptoSchemeSupported(mKeySystem,
-//                                                           mimeType);
-//  if (pluginExist) {
-//    status_t err = mDRMInstance->createPlugin(mKeySystem);
-//    if (err == android::OK ||
-//        (err == -EINVAL &&
-//         mDRMInstance->initCheck() == android::OK)) {
-//      String8 securityLevel;
-//      String8 key("securityLevel");
-//      mDRMInstance->getPropertyString(key, securityLevel);
-//      DRMLOG("[%s][%s] DRM plugin created, securityLevel(%s)",
-//             __CLASS__, __FUNCTION__, securityLevel.string());
-//      return GMPNoErr;
-//    }
-//  }
-//  DRMLOG("[%s][%s] DRM plugin can NOT be created.", __CLASS__, __FUNCTION__);
-  return GMPGenericErr;
+  if (!mMediaDrm) {
+    MediaDrm::LocalRef mediaDrm;
+    clearkeyUUID = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
+    //widevineUUID = GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
+    auto rvMediaDrmNew = MediaDrm::New(clearkeyUUID, &mediaDrm);
+    PG(rvMediaDrmNew);
+    mMediaDrm = mediaDrm;
+    PG(mMediaDrm);
+    if (mMediaDrm) {
+      auto rvSecurityLevel = mMediaDrm->SetPropertyString("securityLevel", "L3");
+      PG(rvSecurityLevel);
+    }
+  }
+
+  if (!mMediaDrm) {
+    DRMLOG("[%s][%s] ERROR !! ", __CLASS__, __FUNCTION__);
+    return false;
+  }
+  return true;
 }
 
-GMPErr
-MediaDrmAdaptor::EnsureCryptoInstanceCreated(uint32_t aPromiseId,
-                                             void* aData,
-                                             size_t aDataSize)
+bool
+MediaDrmAdaptor::EnsureMediaCryptoCreated(mozilla::jni::ByteArray::Param aSessionId)
+{
+  if (!mMediaCrypto) {
+    nsresult rv;
+
+    MediaCrypto::LocalRef mediacrypto;
+    rv = MediaCrypto::New(clearkeyUUID, aSessionId, &mediacrypto);
+
+    mMediaCrypto = mediacrypto;
+    if (mMediaCrypto) {
+      bool isCryptoSchemeSupported = false;
+      rv = mediacrypto->IsCryptoSchemeSupported(clearkeyUUID, &isCryptoSchemeSupported);
+      PG(isCryptoSchemeSupported);
+    }
+  }
+
+  if (!mMediaCrypto) {
+    DRMLOG("[%s][%s] ERROR !! ", __CLASS__, __FUNCTION__);
+    return false;
+  }
+  return true;
+}
+
+void
+MediaDrmAdaptor::GenerateKeyRequest(mozilla::jni::ByteArray::Param aSessionId,
+                                    const nsTArray<uint8_t>& aInitData,
+                                    mozilla::jni::String::Param aMIMEType,
+                                    uint32_t aCreateSessionToken,
+                                    uint32_t aPromiseId)
 {
   DRMLOG("[%s][%s]", __CLASS__, __FUNCTION__);
-//  if (!mCryptoInstance.get()) {
-//    mCryptoInstance = new android::Crypto();
-//  }
-//
-//  bool pluginExist = mCryptoInstance->isCryptoSchemeSupported(mKeySystem);
-//  if (pluginExist) {
-//    auto err = mCryptoInstance->createPlugin(mKeySystem, aData, aDataSize);
-//    if (err == android::OK ||
-//        (err == -EINVAL && mCryptoInstance->initCheck() == android::OK)) {
-//      DRMLOG("[%s][%s] Crypto plugin loaded successfully", __CLASS__, __FUNCTION__);
-//      return GMPNoErr;
-//    }
-//  }
-//  DRMLOG("[%s][%s] Crypto plugin could NOT be created.", __CLASS__, __FUNCTION__);
-  return GMPGenericErr;
-}
+  MOZ_ASSERT(mMediaDrm);
 
-//void
-//MediaDrmAdaptor::GenerateKeyRequest(const android::Vector<uint8_t>& aSessionId,
-//                                    uint32_t aCreateSessionToken,
-//                                    uint32_t aPromiseId,
-//                                    const android::String8& aMIMEType,
-//                                    const android::Vector<uint8_t>& aInitData,
-//                                    GMPSessionType aSessionType)
-//{
-//  DRMLOG("[%s][%s]", __CLASS__, __FUNCTION__);
-//
-//  auto gmpErr = EnsureCryptoInstanceCreated(aPromiseId,
-//                                            (void*)aSessionId.array(),
-//                                            aSessionId.size());
-//  if (GMP_FAILED(gmpErr)) {
-//    string message = " Crypto plugin NOT supported.";
-//    mCallback->RejectPromise(aPromiseId, kGMPNotSupportedError,
-//                             message.c_str(), message.size());
-//    return;
-//  }
-//
-//  if (aMIMEType == "cenc" || aMIMEType == "webm") {
-//    KeyedVector<String8, String8> optionPara;
-//    String8 defaultURL;
-//    Vector<uint8_t> uRequest;
-//
-//    // TODO: Figure out how to identify the KeyType
-//    status_t err =
-//      mDRMInstance->getKeyRequest(aSessionId, aInitData, aMIMEType,
-//                                  DrmPlugin::KeyType::kKeyType_Streaming,
-//                                  optionPara, uRequest, defaultURL);
-//    if (err != OK) {
-//      string message = " GetKeyRequest Error";
-//      mCallback->RejectPromise(aPromiseId, kGMPInvalidStateError,
-//                               message.c_str(), message.size());
-//      return;
-//    }
-//
-//    string sessionId(aSessionId.begin(), aSessionId.end());
-//    string hexSessionId = byteArrayToHexString(aSessionId.array(), aSessionId.size());
-//    string hexRequest = byteArrayToHexString(uRequest.array(), uRequest.size());
-//    DRMLOG("[%s][%s] SeesionIDHex(%s) / KeyRequestHex - (%s) ",
-//           __CLASS__, __FUNCTION__, hexSessionId.c_str(),
-//           hexRequest.c_str());
-//
-//    mCallback->SetSessionId(aCreateSessionToken, &sessionId[0],
-//                            sessionId.length());
-//    mCallback->ResolvePromise(aPromiseId);
-//    mCallback->SessionMessage(&sessionId[0], sessionId.length(),
-//                              kGMPLicenseRequest,
-//                              (uint8_t*)&(uRequest.array())[0], uRequest.size());
-//  } else {
-//    string message = " Not handled yet !";
-//    mCallback->RejectPromise(aPromiseId, kGMPNotSupportedError,
-//                             message.c_str(), message.size());
-//  }
-//}
+  bool created = EnsureMediaCryptoCreated(aSessionId);
+  if (!created) {
+    mCallback->RejectPromise(aPromiseId, NS_ERROR_DOM_NOT_SUPPORTED_ERR,
+                             NS_LITERAL_CSTRING(" MediaCrypto creation failed !!"));
+    return;
+  }
+
+  nsresult rv;
+  KeyRequest::LocalRef keyReq;
+  HashMap::LocalRef lHashMap;
+  auto rvNewHashMap = HashMap::New(&lHashMap);
+  auto jBAInitData = FillJByteArray(&aInitData[0], aInitData.Length());
+
+  // TODO: Figure out how to identify the KeyType
+  rv = mMediaDrm->GetKeyRequest(aSessionId,
+                                mozilla::jni::ByteArray::Ref::From(jBAInitData),
+                                aMIMEType,
+                                MediaDrm::KEY_TYPE_STREAMING,
+                                lHashMap,
+                                ReturnTo(&keyReq));
+  if (NS_FAILED(rv)) {
+    mCallback->RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                             NS_LITERAL_CSTRING(" GetKeyRequest Error"));
+    return;
+  }
+
+  mozilla::jni::ByteArray::LocalRef reqData;
+  mozilla::jni::String::LocalRef urlString;
+  keyReq->GetData(&reqData);
+  keyReq->GetDefaultUrl(&urlString);
+
+  auto reqDataArray = reqData->GetElements();
+  auto url = urlString->ToCString();
+  PR(reqDataArray);
+  PR(url.Length(), url);
+
+  nsCString sessionId((char*) (&(aSessionId->GetElements()[0])), aSessionId->Length());
+  mCallback->SetSessionId(aCreateSessionToken, sessionId);
+  mCallback->ResolvePromise(aPromiseId);
+
+  nsTArray<uint8_t> retRequest;
+  retRequest.AppendElements((unsigned char*)(&reqDataArray[0]), reqDataArray.Length());
+  mCallback->SessionMessage(sessionId,
+                            kGMPLicenseRequest,
+                            retRequest);
+
+  DRMLOG("[%s][%s] <<<<<<<<<<<< leave", __CLASS__, __FUNCTION__);
+}
 
 //void
 //MediaDrmAdaptor::SavePendingInitData(uint32_t aCreateSessionToken,

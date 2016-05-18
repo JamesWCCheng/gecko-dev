@@ -184,14 +184,6 @@ private:
   friend class gmp_InitDoneCallback;
   friend class gmp_InitGetGMPDecryptorCallback;
 
-  struct InitData {
-    uint32_t mPromiseId;
-    nsString mOrigin;
-    nsString mTopLevelOrigin;
-    nsString mGMPName;
-    bool mInPrivateBrowsing;
-  };
-
   // GMP thread only.
   void gmp_Init(nsAutoPtr<InitData>&& aData);
   void gmp_InitDone(GMPDecryptorProxy* aCDM, nsAutoPtr<InitData>&& aData);
@@ -205,13 +197,6 @@ private:
   // Main thread only.
   void OnCDMCreated(uint32_t aPromiseId);
 
-  struct CreateSessionData {
-    dom::SessionType mSessionType;
-    uint32_t mCreateSessionToken;
-    PromiseId mPromiseId;
-    nsCString mInitDataType;
-    nsTArray<uint8_t> mInitData;
-  };
   // GMP thread only.
   void gmp_CreateSession(nsAutoPtr<CreateSessionData> aData);
 
@@ -229,11 +214,6 @@ private:
   // GMP thread only.
   void gmp_SetServerCertificate(nsAutoPtr<SetServerCertificateData> aData);
 
-  struct UpdateSessionData {
-    PromiseId mPromiseId;
-    nsCString mSessionId;
-    nsTArray<uint8_t> mResponse;
-  };
   // GMP thread only.
   void gmp_UpdateSession(nsAutoPtr<UpdateSessionData> aData);
 

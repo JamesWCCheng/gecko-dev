@@ -10,14 +10,11 @@
 #include "mozilla/CDMCaps.h"
 #include "mozilla/MozPromise.h"
 #include "mozilla/dom/MediaKeys.h"
+#include "mozilla/dom/MediaKeySession.h"
 #include "nsString.h"
 
 namespace mozilla {
 class MediaRawData;
-
-namespace dom {
-class MediaKeySession;
-} // namespace dom
 
 struct DecryptResult {
   DecryptResult(GMPErr aStatus, MediaRawData* aSample)
@@ -26,6 +23,19 @@ struct DecryptResult {
   {}
   GMPErr mStatus;
   RefPtr<MediaRawData> mSample;
+};
+
+extern GMPSessionType ToGMPSessionType(dom::SessionType aSessionType);
+
+static dom::MediaKeyMessageType
+ToMediaKeyMessageType(GMPSessionMessageType aMessageType) {
+  switch (aMessageType) {
+    case kGMPLicenseRequest: return dom::MediaKeyMessageType::License_request;
+    case kGMPLicenseRenewal: return dom::MediaKeyMessageType::License_renewal;
+    case kGMPLicenseRelease: return dom::MediaKeyMessageType::License_release;
+    case kGMPIndividualizationRequest: return dom::MediaKeyMessageType::Individualization_request;
+    default: return dom::MediaKeyMessageType::License_request;
+  };
 };
 
 // Proxies calls GMP/CDM, and proxies calls back.
@@ -169,6 +179,30 @@ public:
 #ifdef DEBUG
   virtual bool IsOnGMPThread() = 0;
 #endif
+
+  struct CreateSessionData {
+    dom::SessionType mSessionType;
+    uint32_t mCreateSessionToken;
+    PromiseId mPromiseId;
+    nsCString mInitDataType;
+    nsTArray<uint8_t> mInitData;
+  };
+
+protected:
+
+  struct InitData {
+    uint32_t mPromiseId;
+    nsString mOrigin;
+    nsString mTopLevelOrigin;
+    nsString mGMPName;
+    bool mInPrivateBrowsing;
+  };
+
+  struct UpdateSessionData {
+    PromiseId mPromiseId;
+    nsCString mSessionId;
+    nsTArray<uint8_t> mResponse;
+  };
 };
 
 } // namespace mozilla

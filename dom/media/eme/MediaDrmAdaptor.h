@@ -7,6 +7,8 @@
 #ifndef __MediaDrmAdaptor_h__
 #define __MediaDrmAdaptor_h__
 
+#include <jni.h>
+#include "mozilla/jni/Types.h"
 #include <queue>
 #include "nsISupportsImpl.h"
 #include "GMPDecryptorProxy.h"
@@ -68,24 +70,17 @@ public:
 private:
   ~MediaDrmAdaptor();
 
-  GMPErr
-  EnsureDRMInstanceCreated(const std::string& aInitDataType,
-                           const uint8_t* aInitData,
-                           uint32_t aInitDataSize);
-  GMPErr
-  EnsureCryptoInstanceCreated(uint32_t aPromiseId,
-                              void* aData,
-                              size_t aDataSize);
+  bool EnsureMediaDRMCreated();
+  bool EnsureMediaCryptoCreated(mozilla::jni::ByteArray::Param aSessionId);
 
 //  void DoDecrypt(GMPBuffer* aBuffer, GMPEncryptedBufferMetadata* aMetadata);
   void Shutdown();
 
-//  void GenerateKeyRequest(const android::Vector<uint8_t>& aSessionId,
-//                          uint32_t aCreateSessionToken,
-//                          uint32_t aPromiseId,
-//                          const android::String8& aMIMEType,
-//                          const android::Vector<uint8_t>& aInitData,
-//                          GMPSessionType aSessionType);
+  void GenerateKeyRequest(mozilla::jni::ByteArray::Param aSessionId,
+                          const nsTArray<uint8_t>& aInitData,
+                          mozilla::jni::String::Param aMIMEType,
+                          uint32_t aCreateSessionToken,
+                          uint32_t aPromiseId);
 
   void StartProvisioning(uint32_t aCreateSessionToken);
 
@@ -101,16 +96,15 @@ private:
 
   void ResumeDecryptProcedure();
 
-//  android::sp<android::Drm> mDRMInstance;
-//  android::sp<android::Crypto> mCryptoInstance;
-
   GMPDecryptorProxyCallback* mCallback;
-  //GMPDecryptorCallback* mCallback;
   GMPThread* mThread;
 
   uint8_t mKeySystem[16];
 //  std::vector<KeyId> mKeyIds;
   bool mProvisioning;
+
+  widget::sdk::MediaDrm::GlobalRef mMediaDrm;
+  widget::sdk::MediaCrypto::GlobalRef mMediaCrypto;
 
   widget::sdk::MediaCodec::GlobalRef mDecoder;
 //  std::queue<DecryptTask*> mDecryptTasks;

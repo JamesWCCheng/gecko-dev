@@ -22,6 +22,8 @@
 
 namespace mozilla {
 
+extern GMPSessionType ToGMPSessionType(dom::SessionType aSessionType);
+
 GMPCDMProxy::GMPCDMProxy(dom::MediaKeys* aKeys, const nsAString& aKeySystem)
   : mKeys(aKeys)
   , mKeySystem(aKeySystem)
@@ -273,15 +275,6 @@ GMPCDMProxy::CreateSession(uint32_t aCreateSessionToken,
     NewRunnableMethod<nsAutoPtr<CreateSessionData>>(this, &GMPCDMProxy::gmp_CreateSession, data));
   mGMPThread->Dispatch(task, NS_DISPATCH_NORMAL);
 }
-
-GMPSessionType
-ToGMPSessionType(dom::SessionType aSessionType) {
-  switch (aSessionType) {
-    case dom::SessionType::Temporary: return kGMPTemporySession;
-    case dom::SessionType::Persistent: return kGMPPersistentSession;
-    default: return kGMPTemporySession;
-  };
-};
 
 void
 GMPCDMProxy::gmp_CreateSession(nsAutoPtr<CreateSessionData> aData)
@@ -535,17 +528,6 @@ GMPCDMProxy::OnResolveLoadSessionPromise(uint32_t aPromiseId, bool aSuccess)
   }
   mKeys->OnSessionLoaded(aPromiseId, aSuccess);
 }
-
-static dom::MediaKeyMessageType
-ToMediaKeyMessageType(GMPSessionMessageType aMessageType) {
-  switch (aMessageType) {
-    case kGMPLicenseRequest: return dom::MediaKeyMessageType::License_request;
-    case kGMPLicenseRenewal: return dom::MediaKeyMessageType::License_renewal;
-    case kGMPLicenseRelease: return dom::MediaKeyMessageType::License_release;
-    case kGMPIndividualizationRequest: return dom::MediaKeyMessageType::Individualization_request;
-    default: return dom::MediaKeyMessageType::License_request;
-  };
-};
 
 void
 GMPCDMProxy::OnSessionMessage(const nsAString& aSessionId,

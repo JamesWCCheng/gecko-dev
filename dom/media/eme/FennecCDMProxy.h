@@ -168,17 +168,11 @@ public:
 
 private:
 
-  struct InitData {
-    uint32_t mPromiseId;
-    nsString mOrigin;
-    nsString mTopLevelOrigin;
-    nsString mGMPName;
-    bool mInPrivateBrowsing;
-  };
-
   virtual ~FennecCDMProxy();
 
   void mediaDrm_Init(nsAutoPtr<InitData>&& aData);
+  void mediaDrm_CreateSession(nsAutoPtr<CreateSessionData> aData);
+  void mediaDrm_UpdateSession(nsAutoPtr<UpdateSessionData> aData);
 
   // Main thread only.
   void OnCDMCreated(uint32_t aPromiseId);
