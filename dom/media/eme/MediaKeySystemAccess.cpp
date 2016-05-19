@@ -34,7 +34,10 @@
 #include "gmp-audio-decode.h"
 #include "gmp-video-decode.h"
 #include "DecoderDoctorDiagnostics.h"
-
+#ifdef MOZ_WIDGET_ANDROID
+#include "ezlogger.h"
+#include "MediaCodec.h"
+#endif
 namespace mozilla {
 namespace dom {
 
@@ -213,6 +216,48 @@ MediaKeySystemAccess::IsGMPPresentOnDisk(const nsAString& aKeySystem,
   return isPresent;
 }
 
+#ifdef MOZ_WIDGET_ANDROID
+static UUID::LocalRef GenDrmUUID(int64_t m, int64_t l)
+{
+  UUID::LocalRef uuid;
+  auto rv = UUID::New(m, l, &uuid);
+  PR(rv);
+  return uuid;
+}
+static MediaKeySystemStatus
+EnsureMinCDMVersion(mozIGeckoMediaPluginService* aGMPService,
+                    const nsAString& aKeySystem,
+                    int32_t aMinCdmVersion,
+                    nsACString& aOutMessage,
+                    nsACString& aOutCdmVersion)
+{
+  // TODO: No need aMinCdmVersion and aGMPService, should delete it.
+  PG(ToPrintable(aKeySystem));
+  UUID::LocalRef uuid;
+  if (aKeySystem.EqualsLiteral("org.w3.clearkey")) {
+    uuid = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
+  } else if (aKeySystem.EqualsLiteral("com.widevine.alpha")){
+    uuid = GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
+  }
+  // Ask MediaDrm and Crypto Plugin to check if supported.
+  MediaDrm::LocalRef mediaDrmInstance;
+  auto rv = MediaDrm::New(uuid, &mediaDrmInstance);
+  PG(rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    aOutMessage = NS_LITERAL_CSTRING("CDM unexpected error");
+    return MediaKeySystemStatus::Error;
+  }
+  bool isSupported = false;
+  rv = mediaDrmInstance->IsCryptoSchemeSupported(uuid, &isSupported);
+  PG(rv);
+  if (!isSupported) {
+    aOutMessage = NS_LITERAL_CSTRING("CDM is not installed");
+    return MediaKeySystemStatus::Cdm_not_installed;
+  }
+  PG0();
+  return MediaKeySystemStatus::Available;
+}
+#else
 static MediaKeySystemStatus
 EnsureMinCDMVersion(mozIGeckoMediaPluginService* aGMPService,
                     const nsAString& aKeySystem,
@@ -253,7 +298,7 @@ EnsureMinCDMVersion(mozIGeckoMediaPluginService* aGMPService,
 
   return MediaKeySystemStatus::Available;
 }
-
+#endif
 /* static */
 MediaKeySystemStatus
 MediaKeySystemAccess::GetKeySystemStatus(const nsAString& aKeySystem,
@@ -261,6 +306,7 @@ MediaKeySystemAccess::GetKeySystemStatus(const nsAString& aKeySystem,
                                          nsACString& aOutMessage,
                                          nsACString& aOutCdmVersion)
 {
+  PG(ToPrintable(aKeySystem));
   MOZ_ASSERT(Preferences::GetBool("media.eme.enabled", false));
   nsCOMPtr<mozIGeckoMediaPluginService> mps =
     do_GetService("@mozilla.org/gecko-media-plugin-service;1");
@@ -300,7 +346,8 @@ MediaKeySystemAccess::GetKeySystemStatus(const nsAString& aKeySystem,
   }
 #endif
 
-#ifdef MOZ_WIDEVINE_EME
+// TODO: for testing, normally should use ac_add_options --enable-eme=widevine
+//#ifdef MOZ_WIDEVINE_EME
   if (aKeySystem.EqualsLiteral("com.widevine.alpha")) {
 #ifdef XP_WIN
     // Win Vista and later only.
@@ -315,7 +362,7 @@ MediaKeySystemAccess::GetKeySystemStatus(const nsAString& aKeySystem,
     }
     return EnsureMinCDMVersion(mps, aKeySystem, aMinCdmVersion, aOutMessage, aOutCdmVersion);
   }
-#endif
+//#endif
 
   return MediaKeySystemStatus::Cdm_not_supported;
 }
@@ -404,6 +451,56 @@ GMPDecryptsAndGeckoDecodesAAC(mozIGeckoMediaPluginService* aGMPService,
   return MP4Decoder::CanHandleMediaType(aContentType, aDiagnostics);
 }
 
+#ifdef MOZ_WIDGET_ANDROID
+static bool
+IsMediaDrmSupported(const nsAString& aKeySystem,
+                    const nsAString& aType)
+{
+  PG(ToPrintable(aType));
+  PG(ToPrintable(aKeySystem));
+  UUID::LocalRef uuid;
+  if (aKeySystem.EqualsLiteral("org.w3.clearkey")) {
+    uuid = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
+  } else if (aKeySystem.EqualsLiteral("com.widevine.alpha")){
+    uuid = GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
+  }
+  // Ask MediaDrm and Crypto Plugin to check if supported.
+  MediaDrm::LocalRef mediaDrmInstance;
+  auto rv = MediaDrm::New(uuid, &mediaDrmInstance);
+  PG(rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return false;
+  }
+  nsContentTypeParser parser(aType);
+  nsAutoString mimeType;
+  parser.GetType(mimeType);
+  bool isSupported = false;
+  rv = mediaDrmInstance->IsCryptoSchemeSupported(uuid, mimeType, &isSupported);
+  PG(rv);
+  if (!isSupported) {
+    return false;
+  }
+  PG0();
+  return true;
+}
+static bool
+IsSupportedAudio(mozIGeckoMediaPluginService* aGMPService,
+                 const nsAString& aKeySystem,
+                 const nsAString& aAudioType,
+                 DecoderDoctorDiagnostics* aDiagnostics)
+{
+  return IsMediaDrmSupported(aKeySystem, aAudioType);
+}
+
+static bool
+IsSupportedVideo(mozIGeckoMediaPluginService* aGMPService,
+                 const nsAString& aKeySystem,
+                 const nsAString& aVideoType,
+                 DecoderDoctorDiagnostics* aDiagnostics)
+{
+  return IsMediaDrmSupported(aKeySystem, aVideoType);
+}
+#else
 static bool
 IsSupportedAudio(mozIGeckoMediaPluginService* aGMPService,
                  const nsAString& aKeySystem,
@@ -425,7 +522,7 @@ IsSupportedVideo(mozIGeckoMediaPluginService* aGMPService,
          (GMPDecryptsAndDecodesH264(aGMPService, aKeySystem, aDiagnostics) ||
           GMPDecryptsAndGeckoDecodesH264(aGMPService, aKeySystem, aVideoType, aDiagnostics));
 }
-
+#endif
 static bool
 IsSupported(mozIGeckoMediaPluginService* aGMPService,
             const nsAString& aKeySystem,
@@ -459,13 +556,15 @@ IsSupported(mozIGeckoMediaPluginService* aGMPService,
 static bool
 IsSupportedInitDataType(const nsString& aCandidate, const nsAString& aKeySystem)
 {
+    PG0();
   // All supported keySystems can handle "cenc" initDataType.
   // ClearKey also supports "keyids" and "webm" initDataTypes.
   return aCandidate.EqualsLiteral("cenc") ||
     ((aKeySystem.EqualsLiteral("org.w3.clearkey")
-#ifdef MOZ_WIDEVINE_EME
+// TODO: For testing
+//#ifdef MOZ_WIDEVINE_EME
     || aKeySystem.EqualsLiteral("com.widevine.alpha")
-#endif
+//#endif
     ) &&
     (aCandidate.EqualsLiteral("keyids") || aCandidate.EqualsLiteral("webm)")));
 }
@@ -477,6 +576,7 @@ GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
                    MediaKeySystemConfiguration& aOutConfig,
                    DecoderDoctorDiagnostics* aDiagnostics)
 {
+  PG0();
   MediaKeySystemConfiguration config;
   config.mLabel = aCandidate.mLabel;
   if (aCandidate.mInitDataTypes.WasPassed()) {
@@ -487,6 +587,7 @@ GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
       }
     }
     if (initDataTypes.IsEmpty()) {
+        PG0();
       return false;
     }
     config.mInitDataTypes.Construct();
@@ -500,6 +601,7 @@ GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
       }
     }
     if (caps.IsEmpty()) {
+        PG0();
       return false;
     }
     config.mAudioCapabilities.Construct();
@@ -513,6 +615,7 @@ GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
       }
     }
     if (caps.IsEmpty()) {
+        PG0();
       return false;
     }
     config.mVideoCapabilities.Construct();
@@ -574,18 +677,20 @@ MediaKeySystemAccess::GetSupportedConfig(const nsAString& aKeySystem,
                                          MediaKeySystemConfiguration& aOutConfig,
                                          DecoderDoctorDiagnostics* aDiagnostics)
 {
+  PG0();
   nsCOMPtr<mozIGeckoMediaPluginService> mps =
     do_GetService("@mozilla.org/gecko-media-plugin-service;1");
   if (NS_WARN_IF(!mps)) {
     return false;
   }
-
+// TODO: For Testing.
+#ifndef MOZ_WIDGET_ANDROID
   if (!HaveGMPFor(mps,
                   NS_ConvertUTF16toUTF8(aKeySystem),
                   NS_LITERAL_CSTRING(GMP_API_DECRYPTOR))) {
     return false;
   }
-
+#endif
   for (const MediaKeySystemConfiguration& config : aConfigs) {
     if (mozilla::dom::GetSupportedConfig(
           mps, aKeySystem, config, aOutConfig, aDiagnostics)) {

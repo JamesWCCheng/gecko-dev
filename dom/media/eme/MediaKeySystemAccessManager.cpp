@@ -86,6 +86,9 @@ MediaKeySystemAccessManager::Request(DetailedPromise* aPromise,
   // Parse keysystem, split it out into keySystem prefix, and version suffix.
   nsAutoString keySystem;
   int32_t minCdmVersion = NO_CDM_VERSION;
+#ifdef MOZ_WIDGET_ANDROID
+  keySystem = aKeySystem;
+#else
   if (!ParseKeySystem(aKeySystem, keySystem, minCdmVersion)) {
     // Not to inform user, because nothing to do if the keySystem is not
     // supported.
@@ -96,6 +99,7 @@ MediaKeySystemAccessManager::Request(DetailedPromise* aPromise,
                                           aKeySystem, false, __func__);
     return;
   }
+#endif
 
   if (!Preferences::GetBool("media.eme.enabled", false)) {
     // EME disabled by user, send notification to chrome so UI can inform user.
