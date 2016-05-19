@@ -474,11 +474,15 @@ IsMediaDrmSupported(const nsAString& aKeySystem,
   nsContentTypeParser parser(aType);
   nsAutoString mimeType;
   parser.GetType(mimeType);
+  PG(mimeType);
   bool isSupported = false;
+  // TODO: It's strange that it only accept cenc or webm in clearkey impl.
+  // http://androidxref.com/6.0.1_r10/xref/frameworks/av/drm/mediadrm/plugins/clearkey/DrmFactory.cpp#35
+  // return to for testing.
   rv = mediaDrmInstance->IsCryptoSchemeSupported(uuid, mimeType, &isSupported);
-  PG(rv);
+  PG(isSupported);
   if (!isSupported) {
-    return false;
+    return true;
   }
   PG0();
   return true;
