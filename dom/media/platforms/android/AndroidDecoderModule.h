@@ -14,6 +14,7 @@
 
 #include <deque>
 #include "mozilla/CDMProxy.h"
+#include "ezlogger.h"
 
 namespace mozilla {
 
@@ -87,17 +88,13 @@ protected:
 
   virtual nsresult InitDecoder(widget::sdk::Surface::Param aSurface);
 
+  // Video go here
   virtual nsresult Output(widget::sdk::BufferInfo::Param aInfo, void* aBuffer,
-      widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration)
-  {
-    return NS_OK;
-  }
+      widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration);
 
+  // Audio go here
   virtual nsresult PostOutput(widget::sdk::BufferInfo::Param aInfo,
-      widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration)
-  {
-    return NS_OK;
-  }
+      widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration);
 
   virtual void Cleanup() {};
 

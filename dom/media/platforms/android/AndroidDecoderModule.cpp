@@ -184,7 +184,7 @@ TranslateMimeType(const nsACString& aMimeType)
 static MediaCodec::LocalRef
 CreateDecoder(const nsACString& aMimeType)
 {
-  PrintSecureDecoderNameForMime();
+  //PrintSecureDecoderNameForMime();
   mimetype = TranslateMimeType(aMimeType);
   MediaCodec::LocalRef codec;
   // NS_ENSURE_SUCCESS(MediaCodec::CreateDecoderByType(aMimeType,
@@ -231,13 +231,15 @@ public:
 
   RefPtr<InitPromise> Init() override
   {
+    PG(this);
     mSurfaceTexture = AndroidSurfaceTexture::Create();
     if (!mSurfaceTexture) {
       NS_WARNING("Failed to create SurfaceTexture for video decode\n");
       return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
     }
 
-    if (NS_FAILED(InitDecoder(mSurfaceTexture->JavaSurface()))) {
+    //if (NS_FAILED(InitDecoder(mSurfaceTexture->JavaSurface()))) {
+    if (NS_FAILED(InitDecoder(nullptr))) {
       return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
     }
 
@@ -329,6 +331,7 @@ public:
   nsresult Output(BufferInfo::Param aInfo, void* aBuffer,
                   MediaFormat::Param aFormat, const TimeUnit& aDuration)
   {
+    PG0();
     // The output on Android is always 16-bit signed
     nsresult rv;
     int32_t numChannels;
@@ -348,6 +351,7 @@ public:
 
     int32_t offset;
     NS_ENSURE_SUCCESS(rv = aInfo->Offset(&offset), rv);
+    PR(offset, size);
 
 #ifdef MOZ_SAMPLE_TYPE_S16
     const int32_t numSamples = size / 2;
@@ -424,6 +428,7 @@ AndroidDecoderModule::CreateVideoDecoder(
     MediaDataDecoderCallback* aCallback,
     DecoderDoctorDiagnostics* aDiagnostics)
 {
+  PG(this);
   MediaFormat::LocalRef format;
 
   NS_ENSURE_SUCCESS(MediaFormat::CreateVideoFormat(
@@ -459,6 +464,7 @@ AndroidDecoderModule::CreateAudioDecoder(
     MediaDataDecoderCallback* aCallback,
     DecoderDoctorDiagnostics* aDiagnostics)
 {
+  PG(this);
   MOZ_ASSERT(aConfig.mBitDepth == 16, "We only handle 16-bit audio!");
 
   MediaFormat::LocalRef format;
@@ -530,6 +536,7 @@ MediaCodecDataDecoder::~MediaCodecDataDecoder()
 RefPtr<MediaDataDecoder::InitPromise>
 MediaCodecDataDecoder::Init()
 {
+  PG(this);
   nsresult rv = InitDecoder(nullptr);
 
   TrackInfo::TrackType type =
@@ -545,6 +552,7 @@ MediaCodecDataDecoder::Init()
 nsresult
 MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
 {
+  PG(mMimeType, this);
   mDecoder = CreateDecoder(mMimeType);
   if (!mDecoder) {
     INVOKE_CALLBACK(Error);
@@ -584,7 +592,7 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
   bool isRequiresSecureDecoderComponent = false;
   auto rvRequiresSecureDecoderComponent = mediacrypto->RequiresSecureDecoderComponent(mimetype, &isRequiresSecureDecoderComponent);
   PG(rvRequiresSecureDecoderComponent, isRequiresSecureDecoderComponent);
-  auto rvconfigure = mDecoder->Configure(mFormat, nullptr, mediacrypto, 0);
+  auto rvconfigure = mDecoder->Configure(mFormat, aSurface, mediacrypto, 0);
   PG(rvconfigure);
 
 
@@ -647,7 +655,24 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
 
   return rv;
 }
+// Video go here
+nsresult
+MediaCodecDataDecoder::Output(widget::sdk::BufferInfo::Param aInfo, void* aBuffer,
+      widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration)
+{
+  PR((char*)aBuffer);
+  PR(ToCStringHelper(aFormat));
+  return NS_OK;
+}
 
+  // Audio go here
+nsresult
+MediaCodecDataDecoder::PostOutput(widget::sdk::BufferInfo::Param aInfo,
+      widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration)
+{
+  PG0();
+  return NS_OK;
+}
 // This is in usec, so that's 10ms.
 static const int64_t kDecoderTimeout = 10000;
 
@@ -902,10 +927,14 @@ MediaCodecDataDecoder::ProcessOutput(
       frame.GetEnv()->GetObjectArrayElement(mOutputBuffers.Get(), aStatus));
   PG(aStatus);
   if (buffer) {
-    PG(buffer);
+    PG(buffer, this, mDecoder.Get());
+    PG(ToCStringHelper(aFormat));
     // The buffer will be null on Android L if we are decoding to a Surface.
     void* directBuffer = frame.GetEnv()->GetDirectBufferAddress(buffer.Get());
     Output(aInfo, directBuffer, aFormat, duration);
+  } else
+  {
+    PG(buffer, this, mDecoder.Get());
   }
 
   // The Surface will be updated at this point (for video).
