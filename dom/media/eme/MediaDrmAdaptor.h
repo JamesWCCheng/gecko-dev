@@ -99,7 +99,7 @@ private:
   GMPDecryptorProxyCallback* mCallback;
   GMPThread* mThread;
 
-  uint8_t mKeySystem[16];
+  UUID::GlobalRef mKeySystem;
 //  std::vector<KeyId> mKeyIds;
   bool mProvisioning;
 

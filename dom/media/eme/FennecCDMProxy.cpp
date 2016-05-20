@@ -13,6 +13,7 @@
 namespace mozilla {
 
 extern GMPSessionType ToGMPSessionType(dom::SessionType aSessionType);
+extern dom::MediaKeyMessageType ToMediaKeyMessageType(GMPSessionMessageType aMessageType);
 
 FennecCDMProxy::FennecCDMProxy(dom::MediaKeys* aKeys, const nsAString& aKeySystem)
   : mKeys(aKeys)
@@ -142,7 +143,15 @@ void
 FennecCDMProxy::CloseSession(const nsAString& aSessionId,
                              PromiseId aPromiseId)
 {
+  MOZ_ASSERT(NS_IsMainThread());
+  NS_ENSURE_TRUE_VOID(!mKeys.IsNull());
 
+  nsAutoPtr<SessionOpData> data(new SessionOpData());
+  data->mPromiseId = aPromiseId;
+  data->mSessionId = NS_ConvertUTF16toUTF8(aSessionId);
+  nsCOMPtr<nsIRunnable> task(
+    NewRunnableMethod<nsAutoPtr<SessionOpData>>(this, &FennecCDMProxy::mediaDrm_CloseSession, data));
+  mGMPThread->Dispatch(task, NS_DISPATCH_NORMAL);
 }
 
 void
@@ -217,7 +226,14 @@ FennecCDMProxy::OnExpirationChange(const nsAString& aSessionId,
 void
 FennecCDMProxy::OnSessionClosed(const nsAString& aSessionId)
 {
-
+  MOZ_ASSERT(NS_IsMainThread());
+  if (mKeys.IsNull()) {
+    return;
+  }
+  RefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
+  if (session) {
+    session->OnClosed();
+  }
 }
 
 void
@@ -351,6 +367,18 @@ FennecCDMProxy::mediaDrm_UpdateSession(nsAutoPtr<UpdateSessionData> aData)
   mCDM->UpdateSession(aData->mPromiseId,
                       aData->mSessionId,
                       aData->mResponse);
+}
+
+void
+FennecCDMProxy::mediaDrm_CloseSession(nsAutoPtr<SessionOpData> aData)
+{
+  MOZ_ASSERT(IsOnGMPThread());
+  if (!mCDM) {
+    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("Null CDM in mediaDrm_CloseSession"));
+    return;
+  }
+  mCDM->CloseSession(aData->mPromiseId, aData->mSessionId);
 }
 
 void

@@ -173,6 +173,7 @@ private:
   void mediaDrm_Init(nsAutoPtr<InitData>&& aData);
   void mediaDrm_CreateSession(nsAutoPtr<CreateSessionData> aData);
   void mediaDrm_UpdateSession(nsAutoPtr<UpdateSessionData> aData);
+  void mediaDrm_CloseSession(nsAutoPtr<SessionOpData> aData);
 
   // Main thread only.
   void OnCDMCreated(uint32_t aPromiseId);

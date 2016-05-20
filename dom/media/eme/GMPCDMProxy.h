@@ -200,10 +200,6 @@ private:
   // GMP thread only.
   void gmp_CreateSession(nsAutoPtr<CreateSessionData> aData);
 
-  struct SessionOpData {
-    PromiseId mPromiseId;
-    nsCString mSessionId;
-  };
   // GMP thread only.
   void gmp_LoadSession(nsAutoPtr<SessionOpData> aData);
 

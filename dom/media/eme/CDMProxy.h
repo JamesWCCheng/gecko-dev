@@ -27,16 +27,7 @@ struct DecryptResult {
 
 extern GMPSessionType ToGMPSessionType(dom::SessionType aSessionType);
 
-static dom::MediaKeyMessageType
-ToMediaKeyMessageType(GMPSessionMessageType aMessageType) {
-  switch (aMessageType) {
-    case kGMPLicenseRequest: return dom::MediaKeyMessageType::License_request;
-    case kGMPLicenseRenewal: return dom::MediaKeyMessageType::License_renewal;
-    case kGMPLicenseRelease: return dom::MediaKeyMessageType::License_release;
-    case kGMPIndividualizationRequest: return dom::MediaKeyMessageType::Individualization_request;
-    default: return dom::MediaKeyMessageType::License_request;
-  };
-};
+extern dom::MediaKeyMessageType ToMediaKeyMessageType(GMPSessionMessageType aMessageType);
 
 // Proxies calls GMP/CDM, and proxies calls back.
 // Note: Promises are passed in via a PromiseId, so that the ID can be
@@ -202,6 +193,11 @@ protected:
     PromiseId mPromiseId;
     nsCString mSessionId;
     nsTArray<uint8_t> mResponse;
+  };
+
+  struct SessionOpData {
+    PromiseId mPromiseId;
+    nsCString mSessionId;
   };
 };
 

@@ -23,6 +23,7 @@
 namespace mozilla {
 
 extern GMPSessionType ToGMPSessionType(dom::SessionType aSessionType);
+extern dom::MediaKeyMessageType ToMediaKeyMessageType(GMPSessionMessageType aMessageType);
 
 GMPCDMProxy::GMPCDMProxy(dom::MediaKeys* aKeys, const nsAString& aKeySystem)
   : mKeys(aKeys)

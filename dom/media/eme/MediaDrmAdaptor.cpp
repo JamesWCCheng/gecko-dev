@@ -17,9 +17,6 @@ using namespace android;
 using namespace mozilla::widget::sdk;
 using namespace mozilla;
 
-extern const uint8_t kClearKeyUUID[16];
-extern const uint8_t kWidevineUUID[16];
-
 extern std::string byteArrayToHexString(const unsigned char *bytes, int len);
 
 static
@@ -93,12 +90,14 @@ private:
 };
 
 MediaDrmAdaptor::MediaDrmAdaptor()
-  : mKeySystem{0}
+  : mKeySystem{nullptr}
   , mProvisioning(false)
   , mMediaDrm(nullptr)
   , mMediaCrypto(nullptr)
 {
   DRMLOG("[%s][%s]", __CLASS__, __FUNCTION__);
+  clearkeyUUID = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
+  widevineUUID = GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
 }
 
 MediaDrmAdaptor::~MediaDrmAdaptor()
@@ -245,9 +244,23 @@ MediaDrmAdaptor::UpdateSession(uint32_t aPromiseId,
 
   nsresult rv;
 
+  bool isClearkey = false;
+  mKeySystem->Equals(clearkeyUUID, &isClearkey);
+
+  nsTArray<uint8_t> newResponse;
+  if (isClearkey) {
+    basic_string<uint8_t, char_traits<uint8_t>, allocator<uint8_t>> rep(aResponse.Elements(),
+                                                                          aResponse.Length());
+    std::replace(rep.begin(), rep.end(), static_cast<uint8_t>('-'), static_cast<uint8_t>('+'));
+    std::replace(rep.begin(), rep.end(), static_cast<uint8_t>('_'), static_cast<uint8_t>('/'));
+    newResponse.AppendElements(rep.data(), rep.size());
+  } else {
+    newResponse = aResponse;
+  }
+
   mozilla::jni::ByteArray::LocalRef keysetid;
   auto jBASessionId = FillJByteArray((uint8_t*)aSessionId.Data(), aSessionId.Length());
-  auto jBAReponse = FillJByteArray(aResponse.Elements(), aResponse.Length());
+  auto jBAReponse = FillJByteArray(newResponse.Elements(), newResponse.Length());
 
   rv = mMediaDrm->ProvideKeyResponse(mozilla::jni::ByteArray::Ref::From(jBASessionId),
                                      mozilla::jni::ByteArray::Ref::From(jBAReponse),
@@ -263,44 +276,13 @@ MediaDrmAdaptor::UpdateSession(uint32_t aPromiseId,
   rv= mMediaDrm->QueryKeyStatus(mozilla::jni::ByteArray::Ref::From(jBASessionId),
                                 ReturnTo(&lHashMap));
   if (NS_FAILED(rv)) {
-    DRMLOG("[%s][%s] QueryKeyStatus Err(%d).", __CLASS__, __FUNCTION__, rv);
+    // Aandroid ClearKeyPlugin doesn't handle QueryKeyStatus
+    if (!isClearkey) {
+      DRMLOG("[%s][%s] QueryKeyStatus Err(%d).", __CLASS__, __FUNCTION__, rv);
+    }
   }
   mCallback->ResolvePromise(aPromiseId);
 
-//
-//  // TODO : Need to notify key status via Drm::getKeyStatus!!
-//  Vector<uint8_t> uSessionId;
-//  MediaDrmAdaptorUtils::Assign(uSessionId,
-//                               reinterpret_cast<const uint8_t*>(aSessionId),
-//                               aSessionIdLength);
-//
-//  Vector<uint8_t> uKeySetId;
-//  Vector<uint8_t> uResponse;
-//  basic_string<uint8_t, char_traits<uint8_t>, allocator<uint8_t>> rep(aResponse,
-//                                                                      aResponseSize);
-//  if (!memcmp(mKeySystem, kClearKeyUUID, sizeof(kClearKeyUUID))) {
-//    // Specifically handling the response for aosp-clearkey-plugin
-//    std::replace(rep.begin(), rep.end(), static_cast<uint8_t>('-'),
-//                 static_cast<uint8_t>('+'));
-//    std::replace(rep.begin(), rep.end(), static_cast<uint8_t>('_'),
-//                 static_cast<uint8_t>('/'));
-//  }
-//  MediaDrmAdaptorUtils::Assign(uResponse, rep.data(), rep.size());
-//
-//  string hexSessionId = byteArrayToHexString(uSessionId.array(), uSessionId.size());
-//  string hexRepsonse = byteArrayToHexString(uResponse.array(), uResponse.size());
-//  DRMLOG("[%s][%s] sessionidHex(%s) / aResponse(%s)-(%d)bytes ", __CLASS__,
-//         __FUNCTION__, hexSessionId.c_str(), hexRepsonse.c_str(), rep.size());
-//
-//  status_t err = mDRMInstance->provideKeyResponse(uSessionId, uResponse, uKeySetId);
-//  auto keySetId = byteArrayToHexString(uKeySetId.array(), uKeySetId.size());
-//  DRMLOG("[%s][%s] provideKeyResponse keySetId = %s.", __CLASS__, __FUNCTION__,
-//         keySetId.c_str());
-//  if (err != OK) {
-//    DRMLOG("[%s][%s] provideKeyResponse Err(%d).", __CLASS__, __FUNCTION__, err);
-//    mCallback->RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_ACCESS_ERR, nullptr, 0);
-//    return;
-//  }
 //
 //  //TODO: KeyStatusChanged should use a standard way.
 //  KeyedVector<String8, String8> infoMap;
@@ -328,31 +310,26 @@ MediaDrmAdaptor::UpdateSession(uint32_t aPromiseId,
 
 void
 MediaDrmAdaptor::CloseSession(uint32_t aPromiseId, const nsCString& aSessionId)
-/*
- * uint32_t aPromiseId,
-   const char* aSessionId,
-   uint32_t aSessionIdLength
- */
 {
   DRMLOG("[%s][%s]", __CLASS__, __FUNCTION__);
-//  assert(mDRMInstance.get());
-//
-//  Vector<uint8_t> uSessionId;
-//  MediaDrmAdaptorUtils::Assign(uSessionId,
-//                               reinterpret_cast<const uint8_t*>(aSessionId),
-//                               aSessionIdLength);
-//
-//  status_t err = mDRMInstance->closeSession(uSessionId);
-//  if (err != OK) {
-//    auto sessionId = byteArrayToHexString(uSessionId.array(), uSessionId.size());
-//    DRMLOG("[%s][%s] Session(%s) can NOT be closed correctly.",
-//           __CLASS__, __FUNCTION__, sessionId.c_str());
-//    mCallback->RejectPromise(aPromiseId, NS_ERROR_DOM_NOT_FOUND_ERR, nullptr, 0);
-//    return;
-//  }
-//
-//  mCallback->ResolvePromise(aPromiseId);
-//  mCallback->SessionClosed(aSessionId, aSessionIdLength);
+  MOZ_ASSERT(mMediaDrm);
+
+  auto jBASessionId = FillJByteArray((uint8_t*)aSessionId.Data(),
+                                      aSessionId.Length());
+
+  nsresult rv = mMediaDrm->CloseSession(mozilla::jni::ByteArray::Ref::From(jBASessionId));
+
+  if (NS_FAILED(rv)) {
+    DRMLOG("[%s][%s] SessionId(%s) can NOT be closed correctly.",
+           __CLASS__, __FUNCTION__, aSessionId.get());
+    mCallback->RejectPromise(aPromiseId,
+                             NS_ERROR_DOM_INVALID_STATE_ERR,
+                             NS_LITERAL_CSTRING(" CloseSession Error"));
+    return;
+  }
+
+  mCallback->ResolvePromise(aPromiseId);
+  mCallback->SessionClosed(aSessionId);
 }
 
 void
@@ -525,9 +502,13 @@ MediaDrmAdaptor::EnsureMediaDRMCreated()
   DRMLOG("[%s][%s]", __CLASS__, __FUNCTION__);
   if (!mMediaDrm) {
     MediaDrm::LocalRef mediaDrm;
-    clearkeyUUID = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
-    //widevineUUID = GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
-    auto rvMediaDrmNew = MediaDrm::New(clearkeyUUID, &mediaDrm);
+
+    bool useClearKey = true;
+    mKeySystem = useClearKey ?
+      GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll) :
+      GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
+
+    auto rvMediaDrmNew = MediaDrm::New(mKeySystem, &mediaDrm);
     PG(rvMediaDrmNew);
     mMediaDrm = mediaDrm;
     PG(mMediaDrm);
@@ -551,12 +532,12 @@ MediaDrmAdaptor::EnsureMediaCryptoCreated(mozilla::jni::ByteArray::Param aSessio
     nsresult rv;
 
     MediaCrypto::LocalRef mediacrypto;
-    rv = MediaCrypto::New(clearkeyUUID, aSessionId, &mediacrypto);
+    rv = MediaCrypto::New(mKeySystem, aSessionId, &mediacrypto);
 
     mMediaCrypto = mediacrypto;
     if (mMediaCrypto) {
       bool isCryptoSchemeSupported = false;
-      rv = mediacrypto->IsCryptoSchemeSupported(clearkeyUUID, &isCryptoSchemeSupported);
+      rv = mediacrypto->IsCryptoSchemeSupported(mKeySystem, &isCryptoSchemeSupported);
       PG(isCryptoSchemeSupported);
     }
   }
