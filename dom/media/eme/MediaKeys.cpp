@@ -295,7 +295,7 @@ MediaKeys::Init(ErrorResult& aRv)
     return nullptr;
   }
 
-  bool useFennecCDMProxy = false;
+  bool useFennecCDMProxy = true;
   mProxy = useFennecCDMProxy ?
     static_cast<CDMProxy*>(new FennecCDMProxy(this, mKeySystem)) :
     static_cast<CDMProxy*>(new GMPCDMProxy(this, mKeySystem));

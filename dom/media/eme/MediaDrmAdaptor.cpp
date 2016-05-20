@@ -126,6 +126,12 @@ MediaDrmAdaptor::Init(GMPDecryptorProxyCallback* aCallback)
   return NS_OK;
 }
 
+MediaCrypto::LocalRef
+MediaDrmAdaptor::GetMediaCrypto()
+{
+  return mMediaCrypto;
+}
+
 void
 MediaDrmAdaptor::CreateSession(uint32_t aCreateSessionToken,
                                uint32_t aPromiseId,
@@ -272,15 +278,16 @@ MediaDrmAdaptor::UpdateSession(uint32_t aPromiseId,
     return;
   }
 
-  HashMap::LocalRef lHashMap;
-  rv= mMediaDrm->QueryKeyStatus(mozilla::jni::ByteArray::Ref::From(jBASessionId),
-                                ReturnTo(&lHashMap));
-  if (NS_FAILED(rv)) {
+  if (!isClearkey) {
     // Aandroid ClearKeyPlugin doesn't handle QueryKeyStatus
-    if (!isClearkey) {
+    HashMap::LocalRef lHashMap;
+    rv= mMediaDrm->QueryKeyStatus(mozilla::jni::ByteArray::Ref::From(jBASessionId),
+                                  ReturnTo(&lHashMap));
+    if (NS_FAILED(rv)) {
       DRMLOG("[%s][%s] QueryKeyStatus Err(%d).", __CLASS__, __FUNCTION__, rv);
     }
   }
+
   mCallback->ResolvePromise(aPromiseId);
 
 //

@@ -13,10 +13,13 @@
 #include "mozilla/Monitor.h"
 #include "mozilla/MozPromise.h"
 
+#include "MediaCodec.h"
 #include "nsIThread.h"
 #include "nsString.h"
 #include "nsAutoPtr.h"
 #include "GMPDecryptorProxy.h"
+
+using namespace mozilla::widget::sdk;
 
 namespace mozilla {
 class MediaRawData;
@@ -165,6 +168,8 @@ public:
 #ifdef DEBUG
   bool IsOnGMPThread();
 #endif
+
+  mozilla::widget::sdk::MediaCrypto::LocalRef GetMediaCrypto();
 
 private:
 

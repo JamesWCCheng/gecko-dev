@@ -315,6 +315,16 @@ FennecCDMProxy::IsOnGMPThread()
 }
 #endif
 
+MediaCrypto::LocalRef
+FennecCDMProxy::GetMediaCrypto()
+{
+  if (mCDM) {
+    MediaDrmAdaptor* mda = static_cast<MediaDrmAdaptor*>(mCDM);
+    return mda->GetMediaCrypto();
+  }
+  return nullptr;
+}
+
 // ======== Private Implementation ========
 
 void

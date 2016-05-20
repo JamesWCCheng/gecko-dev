@@ -67,6 +67,8 @@ public:
 
   void Close() override;
 
+  MediaCrypto::LocalRef GetMediaCrypto();
+
 private:
   ~MediaDrmAdaptor();
 

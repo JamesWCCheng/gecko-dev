@@ -126,6 +126,7 @@ protected:
   MediaDataDecoderCallback* mCallback;
 
   widget::sdk::MediaCodec::GlobalRef mDecoder;
+  widget::sdk::MediaCrypto::GlobalRef mCrypto;
 
   jni::ObjectArray::GlobalRef mInputBuffers;
   jni::ObjectArray::GlobalRef mOutputBuffers;

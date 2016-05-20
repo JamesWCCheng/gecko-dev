@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/jni/Types.h"
+#include "mozilla/FennecCDMProxy.h"
 #include "AndroidDecoderModule.h"
 #include "AndroidBridge.h"
 #include "AndroidSurfaceTexture.h"
@@ -558,93 +559,19 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
     INVOKE_CALLBACK(Error);
     return NS_ERROR_FAILURE;
   }
-  const uint8_t kWidevineUUID[16] = {
-    0xed,0xef,0x8b,0xa9,0x79,0xd6,0x4a,0xce,
-    0xa3,0xc8,0x27,0xdc,0xd5,0x1d,0x21,0xed
-  };
-  auto widevineUUID = GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
+
   nsresult rv;
-  //Clearkey: 0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL
+
   auto clearkeyUUID = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
 
-  auto uuidStr = ToStringHelper(clearkeyUUID);
-  PB(uuidStr);
-  MediaDrm::LocalRef mediadrm;
-  auto rvmediadrm = MediaDrm::New(clearkeyUUID, &mediadrm);
-  PG(rvmediadrm);
-  mozilla::jni::ByteArray::LocalRef sessionid;
-  auto rvopensession = mediadrm->OpenSession(&sessionid);
-  PG(rvopensession);
-  PG(sessionid->GetElements());
+  mCrypto = (static_cast<FennecCDMProxy*>(mProxy.get()))->GetMediaCrypto();
 
-  auto sidarr = sessionid->GetElements();
-  JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
-  jbyteArray sessionidArray = FillJByteArray(&sidarr[0], sidarr.Length());
-
-
-  MediaCrypto::LocalRef mediacrypto;
-  auto rvmediacrypto = MediaCrypto::New(clearkeyUUID, mozilla::jni::ByteArray::Ref::From(sessionidArray), &mediacrypto);
-  PG(rvmediacrypto);
-  bool isCryptoSchemeSupported = false;
-  auto rvIscryptosupported =
-    mediacrypto->IsCryptoSchemeSupported(clearkeyUUID, &isCryptoSchemeSupported);
-  PG(isCryptoSchemeSupported);
   bool isRequiresSecureDecoderComponent = false;
-  auto rvRequiresSecureDecoderComponent = mediacrypto->RequiresSecureDecoderComponent(mimetype, &isRequiresSecureDecoderComponent);
+  auto rvRequiresSecureDecoderComponent = mCrypto->RequiresSecureDecoderComponent(mimetype, &isRequiresSecureDecoderComponent);
   PG(rvRequiresSecureDecoderComponent, isRequiresSecureDecoderComponent);
-  auto rvconfigure = mDecoder->Configure(mFormat, aSurface, mediacrypto, 0);
+  auto rvconfigure = mDecoder->Configure(mFormat, aSurface, mCrypto, 0);
   PG(rvconfigure);
 
-
-  // auto uuidStrwidevine = ToStringHelper(widevineUUID);
-  // PB(uuidStrwidevine);
-  // MediaDrm::LocalRef mediadrmwidevine;
-  // auto rvmediadrmwidevine = MediaDrm::New(widevineUUID, &mediadrmwidevine);
-  // PG(rvmediadrmwidevine);
-  //   auto rvSecurityLevel = mediadrmwidevine->SetPropertyString("securityLevel", "L3");
-  //   PG(rvSecurityLevel);
-  // mozilla::jni::ByteArray::LocalRef sessionidwidevine;
-  // auto rvopensessionwidevine = mediadrmwidevine->OpenSession(&sessionidwidevine);
-  // PG(rvopensessionwidevine);
-  // PG(sessionidwidevine->GetElements());
-
-  // auto sidarrwidevine = sessionidwidevine->GetElements();
-  // jbyteArray sessionidArraywidevine = FillJByteArray(&sidarrwidevine[0], sidarrwidevine.Length());
-  // MediaCrypto::LocalRef mediacryptowidevine;
-  // auto rvmediacryptowidevine = MediaCrypto::New(widevineUUID, mozilla::jni::ByteArray::Ref::From(sessionidArraywidevine), &mediacryptowidevine);
-  // PG(rvmediacryptowidevine);
-  // bool isCryptoSchemeSupportedwidevine = false;
-  // auto rvIscryptosupportedwidevine =
-  //   mediacryptowidevine->IsCryptoSchemeSupported(widevineUUID, &isCryptoSchemeSupportedwidevine);
-  // PG(isCryptoSchemeSupportedwidevine);
-  // bool isRequiresSecureDecoderComponentwidevine = false;
-  // auto rvRequiresSecureDecoderComponentwidevine = mediacrypto->RequiresSecureDecoderComponent(mimetype, &isRequiresSecureDecoderComponentwidevine);
-  // PG(rvRequiresSecureDecoderComponentwidevine, isRequiresSecureDecoderComponentwidevine);
-  // auto rvconfigure = mDecoder->Configure(mFormat, aSurface, mediacryptowidevine, 0);
-  // PG(rvconfigure);
-
-  // Do Configure again to test different crypto instance.
-  // mozilla::jni::ByteArray::LocalRef sessionid2;
-  // auto rvopensession2 = mediadrm->OpenSession(&sessionid2);
-  // PG(rvopensession2);
-  // PG(sessionid2->GetElements());
-  // MediaCrypto::LocalRef mediacrypto2;
-  // auto rvmediacrypto2 = MediaCrypto::New(clearkeyUUID, sessionid2, &mediacrypto2);
-  // PG(rvmediacrypto2);
-  // auto rvconfigure2 = mDecoder->Configure(mFormat, aSurface, mediacrypto2, 0);
-  // PG(rvconfigure2);
-  // JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
-  // jbyteArray bytearray = jenv->NewByteArray(5566);
-
-  mozilla::jni::ByteArray::LocalRef keysetid;
-  unsigned char response[] = {0x7b,0x22,0x6b,0x65,0x79,0x73,0x22,0x3a,0x5b,0x7b,0x22,0x6b,0x74,0x79,0x22,0x3a,0x22,0x6f,0x63,0x74,0x22,0x2c,0x22,0x6b,0x69,0x64,0x22,0x3a,0x22,0x59,0x41,0x59,0x65,0x41,0x58,0x35,0x48,0x66,0x6f,0x64,0x2b,0x56,0x39,0x41,0x4e,0x48,0x74,0x41,0x4e,0x48,0x67,0x22,0x2c,0x22,0x6b,0x22,0x3a,0x22,0x47,0x6f,0x6f,0x67,0x6c,0x65,0x54,0x65,0x73,0x74,0x4b,0x65,0x79,0x42,0x61,0x73,0x65,0x36,0x34,0x67,0x67,0x67,0x22,0x7d,0x5d,0x7d};
-  unsigned char *responsedata = response;
-  auto responsearray = FillJByteArray(responsedata, sizeof(response));
-
-  auto rvprovide = mediadrm->ProvideKeyResponse(sessionid, mozilla::jni::ByteArray::Ref::From(responsearray), &keysetid);
-  PG(rvprovide);
-
-  //NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, nullptr, 0), rv);
   NS_ENSURE_SUCCESS(rv = mDecoder->Start(), rv);
 
   NS_ENSURE_SUCCESS(rv = ResetInputBuffers(), rv);
