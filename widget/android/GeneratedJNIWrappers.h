@@ -4160,6 +4160,162 @@ public:
 
 };
 
+class MediaDrmBridge : public mozilla::jni::ObjectBase<MediaDrmBridge, jobject>
+{
+public:
+    explicit MediaDrmBridge(const Context& ctx) : ObjectBase<MediaDrmBridge, jobject>(ctx) {}
+
+    struct New_t {
+        typedef MediaDrmBridge Owner;
+        typedef MediaDrmBridge::LocalRef ReturnType;
+        typedef MediaDrmBridge::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "<init>";
+        static constexpr char signature[] =
+                "()V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    static auto New() -> MediaDrmBridge::LocalRef;
+
+    struct CloseSession_t {
+        typedef MediaDrmBridge Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::String::Param> Args;
+        static constexpr char name[] = "CloseSession";
+        static constexpr char signature[] =
+                "(Ljava/lang/String;)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    auto CloseSession(mozilla::jni::String::Param) const -> void;
+
+    struct CreateSession_t {
+        typedef MediaDrmBridge Owner;
+        typedef bool ReturnType;
+        typedef bool SetterType;
+        typedef mozilla::jni::Args<
+                int32_t,
+                int32_t,
+                mozilla::jni::String::Param,
+                mozilla::jni::ByteArray::Param> Args;
+        static constexpr char name[] = "CreateSession";
+        static constexpr char signature[] =
+                "(IILjava/lang/String;[B)Z";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    auto CreateSession(int32_t, int32_t, mozilla::jni::String::Param, mozilla::jni::ByteArray::Param) const -> bool;
+
+    struct GetMediaCrypto_t {
+        typedef MediaDrmBridge Owner;
+        typedef mozilla::jni::Object::LocalRef ReturnType;
+        typedef mozilla::jni::Object::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "GetMediaCrypto";
+        static constexpr char signature[] =
+                "()Landroid/media/MediaCrypto;";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    auto GetMediaCrypto() const -> mozilla::jni::Object::LocalRef;
+
+    struct Init_t {
+        typedef MediaDrmBridge Owner;
+        typedef bool ReturnType;
+        typedef bool SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::Object::Param> Args;
+        static constexpr char name[] = "Init";
+        static constexpr char signature[] =
+                "(Ljava/util/UUID;)Z";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    auto Init(mozilla::jni::Object::Param) const -> bool;
+
+    struct UpdateSession_t {
+        typedef MediaDrmBridge Owner;
+        typedef bool ReturnType;
+        typedef bool SetterType;
+        typedef mozilla::jni::Args<
+                int32_t,
+                mozilla::jni::String::Param,
+                mozilla::jni::ByteArray::Param> Args;
+        static constexpr char name[] = "UpdateSession";
+        static constexpr char signature[] =
+                "(ILjava/lang/String;[B)Z";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    auto UpdateSession(int32_t, mozilla::jni::String::Param, mozilla::jni::ByteArray::Param) const -> bool;
+
+    struct OnSessionCreated_t {
+        typedef MediaDrmBridge Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                int32_t,
+                int32_t,
+                mozilla::jni::ByteArray::Param,
+                mozilla::jni::ByteArray::Param> Args;
+        static constexpr char name[] = "onSessionCreated";
+        static constexpr char signature[] =
+                "(II[B[B)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    struct OnSessionUpdated_t {
+        typedef MediaDrmBridge Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                int32_t,
+                int32_t> Args;
+        static constexpr char name[] = "onSessionUpdated";
+        static constexpr char signature[] =
+                "(II)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    struct OnSessoinClosed_t {
+        typedef MediaDrmBridge Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                int32_t,
+                int32_t> Args;
+        static constexpr char name[] = "onSessoinClosed";
+        static constexpr char signature[] =
+                "(II)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    static const bool isMultithreaded = true;
+
+    template<class Impl> class Natives;
+};
+
 class Restrictions : public mozilla::jni::ObjectBase<Restrictions, jobject>
 {
 public:

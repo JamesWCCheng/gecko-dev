@@ -9,6 +9,7 @@
 #include "nsContentCID.h"
 #include "nsString.h"
 #include "mozilla/MediaDrmAdaptor.h"
+#include "mozilla/FennecMediaDrm.h"
 
 namespace mozilla {
 
@@ -20,6 +21,7 @@ FennecCDMProxy::FennecCDMProxy(dom::MediaKeys* aKeys, const nsAString& aKeySyste
   , mKeySystem(aKeySystem)
   , mGMPThread(nullptr)
   , mCDM(nullptr)
+  , mJavaMDrm(false)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_COUNT_CTOR(FennecCDMProxy);
@@ -73,10 +75,13 @@ FennecCDMProxy::Init(PromiseId aPromiseId,
   data->mTopLevelOrigin = aTopLevelOrigin;
   data->mGMPName = aGMPName;
   data->mInPrivateBrowsing = aInPrivateBrowsing;
+
+  auto ptrFunc = mJavaMDrm ?
+    &FennecCDMProxy::fmd_Init :
+    &FennecCDMProxy::mediaDrm_Init;
+
   nsCOMPtr<nsIRunnable> task(
-    NewRunnableMethod<nsAutoPtr<InitData>>(this,
-                                           &FennecCDMProxy::mediaDrm_Init,
-                                           Move(data)));
+    NewRunnableMethod<nsAutoPtr<InitData>>(this, ptrFunc, Move(data)));
   mGMPThread->Dispatch(task, NS_DISPATCH_NORMAL);
 }
 
@@ -98,10 +103,12 @@ FennecCDMProxy::CreateSession(uint32_t aCreateSessionToken,
   data->mInitDataType = NS_ConvertUTF16toUTF8(aInitDataType);
   data->mInitData = Move(aInitData);
 
+  auto ptrFunc = mJavaMDrm ?
+    &FennecCDMProxy::fmd_CreateSession :
+    &FennecCDMProxy::mediaDrm_CreateSession;
+
   nsCOMPtr<nsIRunnable> task(
-    NewRunnableMethod<nsAutoPtr<CreateSessionData>>(this,
-                                                    &FennecCDMProxy::mediaDrm_CreateSession,
-                                                    data));
+    NewRunnableMethod<nsAutoPtr<CreateSessionData>>(this, ptrFunc, data));
   mGMPThread->Dispatch(task, NS_DISPATCH_NORMAL);
 }
 
@@ -132,10 +139,13 @@ FennecCDMProxy::UpdateSession(const nsAString& aSessionId,
   data->mPromiseId = aPromiseId;
   data->mSessionId = NS_ConvertUTF16toUTF8(aSessionId);
   data->mResponse = Move(aResponse);
+
+  auto ptrFunc = mJavaMDrm ?
+    &FennecCDMProxy::fmd_UpdateSession :
+    &FennecCDMProxy::mediaDrm_UpdateSession;
+
   nsCOMPtr<nsIRunnable> task(
-    NewRunnableMethod<nsAutoPtr<UpdateSessionData>>(this,
-                                                    &FennecCDMProxy::mediaDrm_UpdateSession,
-                                                    data));
+    NewRunnableMethod<nsAutoPtr<UpdateSessionData>>(this, ptrFunc, data));
   mGMPThread->Dispatch(task, NS_DISPATCH_NORMAL);
 }
 
@@ -149,8 +159,13 @@ FennecCDMProxy::CloseSession(const nsAString& aSessionId,
   nsAutoPtr<SessionOpData> data(new SessionOpData());
   data->mPromiseId = aPromiseId;
   data->mSessionId = NS_ConvertUTF16toUTF8(aSessionId);
+
+  auto ptrFunc = mJavaMDrm ?
+    &FennecCDMProxy::fmd_CloseSession :
+    &FennecCDMProxy::mediaDrm_CloseSession;
+
   nsCOMPtr<nsIRunnable> task(
-    NewRunnableMethod<nsAutoPtr<SessionOpData>>(this, &FennecCDMProxy::mediaDrm_CloseSession, data));
+    NewRunnableMethod<nsAutoPtr<SessionOpData>>(this, ptrFunc, data));
   mGMPThread->Dispatch(task, NS_DISPATCH_NORMAL);
 }
 
@@ -321,6 +336,8 @@ FennecCDMProxy::GetMediaCrypto()
   if (mCDM) {
     MediaDrmAdaptor* mda = static_cast<MediaDrmAdaptor*>(mCDM);
     return mda->GetMediaCrypto();
+  } else if (mJavaMDrm && mMediaDrmCDM) {
+    return mMediaDrmCDM->GetMediaCrypto();
   }
   return nullptr;
 }
@@ -400,15 +417,88 @@ FennecCDMProxy::OnCDMCreated(uint32_t aPromiseId)
     return;
   }
   //MOZ_ASSERT(!GetNodeId().IsEmpty());
-  if (mCDM) {
-    EME_LOG("FennecCDMProxy::OnCDMCreated ====> Ok 1 mCDM(%x)", mCDM);
+  if (mJavaMDrm && mMediaDrmCDM) {
+    EME_LOG("FennecCDMProxy::OnCDMCreated ====> Ok mMediaDrmCDM(%x)", mMediaDrmCDM.get());
+    mKeys->OnCDMCreated(aPromiseId, GetNodeId(), mMediaDrmCDM->GetPluginId());
+    return;
+  } else if (mCDM) {
+    EME_LOG("FennecCDMProxy::OnCDMCreated ====> Ok mCDM(%x)", mCDM);
     mKeys->OnCDMCreated(aPromiseId, GetNodeId(), mCDM->GetPluginId());
-  } else {
-    // No CDM? Just reject the promise.
-    EME_LOG("FennecCDMProxy::OnCDMCreated ====> No cdm");
-    mKeys->RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
-                         NS_LITERAL_CSTRING("Null CDM in OnCDMCreated()"));
+    return;
   }
+
+  // No CDM? Just reject the promise.
+  EME_LOG("FennecCDMProxy::OnCDMCreated ====> No cdm");
+  mKeys->RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                       NS_LITERAL_CSTRING("Null CDM in OnCDMCreated()"));
+}
+
+// ===================================
+
+void
+FennecCDMProxy::fmd_Init(nsAutoPtr<InitData>&& aData)
+{
+  EME_LOG("FennecCDMProxy::fmd_Init ====> ");
+  mMediaDrmCDM = mozilla::MakeUnique<FennecMediaDrm>();
+  MOZ_ASSERT(mMediaDrmCDM);
+
+  mCallback = new CDMCallbackProxy(this);
+  mMediaDrmCDM->Init(mCallback);
+  nsCOMPtr<nsIRunnable> task(
+    NewRunnableMethod<uint32_t>(this,
+                                &FennecCDMProxy::OnCDMCreated,
+                                aData->mPromiseId));
+  NS_DispatchToMainThread(task);
+  EME_LOG("FennecCDMProxy::fmd_Init ====< ");
+}
+
+void
+FennecCDMProxy::fmd_CreateSession(nsAutoPtr<CreateSessionData> aData)
+{
+  EME_LOG("FennecCDMProxy::fmd_CreateSession ====> ");
+  MOZ_ASSERT(IsOnGMPThread());
+
+  if (!mMediaDrmCDM) {
+    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("Null CDM in fmd_CreateSession"));
+    return;
+  }
+  mMediaDrmCDM->CreateSession(aData->mCreateSessionToken,
+                              aData->mPromiseId,
+                              aData->mInitDataType,
+                              aData->mInitData,
+                              ToGMPSessionType(aData->mSessionType));
+  EME_LOG("FennecCDMProxy::fmd_CreateSession ====< ");
+}
+void
+FennecCDMProxy::fmd_UpdateSession(nsAutoPtr<UpdateSessionData> aData)
+{
+  EME_LOG("FennecCDMProxy::fmd_UpdateSession ====> ");
+  MOZ_ASSERT(IsOnGMPThread());
+
+  if (!mMediaDrmCDM) {
+    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("Null CDM in fmd_UpdateSession"));
+    return;
+  }
+  mMediaDrmCDM->UpdateSession(aData->mPromiseId,
+                              aData->mSessionId,
+                              aData->mResponse);
+  EME_LOG("FennecCDMProxy::fmd_UpdateSession ====< ");
+}
+void
+FennecCDMProxy::fmd_CloseSession(nsAutoPtr<SessionOpData> aData)
+{
+  EME_LOG("FennecCDMProxy::fmd_CloseSession ====> ");
+  MOZ_ASSERT(IsOnGMPThread());
+
+  if (!mMediaDrmCDM) {
+    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("Null CDM in fmd_CloseSession"));
+    return;
+  }
+  mMediaDrmCDM->CloseSession(aData->mPromiseId, aData->mSessionId);
+  EME_LOG("FennecCDMProxy::fmd_CloseSession ====< ");
 }
 
 }

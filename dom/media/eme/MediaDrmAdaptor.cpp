@@ -138,14 +138,6 @@ MediaDrmAdaptor::CreateSession(uint32_t aCreateSessionToken,
                                const nsCString& aInitDataType,
                                const nsTArray<uint8_t>& aInitData,
                                GMPSessionType aSessionType)
-/*
-   uint32_t aCreateSessionToken,
-   uint32_t aPromiseId,
-   const char* aInitDataType,
-   uint32_t aInitDataTypeSize,
-   const uint8_t* aInitData,
-   uint32_t aInitDataSize,
-   GMPSessionType aSessionType*/
 {
   DRMLOG("[%s][%s] type:%s", __CLASS__, __FUNCTION__, aInitDataType.get());
 
@@ -200,10 +192,6 @@ MediaDrmAdaptor::CreateSession(uint32_t aCreateSessionToken,
   NS_ENSURE_SUCCESS_VOID(rv);
   PG(sessionId->GetElements());
 
-  auto sidarr = sessionId->GetElements();
-  JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
-  jbyteArray sessionIdArray = FillJByteArray(&sidarr[0], sidarr.Length());
-
   GenerateKeyRequest(sessionId, aInitData, aInitDataType,
                      aCreateSessionToken, aPromiseId);
 }
@@ -211,11 +199,6 @@ MediaDrmAdaptor::CreateSession(uint32_t aCreateSessionToken,
 
 void
 MediaDrmAdaptor::LoadSession(uint32_t aPromiseId, const nsCString& aSessionId)
-/*
- * uint32_t aPromiseId,
-   const char* aSessionId,
-   uint32_t aSessionIdLength
- */
 {
   DRMLOG("[%s][%s]", __CLASS__, __FUNCTION__);
   // NOT IMPLEMENTED
@@ -237,13 +220,6 @@ void
 MediaDrmAdaptor::UpdateSession(uint32_t aPromiseId,
                                const nsCString& aSessionId,
                                const nsTArray<uint8_t>& aResponse)
-/*
- * uint32_t aPromiseId,
-   const char* aSessionId,
-   uint32_t aSessionIdLength,
-   const uint8_t* aResponse,
-   uint32_t aResponseSize
- */
 {
   DRMLOG("[%s][%s]", __CLASS__, __FUNCTION__);
   MOZ_ASSERT(mMediaDrm);

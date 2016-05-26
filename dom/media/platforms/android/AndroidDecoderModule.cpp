@@ -523,8 +523,8 @@ MediaCodecDataDecoder::MediaCodecDataDecoder(MediaData::Type aType,
   , mOutputBuffers(nullptr)
   , mMonitor("MediaCodecDataDecoder::mMonitor")
   , mState(kDecoding)
-  , mProxy(aProxy)
   , mSamplesWaitingForKey(new SamplesWaitingForKey(this, aTaskQueue, aProxy))
+  , mProxy(aProxy)
 {
   PG(mSamplesWaitingForKey.get());
 }

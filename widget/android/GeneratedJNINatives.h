@@ -359,6 +359,29 @@ template<class Impl>
 constexpr JNINativeMethod NativePanZoomController::Natives<Impl>::methods[];
 
 template<class Impl>
+class MediaDrmBridge::Natives : public mozilla::jni::NativeImpl<MediaDrmBridge, Impl>
+{
+public:
+    static constexpr JNINativeMethod methods[] = {
+
+        mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessionCreated_t>(
+                mozilla::jni::NativeStub<MediaDrmBridge::OnSessionCreated_t, Impl>
+                ::template Wrap<&Impl::OnSessionCreated>),
+
+        mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessionUpdated_t>(
+                mozilla::jni::NativeStub<MediaDrmBridge::OnSessionUpdated_t, Impl>
+                ::template Wrap<&Impl::OnSessionUpdated>),
+
+        mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessoinClosed_t>(
+                mozilla::jni::NativeStub<MediaDrmBridge::OnSessoinClosed_t, Impl>
+                ::template Wrap<&Impl::OnSessoinClosed>)
+    };
+};
+
+template<class Impl>
+constexpr JNINativeMethod MediaDrmBridge::Natives<Impl>::methods[];
+
+template<class Impl>
 class NativeJSContainer::Natives : public mozilla::jni::NativeImpl<NativeJSContainer, Impl>
 {
 public:

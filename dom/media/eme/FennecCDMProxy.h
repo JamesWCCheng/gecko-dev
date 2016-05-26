@@ -7,11 +7,16 @@
 #ifndef FennecCDMProxy_h_
 #define FennecCDMProxy_h_
 
+#include <jni.h>
+#include "mozilla/jni/Types.h"
+#include "GeneratedJNINatives.h"
+
 #include "mozilla/CDMProxy.h"
 #include "mozilla/CDMCaps.h"
 #include "mozilla/dom/MediaKeys.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/MozPromise.h"
+#include "mozilla/UniquePtr.h"
 
 #include "MediaCodec.h"
 #include "nsIThread.h"
@@ -24,6 +29,7 @@ using namespace mozilla::widget::sdk;
 namespace mozilla {
 class MediaRawData;
 class CDMCallbackProxy;
+class FennecMediaDrm;
 
 namespace dom {
 class MediaKeySession;
@@ -172,7 +178,6 @@ public:
   mozilla::widget::sdk::MediaCrypto::LocalRef GetMediaCrypto();
 
 private:
-
   virtual ~FennecCDMProxy();
 
   void mediaDrm_Init(nsAutoPtr<InitData>&& aData);
@@ -224,6 +229,9 @@ private:
 
   nsCString mNodeId;
 
+  //FennecMediaDrm* mMediaDrmCDM;
+  mozilla::UniquePtr<FennecMediaDrm> mMediaDrmCDM;
+
   GMPDecryptorProxy* mCDM;
   nsAutoPtr<CDMCallbackProxy> mCallback;
 
@@ -252,6 +260,16 @@ private:
   };
 
   CDMCaps mCapabilites;
+
+// =====================================================================
+// For FennecMediaDrm
+  bool mJavaMDrm;
+  void fmd_Init(nsAutoPtr<InitData>&& aData);
+  void fmd_CreateSession(nsAutoPtr<CreateSessionData> aData);
+  void fmd_UpdateSession(nsAutoPtr<UpdateSessionData> aData);
+  void fmd_CloseSession(nsAutoPtr<SessionOpData> aData);
+// =====================================================================
+
 };
 
 
