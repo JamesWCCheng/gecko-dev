@@ -25,14 +25,17 @@
 #include "ezlogger.h"
 #include "GeneratedJNIWrappers.h"
 #include "mozilla/GMPCDMProxy.h"
-nsCString mimetype;
 using namespace mozilla::widget::sdk;
 using namespace mozilla;
+/* Will initialed in AndroidDecoderModule cstr*/
+UUID::GlobalRef widevineUUID;
+UUID::GlobalRef clearkeyUUID;
+/* Modify this to switch the current testing drm module.*/
+UUID::GlobalRef currentTestingUUID;
 static UUID::LocalRef GenDrmUUID(int64_t m, int64_t l)
 {
   UUID::LocalRef uuid;
   auto rv = UUID::New(m, l, &uuid);
-  PR(rv);
   return uuid;
 }
 template<class T>
@@ -57,15 +60,12 @@ void PrintSecureDecoderNameForMime() {
   using namespace mozilla::widget::sdk;
   int codec_num = 0;
   auto rvGetCodecCount = MediaCodecList::GetCodecCount(&codec_num);
-  PR(rvGetCodecCount);
   for (int i = 0; i < codec_num; ++i) {
     MediaCodecInfo::LocalRef mediainfotest;
     auto rvGetCodecInfoAt2 = MediaCodecList::GetCodecInfoAt(i, ReturnTo(&mediainfotest));
-    PR(rvGetCodecInfoAt2);
     mozilla::jni::Object::LocalRef info;
     auto rvGetCodecInfoAt = MediaCodecList::GetCodecInfoAt(i, &info);
     MediaCodecInfo::LocalRef mediainfo = MediaCodecInfo::LocalRef::Adopt(info.Forget());
-    PR(rvGetCodecInfoAt);
     bool isEncoder = false;
     mediainfo->IsEncoder(&isEncoder);
     if (isEncoder) {
@@ -73,10 +73,9 @@ void PrintSecureDecoderNameForMime() {
     }
     mozilla::jni::ObjectArray::LocalRef supportedTypes;
     auto rvGetSupportedTypes = mediainfo->GetSupportedTypes(&supportedTypes);
-    mozilla::jni::String::LocalRef nameStr;
-    mediainfo->GetName(&nameStr);
-    PR(nameStr->ToCString());
-    PR(rvGetSupportedTypes);
+    mozilla::jni::String::LocalRef codeecNameStr;
+    mediainfo->GetName(&codeecNameStr);
+    PR(codeecNameStr->ToCString());
     JNIEnv* const env = jni::GetEnvForThread();
     jsize length = env->GetArrayLength(supportedTypes.Get());
     for (int j = 0; j < length; ++j) {
@@ -93,12 +92,10 @@ nsCString GetSecureDecoderNameForMime(const nsACString& aMime)
   using namespace mozilla::widget::sdk;
   int codec_num = 0;
   auto rvGetCodecCount = MediaCodecList::GetCodecCount(&codec_num);
-  //PR(rvGetCodecCount);
   for (int i = 0; i < codec_num; ++i) {
     mozilla::jni::Object::LocalRef info;
     auto rvGetCodecInfoAt = MediaCodecList::GetCodecInfoAt(i, &info);
     MediaCodecInfo::LocalRef mediainfo = MediaCodecInfo::LocalRef::Adopt(info.Forget());
-    //PR(rvGetCodecInfoAt);
     bool isEncoder = false;
     mediainfo->IsEncoder(&isEncoder);
     if (isEncoder) {
@@ -109,8 +106,6 @@ nsCString GetSecureDecoderNameForMime(const nsACString& aMime)
     mozilla::jni::String::LocalRef nameStr;
     mediainfo->GetName(&nameStr);
     auto codecName = nameStr->ToCString();
-    //PR(codecName);
-    //PR(rvGetSupportedTypes);
     JNIEnv* const env = jni::GetEnvForThread();
     jsize length = env->GetArrayLength(supportedTypes.Get());
     for (int j = 0; j < length; ++j) {
@@ -120,7 +115,7 @@ nsCString GetSecureDecoderNameForMime(const nsACString& aMime)
         PG(supportType);
         NS_ConvertUTF16toUTF8 mime(supportType);
         if (mime.EqualsIgnoreCase(PromiseFlatCString(aMime).get())) {
-           //codecName.AppendLiteral(".secure");
+           codecName.AppendLiteral(".secure");
            PR(codecName);
            return codecName;
         }
@@ -184,16 +179,24 @@ TranslateMimeType(const nsACString& aMimeType)
 }
 
 static MediaCodec::LocalRef
-CreateDecoder(const nsACString& aMimeType)
+CreateDecoder(const nsACString& aMimeType, bool isEncrypted, bool isRequiresSecureDecoderComponent)
 {
-  //PrintSecureDecoderNameForMime();
-  mimetype = TranslateMimeType(aMimeType);
+  auto mimetype = TranslateMimeType(aMimeType);
+  PR(mimetype);
   MediaCodec::LocalRef codec;
-  NS_ENSURE_SUCCESS(MediaCodec::CreateDecoderByType(aMimeType,
-                    &codec), nullptr);
-  // auto codecName = GetSecureDecoderNameForMime(mimetype);
-  // auto rvCreateByCodecName = MediaCodec::CreateByCodecName(codecName, &codec);
-  // PR(rvCreateByCodecName);
+
+  // http://androidxref.com/5.1.1_r6/xref/cts/tests/tests/media/src/android/media/cts/MediaCodecCencPlayer.java#289
+  if (isRequiresSecureDecoderComponent && isEncrypted) {
+      // Need secure decoder, will append .secure postfix.
+      auto codecName = GetSecureDecoderNameForMime(mimetype);
+      auto rvCreateByCodecName = MediaCodec::CreateByCodecName(codecName, &codec);
+      PR(codecName);
+  } else {
+      NS_ENSURE_SUCCESS(MediaCodec::CreateDecoderByType(TranslateMimeType(aMimeType),
+                                                        &codec), nullptr);
+  }
+  // http://androidxref.com/5.1.1_r6/xref/external/chromium_org/media/base/android/java/src/org/chromium/media/MediaCodecBridge.java#260
+  // PR(widget::GeckoAppShell::CheckIsAdaptivePlayback(codec, mimetype));
   return codec;
 }
 
@@ -223,7 +226,7 @@ public:
     , mImageContainer(aImageContainer)
     , mConfig(aConfig)
   {
-    PG(mSamplesWaitingForKey.get());
+    //PG(mSamplesWaitingForKey.get());
   }
 
   const char* GetDescriptionName() const override
@@ -233,8 +236,6 @@ public:
 
   RefPtr<InitPromise> Init() override
   {
-    PG(this);
-
     //auto cdm = static_cast<GMPCDMProxy*>(mProxy.get());
     auto cdmtemp = new GMPCDMProxy();
     mSurfaceView = cdmtemp->GetSurfaceView();
@@ -396,11 +397,19 @@ private:
   RefPtr<TaskQueue> mTaskQueue;
 };
 
+AndroidDecoderModule::AndroidDecoderModule(CDMProxy *aProxy/*will be null in non-drm case*/)
+  :mProxy(aProxy)
+{
+  widevineUUID = GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
+  clearkeyUUID = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
+  /* Modify this to switch the current testing drm module.*/
+  currentTestingUUID = clearkeyUUID;
+}
+
 bool
 AndroidDecoderModule::SupportsMimeType(const nsACString& aMimeType,
                                        DecoderDoctorDiagnostics* aDiagnostics) const
 {
-  PG(this);
   PG(ToPrintable(aMimeType));
   if (!AndroidBridge::Bridge() ||
       AndroidBridge::Bridge()->GetAPIVersion() < 16) {
@@ -442,7 +451,6 @@ AndroidDecoderModule::CreateVideoDecoder(
     MediaDataDecoderCallback* aCallback,
     DecoderDoctorDiagnostics* aDiagnostics)
 {
-  PG(this);
   MediaFormat::LocalRef format;
 
   NS_ENSURE_SUCCESS(MediaFormat::CreateVideoFormat(
@@ -478,7 +486,6 @@ AndroidDecoderModule::CreateAudioDecoder(
     MediaDataDecoderCallback* aCallback,
     DecoderDoctorDiagnostics* aDiagnostics)
 {
-  PG(this);
   MOZ_ASSERT(aConfig.mBitDepth == 16, "We only handle 16-bit audio!");
 
   MediaFormat::LocalRef format;
@@ -539,7 +546,7 @@ MediaCodecDataDecoder::MediaCodecDataDecoder(MediaData::Type aType,
   , mProxy(aProxy)
   , mSamplesWaitingForKey(new SamplesWaitingForKey(this, aTaskQueue, aProxy))
 {
-  PG(mSamplesWaitingForKey.get());
+  //PG(mSamplesWaitingForKey.get());
 }
 
 MediaCodecDataDecoder::~MediaCodecDataDecoder()
@@ -550,7 +557,6 @@ MediaCodecDataDecoder::~MediaCodecDataDecoder()
 RefPtr<MediaDataDecoder::InitPromise>
 MediaCodecDataDecoder::Init()
 {
-  PG(this);
   nsresult rv = InitDecoder(nullptr);
 
   TrackInfo::TrackType type =
@@ -566,25 +572,12 @@ MediaCodecDataDecoder::Init()
 nsresult
 MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
 {
-  PG(mMimeType, this);
-  mDecoder = CreateDecoder(mMimeType);
-  if (!mDecoder) {
-    INVOKE_CALLBACK(Error);
-    return NS_ERROR_FAILURE;
-  }
-  const uint8_t kWidevineUUID[16] = {
-    0xed,0xef,0x8b,0xa9,0x79,0xd6,0x4a,0xce,
-    0xa3,0xc8,0x27,0xdc,0xd5,0x1d,0x21,0xed
-  };
-  auto widevineUUID = GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
   nsresult rv;
-  //Clearkey: 0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL
-  auto clearkeyUUID = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
 
-  auto uuidStr = ToStringHelper(clearkeyUUID);
+  auto uuidStr = ToStringHelper(currentTestingUUID);
   PB(uuidStr);
   MediaDrm::LocalRef mediadrm;
-  auto rvmediadrm = MediaDrm::New(clearkeyUUID, &mediadrm);
+  auto rvmediadrm = MediaDrm::New(currentTestingUUID, &mediadrm);
   PG(rvmediadrm);
   mozilla::jni::ByteArray::LocalRef sessionid;
   auto rvopensession = mediadrm->OpenSession(&sessionid);
@@ -595,61 +588,6 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
   JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
   jbyteArray sessionidArray = FillJByteArray(&sidarr[0], sidarr.Length());
 
-
-  MediaCrypto::LocalRef mediacrypto;
-  auto rvmediacrypto = MediaCrypto::New(clearkeyUUID, mozilla::jni::ByteArray::Ref::From(sessionidArray), &mediacrypto);
-  PG(rvmediacrypto);
-  bool isCryptoSchemeSupported = false;
-  auto rvIscryptosupported =
-    mediacrypto->IsCryptoSchemeSupported(clearkeyUUID, &isCryptoSchemeSupported);
-  PG(isCryptoSchemeSupported);
-  bool isRequiresSecureDecoderComponent = false;
-  auto rvRequiresSecureDecoderComponent = mediacrypto->RequiresSecureDecoderComponent(mimetype, &isRequiresSecureDecoderComponent);
-  PG(rvRequiresSecureDecoderComponent, isRequiresSecureDecoderComponent);
-  auto rvconfigure = mDecoder->Configure(mFormat, aSurface, mediacrypto, 0);
-  PG(rvconfigure);
-
-
-  // auto uuidStrwidevine = ToStringHelper(widevineUUID);
-  // PB(uuidStrwidevine);
-  // MediaDrm::LocalRef mediadrmwidevine;
-  // auto rvmediadrmwidevine = MediaDrm::New(widevineUUID, &mediadrmwidevine);
-  // PG(rvmediadrmwidevine);
-  //   auto rvSecurityLevel = mediadrmwidevine->SetPropertyString("securityLevel", "L3");
-  //   PG(rvSecurityLevel);
-  // mozilla::jni::ByteArray::LocalRef sessionidwidevine;
-  // auto rvopensessionwidevine = mediadrmwidevine->OpenSession(&sessionidwidevine);
-  // PG(rvopensessionwidevine);
-  // PG(sessionidwidevine->GetElements());
-
-  // auto sidarrwidevine = sessionidwidevine->GetElements();
-  // jbyteArray sessionidArraywidevine = FillJByteArray(&sidarrwidevine[0], sidarrwidevine.Length());
-  // MediaCrypto::LocalRef mediacryptowidevine;
-  // auto rvmediacryptowidevine = MediaCrypto::New(widevineUUID, mozilla::jni::ByteArray::Ref::From(sessionidArraywidevine), &mediacryptowidevine);
-  // PG(rvmediacryptowidevine);
-  // bool isCryptoSchemeSupportedwidevine = false;
-  // auto rvIscryptosupportedwidevine =
-  //   mediacryptowidevine->IsCryptoSchemeSupported(widevineUUID, &isCryptoSchemeSupportedwidevine);
-  // PG(isCryptoSchemeSupportedwidevine);
-  // bool isRequiresSecureDecoderComponentwidevine = false;
-  // auto rvRequiresSecureDecoderComponentwidevine = mediacrypto->RequiresSecureDecoderComponent(mimetype, &isRequiresSecureDecoderComponentwidevine);
-  // PG(rvRequiresSecureDecoderComponentwidevine, isRequiresSecureDecoderComponentwidevine);
-  // auto rvconfigure = mDecoder->Configure(mFormat, aSurface, mediacryptowidevine, 0);
-  // PG(rvconfigure);
-
-  // Do Configure again to test different crypto instance.
-  // mozilla::jni::ByteArray::LocalRef sessionid2;
-  // auto rvopensession2 = mediadrm->OpenSession(&sessionid2);
-  // PG(rvopensession2);
-  // PG(sessionid2->GetElements());
-  // MediaCrypto::LocalRef mediacrypto2;
-  // auto rvmediacrypto2 = MediaCrypto::New(clearkeyUUID, sessionid2, &mediacrypto2);
-  // PG(rvmediacrypto2);
-  // auto rvconfigure2 = mDecoder->Configure(mFormat, aSurface, mediacrypto2, 0);
-  // PG(rvconfigure2);
-  // JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
-  // jbyteArray bytearray = jenv->NewByteArray(5566);
-
   mozilla::jni::ByteArray::LocalRef keysetid;
   unsigned char response[] = {0x7b,0x22,0x6b,0x65,0x79,0x73,0x22,0x3a,0x5b,0x7b,0x22,0x6b,0x74,0x79,0x22,0x3a,0x22,0x6f,0x63,0x74,0x22,0x2c,0x22,0x6b,0x69,0x64,0x22,0x3a,0x22,0x59,0x41,0x59,0x65,0x41,0x58,0x35,0x48,0x66,0x6f,0x64,0x2b,0x56,0x39,0x41,0x4e,0x48,0x74,0x41,0x4e,0x48,0x67,0x22,0x2c,0x22,0x6b,0x22,0x3a,0x22,0x47,0x6f,0x6f,0x67,0x6c,0x65,0x54,0x65,0x73,0x74,0x4b,0x65,0x79,0x42,0x61,0x73,0x65,0x36,0x34,0x67,0x67,0x67,0x22,0x7d,0x5d,0x7d};
   unsigned char *responsedata = response;
@@ -658,7 +596,26 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
   auto rvprovide = mediadrm->ProvideKeyResponse(sessionid, mozilla::jni::ByteArray::Ref::From(responsearray), &keysetid);
   PG(rvprovide);
 
-  //NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, nullptr, 0), rv);
+  MediaCrypto::LocalRef mediacrypto;
+  auto rvmediacrypto = MediaCrypto::New(currentTestingUUID, mozilla::jni::ByteArray::Ref::From(sessionidArray), &mediacrypto);
+  PG(rvmediacrypto);
+  bool isCryptoSchemeSupported = false;
+  auto rvIscryptosupported =
+    mediacrypto->IsCryptoSchemeSupported(currentTestingUUID, &isCryptoSchemeSupported);
+  PG(isCryptoSchemeSupported);
+  mMediacrypto = mediacrypto;
+
+  bool isRequiresSecureDecoderComponent = false;
+  auto rvRequiresSecureDecoderComponent = mMediacrypto->RequiresSecureDecoderComponent(mMimeType, &isRequiresSecureDecoderComponent);
+  mDecoder = CreateDecoder(mMimeType, (mProxy != nullptr)/*means EME, so assume it is encrypted data case*/
+                           , isRequiresSecureDecoderComponent);
+  if (!mDecoder) {
+    INVOKE_CALLBACK(Error);
+    return NS_ERROR_FAILURE;
+  }
+
+  auto rvconfigure = mDecoder->Configure(mFormat, aSurface, mediacrypto, 0);
+
   NS_ENSURE_SUCCESS(rv = mDecoder->Start(), rv);
 
   NS_ENSURE_SUCCESS(rv = ResetInputBuffers(), rv);
@@ -674,8 +631,7 @@ nsresult
 MediaCodecDataDecoder::Output(widget::sdk::BufferInfo::Param aInfo, void* aBuffer,
       widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration)
 {
-  //PR((char*)aBuffer);
-  PR(ToCStringHelper(aFormat));
+  //PR(ToCStringHelper(aFormat));
   return NS_OK;
 }
 
@@ -684,7 +640,7 @@ nsresult
 MediaCodecDataDecoder::PostOutput(widget::sdk::BufferInfo::Param aInfo,
       widget::sdk::MediaFormat::Param aFormat, const media::TimeUnit& aDuration)
 {
-  PG0();
+  //PG0();
   return NS_OK;
 }
 // This is in usec, so that's 10ms.
@@ -796,10 +752,8 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
   PodCopy(static_cast<uint8_t*>(directBuffer), aSample->Data(), aSample->Size());
 
   PG(bin2hex(aSample->Data(), aSample->Size()));
-  PG0();
   // Test DRM
   if (aSample->mCrypto.mValid) {
-    PG0();
     if (mSamplesWaitingForKey->WaitIfKeyNotUsable(const_cast<MediaRawData*>(aSample))) {
       return NS_OK;
     }
@@ -819,23 +773,22 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
     for (auto& clear : cryptoObj.mPlainSizes) {
       clearData.AppendElement(clear);
     }
-    PR(newNumSubSamples);
-    PR(clearData);
-    PR(cryptoObj.mEncryptedSizes);
-    PR(cryptoObj.mIV);
+
     auto snapshotIV(cryptoObj.mIV);
     PR(snapshotIV);
-    PR(snapshotIV.Length());
     auto length = snapshotIV.Length();
     if (snapshotIV.Length() < 16) {
       for (size_t i = 0; i < (16 - length); i++) {
 
         snapshotIV.AppendElement(0); //pad with 0
-        PG(snapshotIV);
+        //PG(snapshotIV);
       }
     }
-
-    PR(snapshotIV);
+    PR(newNumSubSamples);
+    PR(clearData);
+    PR(cryptoObj.mEncryptedSizes);
+    PR(cryptoObj.mIV);
+    PR(snapshotIV, snapshotIV.Length());
     PR(cryptoObj.mKeyId);
     auto newNumBytesOfClearData = FillJIntArray(&clearData[0], clearData.Length());
     auto newNumBytesOfEncryptedData = FillJIntArray(&cryptoObj.mEncryptedSizes[0], cryptoObj.mEncryptedSizes.Length());
@@ -868,14 +821,13 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
     PG(rvcryptoset);
     // res = mDecoder->QueueSecureInputBuffer(inputIndex, 0,cryptoInfo,
     //                                        aSample->mTime, 0);
+    // Call Java version to know the exception msg.
     widget::GeckoAppShell::CallQueueSecureInputBuffer(mDecoder, cryptoInfo, inputIndex, 0, aSample->mTime, 0);
-    PG(aSample->mTime);
-    PG(res);
+    // PG(aSample->mTime);
+    // PG(res);
   } else {
-    PG0();
-    PG(mProxy.get());
     res = mDecoder->QueueInputBuffer(inputIndex, 0, aSample->Size(),
-                                   aSample->mTime, 0);
+                                     aSample->mTime, 0);
   }
 
 
@@ -943,7 +895,6 @@ MediaCodecDataDecoder::ProcessOutput(
       frame.GetEnv()->GetObjectArrayElement(mOutputBuffers.Get(), aStatus));
   PG(aStatus);
   if (buffer) {
-    PG(buffer, this, mDecoder.Get());
     PG(ToCStringHelper(aFormat));
     // The buffer will be null on Android L if we are decoding to a Surface.
     void* directBuffer = frame.GetEnv()->GetDirectBufferAddress(buffer.Get());
@@ -1001,7 +952,7 @@ MediaCodecDataDecoder::DecoderLoop()
     BREAK_ON_DECODER_ERROR();
 
     int32_t outputStatus = -1;
-    res = mDecoder->DequeueOutputBuffer(bufferInfo, kDecoderTimeout,
+    res = mDecoder->DequeueOutputBuffer(bufferInfo, kDecoderTimeout * 100,
                                         &outputStatus);
     PR(outputStatus);
     BREAK_ON_DECODER_ERROR();
@@ -1066,7 +1017,7 @@ MediaCodecDataDecoder::State() const
 bool
 MediaCodecDataDecoder::State(ModuleState aState)
 {
-  PR(aState);
+  //PR(aState);
   bool ok = true;
 
   if (mState == kShutdown) {
@@ -1152,7 +1103,6 @@ MediaCodecDataDecoder::Drain()
 nsresult
 MediaCodecDataDecoder::Shutdown()
 {
-  PG(this);
   MonitorAutoLock lock(mMonitor);
 
   State(kStopping);

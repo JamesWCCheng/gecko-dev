@@ -152,6 +152,23 @@ public:
 
     static auto CallQueueSecureInputBuffer(mozilla::jni::Object::Param, mozilla::jni::Object::Param, int32_t, int32_t, int64_t, int32_t) -> void;
 
+    struct CheckIsAdaptivePlayback_t {
+        typedef GeckoAppShell Owner;
+        typedef bool ReturnType;
+        typedef bool SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::Object::Param,
+                mozilla::jni::String::Param> Args;
+        static constexpr char name[] = "CheckIsAdaptivePlayback";
+        static constexpr char signature[] =
+                "(Landroid/media/MediaCodec;Ljava/lang/String;)Z";
+        static const bool isStatic = true;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    static auto CheckIsAdaptivePlayback(mozilla::jni::Object::Param, mozilla::jni::String::Param) -> bool;
+
     struct CreateSurfaceView_t {
         typedef GeckoAppShell Owner;
         typedef void ReturnType;

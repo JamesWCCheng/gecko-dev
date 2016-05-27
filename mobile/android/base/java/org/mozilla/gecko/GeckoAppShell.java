@@ -107,6 +107,9 @@ import android.view.ViewGroup.LayoutParams;
 import android.media.MediaCodec;
 import android.media.MediaCodec.CryptoException;
 import android.media.MediaCodec.CryptoInfo;
+import java.lang.IllegalStateException;
+import android.media.MediaCodecInfo;
+import android.os.Build;
 public class GeckoAppShell
 {
     private static final String LOGTAG = "GeckoAppShell";
@@ -2430,5 +2433,30 @@ public class GeckoAppShell
           Log.e("James", "!!!!!!!!!!!!!!!!GetSurfaceView MediaCodec.CryptoException!!!!!!!!!!!!!!!!!!!!!" + e.getErrorCode());
           Log.e("James", "!!!!!!!!!!!!!!!!GetSurfaceView MediaCodec.CryptoException!!!!!!!!!!!!!!!!!!!!!" + e.getMessage());
       }
+      catch(IllegalStateException e) {
+          e.printStackTrace();
+          Log.e("James", "!!!!!!!!!!!!!!!!GetSurfaceView MediaCodec.IllegalStateException!!!!!!!!!!!!!!!!!!!!!" + e.getMessage());
+      }
+    }
+
+    @WrapForJNI
+    public static boolean CheckIsAdaptivePlayback(MediaCodec mediaCodec, String mime) {
+       if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT || mediaCodec == null) {
+        Log.e("James", "!!!!!!!!!!!!!!!!CheckIsAdaptivePlayback is encoder!!!!!!!!!!!!!!!!!!!!!" + Build.VERSION.SDK_INT + "," +Build.VERSION_CODES.KITKAT);
+           return false;
+       }
+       try {
+           MediaCodecInfo info = mediaCodec.getCodecInfo();
+           if (info.isEncoder()) {
+            Log.e("James", "!!!!!!!!!!!!!!!!CheckIsAdaptivePlayback is encoder!!!!!!!!!!!!!!!!!!!!!" );
+               return false;
+           }
+           MediaCodecInfo.CodecCapabilities capabilities = info.getCapabilitiesForType(mime);
+           return (capabilities != null) && capabilities.isFeatureSupported(
+                   MediaCodecInfo.CodecCapabilities.FEATURE_AdaptivePlayback);
+       } catch (IllegalArgumentException e) {
+             Log.e("James", "!!!!!!!!!!!!!!!!CheckIsAdaptivePlayback IllegalArgumentException!!!!!!!!!!!!!!!!!!!!!" + e.getMessage());
+       }
+       return false;
     }
 }

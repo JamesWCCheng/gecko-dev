@@ -58,6 +58,14 @@ auto GeckoAppShell::CallQueueSecureInputBuffer(mozilla::jni::Object::Param a0, m
     return mozilla::jni::Method<CallQueueSecureInputBuffer_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1, a2, a3, a4, a5);
 }
 
+constexpr char GeckoAppShell::CheckIsAdaptivePlayback_t::name[];
+constexpr char GeckoAppShell::CheckIsAdaptivePlayback_t::signature[];
+
+auto GeckoAppShell::CheckIsAdaptivePlayback(mozilla::jni::Object::Param a0, mozilla::jni::String::Param a1) -> bool
+{
+    return mozilla::jni::Method<CheckIsAdaptivePlayback_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1);
+}
+
 constexpr char GeckoAppShell::CreateSurfaceView_t::name[];
 constexpr char GeckoAppShell::CreateSurfaceView_t::signature[];
 
