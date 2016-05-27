@@ -190,6 +190,10 @@ public class MediaDrmBridge extends JNIObject {
             	// Aandroid ClearKeyPlugin doesn't handle QueryKeyStatus
             	if (!mSchemeUUID.equals(CLEARKEY_SCHEME_UUID)) {
             		HashMap<String, String> infoMap = mDrm.queryKeyStatus(session.array());
+            		for (String strKey : infoMap.keySet()) {
+            			String strValue = infoMap.get(strKey);
+            			Log.e(LOGTAG, "InfoMap : key("+strKey+")/value("+strValue+")");
+                    }
             	}
             } catch (java.lang.IllegalStateException e) {
                 // This is not really an exception. Some error code are incorrectly
