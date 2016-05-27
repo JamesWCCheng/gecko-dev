@@ -27,7 +27,7 @@ public:
 
   MOZ_DECLARE_WEAKREFERENCE_TYPENAME(FennecMediaDrm);
 
-  FennecMediaDrm();
+  FennecMediaDrm(const nsAString& aKeySystem);
   ~FennecMediaDrm() {}
 
   // === Called from Java ===
@@ -72,12 +72,12 @@ public:
   // Utility =============================
   MediaCrypto::LocalRef GetMediaCrypto();
 
-
 private:
   widget::MediaDrmBridge::GlobalRef mBridge;
   widget::sdk::MediaCrypto::GlobalRef mCrypto;
   GMPDecryptorProxyCallback* mCallback;
-  UUID::GlobalRef mKeySystem;
+  UUID::GlobalRef mKeySystemUUID;
+  const nsString mKeySystem;
 
 };
 

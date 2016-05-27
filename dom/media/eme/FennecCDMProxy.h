@@ -180,11 +180,6 @@ public:
 private:
   virtual ~FennecCDMProxy();
 
-  void mediaDrm_Init(nsAutoPtr<InitData>&& aData);
-  void mediaDrm_CreateSession(nsAutoPtr<CreateSessionData> aData);
-  void mediaDrm_UpdateSession(nsAutoPtr<UpdateSessionData> aData);
-  void mediaDrm_CloseSession(nsAutoPtr<SessionOpData> aData);
-
   // Main thread only.
   void OnCDMCreated(uint32_t aPromiseId);
 
@@ -229,10 +224,9 @@ private:
 
   nsCString mNodeId;
 
-  //FennecMediaDrm* mMediaDrmCDM;
-  mozilla::UniquePtr<FennecMediaDrm> mMediaDrmCDM;
+  //FennecMediaDrm* mCDM;
+  mozilla::UniquePtr<FennecMediaDrm> mCDM;
 
-  GMPDecryptorProxy* mCDM;
   nsAutoPtr<CDMCallbackProxy> mCallback;
 
   class DecryptJob {
@@ -263,7 +257,6 @@ private:
 
 // =====================================================================
 // For FennecMediaDrm
-  bool mJavaMDrm;
   void fmd_Init(nsAutoPtr<InitData>&& aData);
   void fmd_CreateSession(nsAutoPtr<CreateSessionData> aData);
   void fmd_UpdateSession(nsAutoPtr<UpdateSessionData> aData);

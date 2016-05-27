@@ -35,10 +35,11 @@ UUID::LocalRef GenDrmUUID(int64_t aFront, int64_t aRear)
   return uuid;
 }
 
-FennecMediaDrm::FennecMediaDrm()
+FennecMediaDrm::FennecMediaDrm(const nsAString& aKeySystem)
   : mBridge(nullptr)
   , mCrypto(nullptr)
   , mCallback(nullptr)
+  , mKeySystem(aKeySystem)
 {
   clearkeyUUID = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
   widevineUUID = GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
@@ -60,11 +61,15 @@ FennecMediaDrm::Init(GMPDecryptorProxyCallback* aCallback)
   MOZ_ASSERT(mBridge);
   mCallback = aCallback;
 
-  bool useClearKey = true;
-  mKeySystem = useClearKey ? clearkeyUUID : widevineUUID;
+  if (mKeySystem.EqualsLiteral("org.w3.clearkey")) {
+    mKeySystemUUID = clearkeyUUID;
+  } else if (mKeySystem.EqualsLiteral("com.widevine.alpha")) {
+    mKeySystemUUID = widevineUUID;
+  } else {
+    return NS_ERROR_FAILURE;
+  }
 
-  bool success = mBridge->Init(mKeySystem);
-
+  bool success = mBridge->Init(mKeySystemUUID);
   EME_LOG("FennecMediaDrm::Init <<<<< ");
   return success ? NS_OK : NS_ERROR_FAILURE;
 }
@@ -109,7 +114,7 @@ FennecMediaDrm::UpdateSession(uint32_t aPromiseId,
   MOZ_ASSERT(mBridge);
 
   bool isClearkey = false;
-  mKeySystem->Equals(clearkeyUUID, &isClearkey);
+  mKeySystemUUID->Equals(clearkeyUUID, &isClearkey);
 
   nsTArray<uint8_t> newResponse;
   if (isClearkey) {

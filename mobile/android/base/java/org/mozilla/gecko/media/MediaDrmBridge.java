@@ -29,6 +29,7 @@ import android.media.MediaDrm;
 import android.media.MediaDrmException;
 import android.util.Log;
 
+import java.lang.InterruptedException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -50,6 +51,7 @@ public class MediaDrmBridge extends JNIObject {
     private ByteBuffer mCryptoSessionId;
     private boolean mProvisioning;
     private HashMap<ByteBuffer, String> mSessionIds;
+    private HashMap<ByteBuffer, String> mSessionMIMETypes;
     private ArrayDeque<PendingCreateSessionData> mPendingCreateSessionDataQueue;
 
     private static class PendingCreateSessionData {
@@ -83,6 +85,7 @@ public class MediaDrmBridge extends JNIObject {
     	Log.d(LOGTAG, "MediaDrmBridge()");
 		mProvisioning = false;
 		mSessionIds = new HashMap<ByteBuffer, String>();
+		mSessionMIMETypes = new HashMap<ByteBuffer, String>();
 		mPendingCreateSessionDataQueue = new ArrayDeque<PendingCreateSessionData>();
 		mHandler = new Handler();
     }
@@ -143,6 +146,7 @@ public class MediaDrmBridge extends JNIObject {
 	        					 request.getData());
 
     			mSessionIds.put(sessionId, strSessionId);
+    			mSessionMIMETypes.put(sessionId, aInitDataType);
     			Log.d(LOGTAG, " StringID : " + strSessionId + " is put into mSessionIds ");
     			return true;
     		} catch (android.media.NotProvisionedException e) {
@@ -152,6 +156,7 @@ public class MediaDrmBridge extends JNIObject {
     			}
     			savePendingCreateSessionData(aCreateSessionToken, aPromiseId,
     										 aInitData, aInitDataType);
+    			startProvisioning();
     			return true;
     		}
     	}
@@ -182,10 +187,10 @@ public class MediaDrmBridge extends JNIObject {
         try {
             try {
             	final byte [] keySetId = mDrm.provideKeyResponse(session.array(), aResponse);
-
             	// Aandroid ClearKeyPlugin doesn't handle QueryKeyStatus
-            	HashMap<String, String> infoMap = mDrm.queryKeyStatus(session.array());
-            	
+            	if (!mSchemeUUID.equals(CLEARKEY_SCHEME_UUID)) {
+            		HashMap<String, String> infoMap = mDrm.queryKeyStatus(session.array());
+            	}
             } catch (java.lang.IllegalStateException e) {
                 // This is not really an exception. Some error code are incorrectly
                 // reported as an exception.
@@ -216,6 +221,16 @@ public class MediaDrmBridge extends JNIObject {
     
     @WrapForJNI(allowMultithread = true)
     private MediaCrypto GetMediaCrypto() {
+    	synchronized (getLock()) {
+	    	if (mCrypto == null) {
+	    		try {
+	    			getLock().wait();
+	    		} catch (InterruptedException e){
+	    			Log.d(LOGTAG, " Wait for MediaCrypto !!!");
+	    			return null;
+	    		}
+	    	}
+    	}
     	return mCrypto;
     }
 
@@ -255,7 +270,7 @@ public class MediaDrmBridge extends JNIObject {
         @Override
         public void onEvent(MediaDrm mediaDrm, byte[] sessionArray, int event,
         					int extra, byte[] data) {
-        	Log.e(LOGTAG, "MediaDrmListener:onEvent() is called !!!!! ");
+        	Log.e(LOGTAG, "MediaDrmListener:onEvent() is called !!!!!!!!!! ");
             if (sessionArray == null) {
                 Log.e(LOGTAG, "MediaDrmListener: Null session.");
                 return;
@@ -280,15 +295,15 @@ public class MediaDrmBridge extends JNIObject {
 	                if (mProvisioning) {
 	                    return;
 	                }
-	                //String mime = mSessionMimeTypes.get(session);
+	                String initDataType = mSessionMIMETypes.get(session);
 	                MediaDrm.KeyRequest request = null;
-//	                try {
-//	                    request = getKeyRequest(session, data, mime);
-//	                } catch (android.media.NotProvisionedException e) {
-//	                    Log.e(LOGTAG, "Device not provisioned", e);
-//	                    startProvisioning();
-//	                    return;
-//	                }
+	                try {
+	                    request = getKeyRequest(session, data, initDataType);
+	                } catch (android.media.NotProvisionedException e) {
+	                    Log.e(LOGTAG, "Device not provisioned", e);
+	                    startProvisioning();
+	                    return;
+	                }
 	                if (request != null) {
 	                    //onSessionMessage(sessionId, request);
 	                } else {
@@ -374,7 +389,7 @@ public class MediaDrmBridge extends JNIObject {
         	URL finalURL = new URL(url + "&signedRequest=" + new String(drmRequest));
         	HttpURLConnection urlConnection = (HttpURLConnection) finalURL.openConnection();
         	urlConnection.setRequestMethod("POST");
-
+        	Log.d(LOGTAG, "Provisioning : postRequest=" + finalURL.toString());
         	try {
         		// Add data
         		urlConnection.setRequestProperty("Accept", "*/*");
@@ -395,6 +410,7 @@ public class MediaDrmBridge extends JNIObject {
                         response.append(inputLine);
                     }
                     in.close();
+                    Log.d(LOGTAG, "Provisioning : postRequest - done");
                     return String.valueOf(response).getBytes();
                 } else {
                     Log.d(LOGTAG, "Server returned HTTP error code " + responseCode);
@@ -495,6 +511,7 @@ public class MediaDrmBridge extends JNIObject {
         	if (MediaCrypto.isCryptoSchemeSupported(mSchemeUUID)) {
         		final byte [] cryptoSessionId = aSessionId.array();
         		mCrypto = new MediaCrypto(mSchemeUUID, cryptoSessionId);
+        		getLock().notify();
         		String strCrypteSessionId = new String(aSessionId.array());
         		Log.d(LOGTAG, "MediaCrypto successfully created! - SId " + strCrypteSessionId);
         		return true;
