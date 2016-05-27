@@ -1,15 +1,18 @@
+// Copyright 2013 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 package org.mozilla.gecko.media;
 
-//import org.apache.http.HttpResponse;
-//import org.apache.http.client.ClientProtocolException;
-//import org.apache.http.client.HttpClient;
-//import org.apache.http.client.methods.HttpPost;
-//import org.apache.http.impl.client.DefaultHttpClient;
-//import org.apache.http.util.EntityUtils;
-//import org.apache.commons.lang3.CharEncoding.UTF_8;
-//import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 //import java.nio.ByteOrder;
-//import java.util.ArrayDeque;
+import java.util.ArrayDeque;
 
 import org.mozilla.gecko.mozglue.JNIObject;
 import org.mozilla.gecko.annotation.RobocopTarget;
@@ -17,9 +20,9 @@ import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.GeckoAppShell;
 
-//import android.os.AsyncTask;
+import android.os.AsyncTask;
 //import android.os.Build;
-//import android.os.Handler;
+import android.os.Handler;
 import android.media.MediaCrypto;
 import android.media.MediaCryptoException;
 import android.media.MediaDrm;
@@ -43,12 +46,34 @@ public class MediaDrmBridge extends JNIObject {
     private MediaDrm mDrm;
     private MediaCrypto mCrypto;
     private UUID mSchemeUUID;
+    private Handler mHandler;
     private ByteBuffer mCryptoSessionId;
     private boolean mProvisioning;
     private HashMap<ByteBuffer, String> mSessionIds;
-    
+    private ArrayDeque<PendingCreateSessionData> mPendingCreateSessionDataQueue;
+
+    private static class PendingCreateSessionData {
+        private final int mToken;
+        private final int mPromiseId;
+        private final byte[] mInitData;
+        private final String mMimeType;
+
+        private PendingCreateSessionData(int aToken, int aPromiseId,
+        								 byte[] aInitData, String aMimeType) {
+        	mToken = aToken;
+        	mPromiseId = aPromiseId;
+        	mInitData = aInitData;
+        	mMimeType = aMimeType;
+        }
+
+        private int token() { return mToken; }
+        private int promiseId() { return mPromiseId; }
+        private byte[] initData() { return mInitData; }
+        private String mimeType() { return mMimeType; }
+    }
+
     @Override protected native void disposeNative();
-    
+
     public Object getLock() {
         return this;
     }
@@ -56,14 +81,16 @@ public class MediaDrmBridge extends JNIObject {
     @WrapForJNI(allowMultithread = true)
     MediaDrmBridge() {
     	Log.d(LOGTAG, "MediaDrmBridge()");
+		mProvisioning = false;
+		mSessionIds = new HashMap<ByteBuffer, String>();
+		mPendingCreateSessionDataQueue = new ArrayDeque<PendingCreateSessionData>();
+		mHandler = new Handler();
     }
-    
+
     @WrapForJNI(allowMultithread = true)
     public boolean Init(UUID aKeySystem) {
     	synchronized (getLock()) {
     		Log.d(LOGTAG, "Init");
-    		mProvisioning = false;
-    		mSessionIds = new HashMap<ByteBuffer, String>();
         	try {
         		mDrm = new MediaDrm(aKeySystem);
         		mDrm.setOnEventListener(new MediaDrmListener());
@@ -88,39 +115,45 @@ public class MediaDrmBridge extends JNIObject {
     		Log.d(LOGTAG, "mDrm not exists !");
     		return false;
     	}
-    	if (mProvisioning) {
-    		Log.d(LOGTAG, "Pending createsession because of provisioning !");
-    		return true;
-    	}
-    	ByteBuffer sessionId = null;
-    	String strSessionId = null;
-    	try {
-    		sessionId = openSession();
-    		strSessionId = new String(sessionId.array());
-        	boolean hasCrypto = ensureMediaCryptoCreated(sessionId);
+    	synchronized (getLock()) {
+    		if (mProvisioning) {
+    			Log.d(LOGTAG, "Pending createsession because of provisioning !");
+    			assert mCrypto == null;
+    			savePendingCreateSessionData(aCreateSessionToken, aPromiseId,
+    										 aInitData, aInitDataType);
+	    		return true;
+	    	}
+    		ByteBuffer sessionId = null;
+    		String strSessionId = null;
+    		try {
+    			sessionId = openSession();
+    			strSessionId = new String(sessionId.array());
+    			boolean hasCrypto = ensureMediaCryptoCreated(sessionId);
 
-        	MediaDrm.KeyRequest request = null;
-        	request = getKeyRequest(sessionId, aInitData, aInitDataType);
-        	if (request == null) {
-        		if (sessionId != null) {
-        			CloseSession(strSessionId);
-        		}
-        		return false;
-        	}
+    			MediaDrm.KeyRequest request = null;
+    			request = getKeyRequest(sessionId, aInitData, aInitDataType);
+    			if (request == null) {
+    				if (sessionId != null) {
+    					CloseSession(strSessionId);
+    				}
+    				return false;
+	        	}
 
-        	onSessionCreated(aCreateSessionToken, aPromiseId, sessionId.array(),
-        					 request.getData());
-        	
-        	mSessionIds.put(sessionId, strSessionId);
-        	Log.d(LOGTAG, " StringID : " + strSessionId + " is put into mSessionIds ");
-        	return true;
-    	} catch (android.media.NotProvisionedException e) {
-    		Log.e(LOGTAG, "Device not provisioned", e);
-    		if (sessionId != null) {
-    			CloseSession(strSessionId);
+    			onSessionCreated(aCreateSessionToken, aPromiseId, sessionId.array(),
+	        					 request.getData());
+
+    			mSessionIds.put(sessionId, strSessionId);
+    			Log.d(LOGTAG, " StringID : " + strSessionId + " is put into mSessionIds ");
+    			return true;
+    		} catch (android.media.NotProvisionedException e) {
+    			Log.e(LOGTAG, "Device not provisioned", e);
+    			if (sessionId != null) {
+    				CloseSession(strSessionId);
+    			}
+    			savePendingCreateSessionData(aCreateSessionToken, aPromiseId,
+    										 aInitData, aInitDataType);
+    			return true;
     		}
-        	// TODO : Start provisioning
-    		return true;
     	}
     }
 
@@ -313,6 +346,147 @@ public class MediaDrmBridge extends JNIObject {
     private void release() {
     }
     
+    private class PostRequestTask extends AsyncTask<String, Void, Void> {
+        private static final String LOGTAG = "PostRequestTask";
+
+        private byte[] mDrmRequest;
+        private byte[] mResponseBody;
+
+        public PostRequestTask(byte[] drmRequest) {
+            mDrmRequest = drmRequest;
+        }
+
+        @Override
+        protected Void doInBackground(String... urls) {
+        	try {
+        		mResponseBody = postRequest(urls[0], mDrmRequest);
+                if (mResponseBody != null) {
+                    Log.d(LOGTAG, "response length=" + mResponseBody.length);
+                }
+        	} catch (IOException e) {
+        		e.printStackTrace();
+        	}
+            return null;
+        }
+
+        private byte[] postRequest(String url, byte[] drmRequest) throws IOException {
+        	// TODO : Check the correctness
+        	URL finalURL = new URL(url + "&signedRequest=" + new String(drmRequest));
+        	HttpURLConnection urlConnection = (HttpURLConnection) finalURL.openConnection();
+        	urlConnection.setRequestMethod("POST");
+
+        	try {
+        		// Add data
+        		urlConnection.setRequestProperty("Accept", "*/*");
+        		urlConnection.setRequestProperty("User-Agent", "Widevine CDM v1.0");
+        		urlConnection.setRequestProperty("Content-Type", "application/json");
+
+        		// Execute HTTP Post Request
+        		urlConnection.connect();
+
+        		int responseCode = urlConnection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                	BufferedReader in =
+                	    new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+                	String inputLine;
+                	StringBuffer response = new StringBuffer();
+
+                    while ((inputLine = in.readLine()) != null) {
+                        response.append(inputLine);
+                    }
+                    in.close();
+                    return String.valueOf(response).getBytes();
+                } else {
+                    Log.d(LOGTAG, "Server returned HTTP error code " + responseCode);
+                    return null;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void v) {
+            onProvisionResponse(mResponseBody);
+        }
+    }
+
+    boolean provideProvisionResponse(byte[] response) {
+        if (response == null || response.length == 0) {
+            Log.e(LOGTAG, "Invalid provision response.");
+            return false;
+        }
+
+        try {
+            mDrm.provideProvisionResponse(response);
+            return true;
+        } catch (android.media.DeniedByServerException e) {
+            Log.e(LOGTAG, "failed to provide provision response", e);
+        } catch (java.lang.IllegalStateException e) {
+            Log.e(LOGTAG, "failed to provide provision response", e);
+        }
+        return false;
+    }
+
+    private void savePendingCreateSessionData(int aToken, int aPromiseId, byte[] initData, String mime) {
+    	Log.d(LOGTAG, "savePendingCreateSessionData()");
+    	mPendingCreateSessionDataQueue.offer(new PendingCreateSessionData(aToken, aPromiseId, initData, mime));
+    }
+
+    private void processPendingCreateSessionData() {
+        Log.d(LOGTAG, "processPendingCreateSessionData()");
+        assert mDrm != null;
+
+        // Check !mProvisioning because NotProvisionedException may be
+        // thrown in createSession().
+        while (!mProvisioning && !mPendingCreateSessionDataQueue.isEmpty()) {
+            PendingCreateSessionData pendingData = mPendingCreateSessionDataQueue.poll();
+            int token = pendingData.token();
+            int promiseId = pendingData.promiseId();
+            byte[] initData = pendingData.initData();
+            String mime = pendingData.mimeType();
+            CreateSession(token, promiseId, mime, initData);
+        }
+    }
+
+    private void resumePendingOperations() {
+        mHandler.post(new Runnable(){
+            @Override
+            public void run() {
+                processPendingCreateSessionData();
+            }
+        });
+    }
+
+    private void startProvisioning() {
+        Log.d(LOGTAG, "startProvisioning");
+        assert mDrm != null;
+        assert !mProvisioning;
+        mProvisioning = true;
+        MediaDrm.ProvisionRequest request = mDrm.getProvisionRequest();
+        PostRequestTask postTask = new PostRequestTask(request.getData());
+        postTask.execute(request.getDefaultUrl());
+    }
+
+    private void onProvisionResponse(byte[] response) {
+        Log.d(LOGTAG, "onProvisionResponse()");
+        assert mProvisioning;
+        mProvisioning = false;
+
+        // If |mDrm| is released, there is no need to callback native.
+        if (mDrm == null) {
+            return;
+        }
+
+        boolean success = provideProvisionResponse(response);
+
+        if (success) {
+            resumePendingOperations();
+        }
+    }
+
+    // ===============================================================================
     private boolean ensureMediaCryptoCreated(ByteBuffer aSessionId) {
     	if (mCrypto != null) {
     		return true;
