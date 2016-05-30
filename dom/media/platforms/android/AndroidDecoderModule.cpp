@@ -467,7 +467,6 @@ AndroidDecoderModule::CreateVideoDecoder(
 
   RefPtr<MediaDataDecoder> decoder =
     new VideoDataDecoder(aConfig, format, aCallback, aImageContainer, aVideoTaskQueue, mProxy);
-
   return decoder.forget();
 }
 
@@ -503,7 +502,6 @@ AndroidDecoderModule::CreateAudioDecoder(
 
   RefPtr<MediaDataDecoder> decoder =
     new AudioDataDecoder(aConfig, format, aCallback, aAudioTaskQueue, mProxy);
-
   return decoder.forget();
 }
 
@@ -578,7 +576,7 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
     INVOKE_CALLBACK(Error);
     return NS_ERROR_FAILURE;
   }
-  if (fennecCDMProxy) {
+  if (!fennecCDMProxy) {
     NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, nullptr, 0), rv);
   } else {
     NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, mediaCrypto, 0), rv);
@@ -729,8 +727,6 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
     mProxy->GetSessionIdsForKeyId(aSample->mCrypto.mKeyId,
                                   writer->mCrypto.mSessionIds);
 
-    CryptoInfo::LocalRef cryptoInfo;
-    Unused << CryptoInfo::New(&cryptoInfo);
     auto& cryptoObj = aSample->mCrypto;
     //https://dxr.mozilla.org/mozilla-central/rev/3461f3cae78495f100a0f7d3d2e0b89292d3ec02/dom/media/gmp/GMPEncryptedBufferDataImpl.cpp#89
     int newNumSubSamples = std::min<uint32_t>(cryptoObj.mPlainSizes.Length(), cryptoObj.mEncryptedSizes.Length());
@@ -774,7 +770,8 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
     nsTArray<uint8_t> mIV;
     nsTArray<nsCString> mSessionIds;
     */
-
+    CryptoInfo::LocalRef cryptoInfo;
+    Unused << CryptoInfo::New(&cryptoInfo);
     Unused << cryptoInfo->Set(newNumSubSamples,
                     mozilla::jni::IntArray::Ref::From(newNumBytesOfClearData),
                     mozilla::jni::IntArray::Ref::From(newNumBytesOfEncryptedData),

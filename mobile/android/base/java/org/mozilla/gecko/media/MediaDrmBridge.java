@@ -251,7 +251,7 @@ public class MediaDrmBridge extends JNIObject {
         assert mDrm != null;
         assert mCrypto != null;
         assert !mProvisioning;
-
+        Log.d(LOGTAG, "getKeyRequest mime = " + mime + ", data length = " + data.length);
         HashMap<String, String> optionalParameters = new HashMap<String, String>();
         MediaDrm.KeyRequest request =
           mDrm.getKeyRequest(session.array(), data, mime,

@@ -2349,15 +2349,15 @@ public class GeckoAppShell
     static Object sLocker = new Object();
     @WrapForJNI
     public static synchronized void CreateSurfaceView() {
-      Log.e(LOGTAG, "!!!!!!!!!!!CreateSurfaceView !!!!!!!!!!!!!!!!!!!!");
+      Log.e(LOGTAG, "!!!!!!!!!!!CreateSurfaceView ++ !!!!!!!!!!!!!!!!!!!!");
 
       Runnable sCallbackRunnable = new Runnable() {
         @Override
         public void run() {
           if (sSurfaceView == null) {
-            Log.e(LOGTAG, "!!!!!!!!!!!CreateSurfaceView !!!!!!!!!!!!!!!!!!!!");
+            Log.e(LOGTAG, "!!!!!!!!!!! sSurfaceView == null , CreateSurfaceView !!!!!!!!!!!!!!!!!!!!");
             sSurfaceView = new SurfaceView(getContext());
-            getGeckoInterface().addPluginView(sSurfaceView, new RectF(0, 0, 100, 100), false);
+            getGeckoInterface().addPluginView(sSurfaceView, new RectF(0, 0, 300, 300), false);
             SurfaceHolder.Callback holderCallback = new SurfaceHolder.Callback() {
               @Override
               public void surfaceCreated(SurfaceHolder arg0) {
@@ -2383,7 +2383,7 @@ public class GeckoAppShell
             };
             sSurfaceHolder=sSurfaceView.getHolder();
             sSurfaceHolder.addCallback(holderCallback);
-            Log.e(LOGTAG, "!!!!!!!!!!!CreateSurfaceView 88 !!!!!!!!!!!!!!!!!!!!");
+            Log.e(LOGTAG, "!!!!!!!!!!!CreateSurfaceView -- !!!!!!!!!!!!!!!!!!!!");
           }
         }
       };
