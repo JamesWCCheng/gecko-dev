@@ -171,7 +171,7 @@ public class MediaDrmBridge extends JNIObject {
         if (session == null) {
             Log.e(LOGTAG, "updateSession : found no session for Id="+aSessionId);
         }
-    	// TODO : Check the following error
+      // TODO : Check the following error
 //        if (!sessionExists(session)) {
 //            Log.e(LOGTAG, "Invalid session in updateSession.");
 //            onSessionError(sessionId);
@@ -280,7 +280,7 @@ public class MediaDrmBridge extends JNIObject {
 //            if (sessionId == null || sessionId == INVALID_SESSION_ID) {
 //                Log.e(LOGTAG, "MediaDrmListener: Invalid session ID.");
 //                return;
-              }
+//              }
             switch(event) {
                 case MediaDrm.EVENT_PROVISION_REQUIRED:
                     Log.d(LOGTAG, "MediaDrm.EVENT_PROVISION_REQUIRED");
