@@ -1835,9 +1835,9 @@ template<> const char mozilla::jni::Context<MediaDrmBridge, jobject>::name[] =
 constexpr char MediaDrmBridge::New_t::name[];
 constexpr char MediaDrmBridge::New_t::signature[];
 
-auto MediaDrmBridge::New() -> MediaDrmBridge::LocalRef
+auto MediaDrmBridge::New(mozilla::jni::Object::Param a0) -> MediaDrmBridge::LocalRef
 {
-    return mozilla::jni::Constructor<New_t>::Call(MediaDrmBridge::Context(), nullptr);
+    return mozilla::jni::Constructor<New_t>::Call(MediaDrmBridge::Context(), nullptr, a0);
 }
 
 constexpr char MediaDrmBridge::CloseSession_t::name[];

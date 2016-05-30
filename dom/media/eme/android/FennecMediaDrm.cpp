@@ -44,7 +44,15 @@ FennecMediaDrm::FennecMediaDrm(const nsAString& aKeySystem)
   clearkeyUUID = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
   widevineUUID = GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
 
-  mBridge = widget::MediaDrmBridge::New();
+  if (mKeySystem.EqualsLiteral("org.w3.clearkey")) {
+    mKeySystemUUID = clearkeyUUID;
+  } else if (mKeySystem.EqualsLiteral("com.widevine.alpha")) {
+    mKeySystemUUID = widevineUUID;
+  } else {
+    MOZ_ASSERT(false);
+  }
+
+  mBridge = widget::MediaDrmBridge::New(mKeySystemUUID);
   MDBridge::AttachNative(mBridge, this);
 }
 
@@ -60,14 +68,6 @@ FennecMediaDrm::Init(GMPDecryptorProxyCallback* aCallback)
   EME_LOG("FennecMediaDrm::Init >>>>> ");
   MOZ_ASSERT(mBridge);
   mCallback = aCallback;
-
-  if (mKeySystem.EqualsLiteral("org.w3.clearkey")) {
-    mKeySystemUUID = clearkeyUUID;
-  } else if (mKeySystem.EqualsLiteral("com.widevine.alpha")) {
-    mKeySystemUUID = widevineUUID;
-  } else {
-    return NS_ERROR_FAILURE;
-  }
 
   bool success = mBridge->Init(mKeySystemUUID);
   EME_LOG("FennecMediaDrm::Init <<<<< ");

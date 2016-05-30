@@ -4237,16 +4237,17 @@ public:
         typedef MediaDrmBridge Owner;
         typedef MediaDrmBridge::LocalRef ReturnType;
         typedef MediaDrmBridge::Param SetterType;
-        typedef mozilla::jni::Args<> Args;
+        typedef mozilla::jni::Args<
+                mozilla::jni::Object::Param> Args;
         static constexpr char name[] = "<init>";
         static constexpr char signature[] =
-                "()V";
+                "(Ljava/util/UUID;)V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
     };
 
-    static auto New() -> MediaDrmBridge::LocalRef;
+    static auto New(mozilla::jni::Object::Param) -> MediaDrmBridge::LocalRef;
 
     struct CloseSession_t {
         typedef MediaDrmBridge Owner;
