@@ -50,6 +50,38 @@ auto DownloadsIntegration::ScanMedia(mozilla::jni::String::Param a0, mozilla::jn
 template<> const char mozilla::jni::Context<GeckoAppShell, jobject>::name[] =
         "org/mozilla/gecko/GeckoAppShell";
 
+constexpr char GeckoAppShell::CallQueueSecureInputBuffer_t::name[];
+constexpr char GeckoAppShell::CallQueueSecureInputBuffer_t::signature[];
+
+auto GeckoAppShell::CallQueueSecureInputBuffer(mozilla::jni::Object::Param a0, mozilla::jni::Object::Param a1, int32_t a2, int32_t a3, int64_t a4, int32_t a5) -> void
+{
+    return mozilla::jni::Method<CallQueueSecureInputBuffer_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1, a2, a3, a4, a5);
+}
+
+constexpr char GeckoAppShell::CheckIsAdaptivePlayback_t::name[];
+constexpr char GeckoAppShell::CheckIsAdaptivePlayback_t::signature[];
+
+auto GeckoAppShell::CheckIsAdaptivePlayback(mozilla::jni::Object::Param a0, mozilla::jni::String::Param a1) -> bool
+{
+    return mozilla::jni::Method<CheckIsAdaptivePlayback_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1);
+}
+
+constexpr char GeckoAppShell::CreateSurfaceView_t::name[];
+constexpr char GeckoAppShell::CreateSurfaceView_t::signature[];
+
+auto GeckoAppShell::CreateSurfaceView() -> void
+{
+    return mozilla::jni::Method<CreateSurfaceView_t>::Call(GeckoAppShell::Context(), nullptr);
+}
+
+constexpr char GeckoAppShell::GetSurfaceView_t::name[];
+constexpr char GeckoAppShell::GetSurfaceView_t::signature[];
+
+auto GeckoAppShell::GetSurfaceView() -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetSurfaceView_t>::Call(GeckoAppShell::Context(), nullptr);
+}
+
 constexpr char GeckoAppShell::AddPluginViewWrapper_t::name[];
 constexpr char GeckoAppShell::AddPluginViewWrapper_t::signature[];
 

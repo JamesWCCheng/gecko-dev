@@ -37,7 +37,7 @@ public:
                      DecoderDoctorDiagnostics* aDiagnostics) override;
 
 
-  AndroidDecoderModule(CDMProxy *aProxy = nullptr) :mProxy(aProxy){}
+  AndroidDecoderModule(CDMProxy *aProxy = nullptr);
   virtual ~AndroidDecoderModule() {}
 
   bool SupportsMimeType(const nsACString& aMimeType,
@@ -126,7 +126,6 @@ protected:
   MediaDataDecoderCallback* mCallback;
 
   widget::sdk::MediaCodec::GlobalRef mDecoder;
-  widget::sdk::MediaCrypto::GlobalRef mCrypto;
 
   jni::ObjectArray::GlobalRef mInputBuffers;
   jni::ObjectArray::GlobalRef mOutputBuffers;
@@ -143,8 +142,11 @@ protected:
   std::deque<media::TimeUnit> mDurations;
 
   // Test For DRM.
-  RefPtr<SamplesWaitingForKey> mSamplesWaitingForKey;
   RefPtr<CDMProxy> mProxy;
+  RefPtr<SamplesWaitingForKey> mSamplesWaitingForKey;
+  widget::sdk::SurfaceView::GlobalRef mSurfaceView;
+  widget::sdk::SurfaceHolder::GlobalRef mSurfaceHolder;
+  widget::sdk::Surface::GlobalRef mSurfaceFromSurfaceView;
 };
 
 } // namespace mozilla

@@ -131,6 +131,74 @@ class GeckoAppShell : public mozilla::jni::ObjectBase<GeckoAppShell, jobject>
 public:
     explicit GeckoAppShell(const Context& ctx) : ObjectBase<GeckoAppShell, jobject>(ctx) {}
 
+    struct CallQueueSecureInputBuffer_t {
+        typedef GeckoAppShell Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::Object::Param,
+                mozilla::jni::Object::Param,
+                int32_t,
+                int32_t,
+                int64_t,
+                int32_t> Args;
+        static constexpr char name[] = "CallQueueSecureInputBuffer";
+        static constexpr char signature[] =
+                "(Landroid/media/MediaCodec;Landroid/media/MediaCodec$CryptoInfo;IIJI)V";
+        static const bool isStatic = true;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    static auto CallQueueSecureInputBuffer(mozilla::jni::Object::Param, mozilla::jni::Object::Param, int32_t, int32_t, int64_t, int32_t) -> void;
+
+    struct CheckIsAdaptivePlayback_t {
+        typedef GeckoAppShell Owner;
+        typedef bool ReturnType;
+        typedef bool SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::Object::Param,
+                mozilla::jni::String::Param> Args;
+        static constexpr char name[] = "CheckIsAdaptivePlayback";
+        static constexpr char signature[] =
+                "(Landroid/media/MediaCodec;Ljava/lang/String;)Z";
+        static const bool isStatic = true;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    static auto CheckIsAdaptivePlayback(mozilla::jni::Object::Param, mozilla::jni::String::Param) -> bool;
+
+    struct CreateSurfaceView_t {
+        typedef GeckoAppShell Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "CreateSurfaceView";
+        static constexpr char signature[] =
+                "()V";
+        static const bool isStatic = true;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    static auto CreateSurfaceView() -> void;
+
+    struct GetSurfaceView_t {
+        typedef GeckoAppShell Owner;
+        typedef mozilla::jni::Object::LocalRef ReturnType;
+        typedef mozilla::jni::Object::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "GetSurfaceView";
+        static constexpr char signature[] =
+                "()Landroid/view/SurfaceView;";
+        static const bool isStatic = true;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    static auto GetSurfaceView() -> mozilla::jni::Object::LocalRef;
+
     struct AddPluginViewWrapper_t {
         typedef GeckoAppShell Owner;
         typedef void ReturnType;

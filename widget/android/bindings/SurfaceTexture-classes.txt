@@ -1,2 +1,4 @@
 android.graphics.SurfaceTexture
 android.view.Surface
+android.view.SurfaceHolder
+android.view.SurfaceView
