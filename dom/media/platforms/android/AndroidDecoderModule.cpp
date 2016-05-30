@@ -719,7 +719,7 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
   if (aSample->mCrypto.mValid) {
     // FIXME: This function does not work, so do not return.
     if (mSamplesWaitingForKey->WaitIfKeyNotUsable(const_cast<MediaRawData*>(aSample))) {
-      sleep(3);
+      //sleep(3);
       //return NS_OK;
     }
 
