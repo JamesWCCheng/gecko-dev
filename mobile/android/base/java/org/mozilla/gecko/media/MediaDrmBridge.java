@@ -91,6 +91,16 @@ public class MediaDrmBridge extends JNIObject {
         mSchemeUUID = aKeySystem;
         try {
             mDrm = new MediaDrm(mSchemeUUID);
+            try {
+              String currentSecurityLevel = mDrm.getPropertyString("securityLevel");
+              Log.e(LOGTAG, "Security level: current " + currentSecurityLevel);
+              mDrm.setPropertyString("securityLevel", "L3");
+              currentSecurityLevel = mDrm.getPropertyString("securityLevel");
+              Log.e(LOGTAG, "Security level: after L3 " + currentSecurityLevel);
+            }
+            catch (Exception e) {
+              Log.e(LOGTAG, "Failed to setPropertyString: " + e.getMessage());
+            }
             mDrm.setOnEventListener(new MediaDrmListener());
         } catch (MediaDrmException e) {
             Log.e(LOGTAG, "Failed to create MediaDrm: " + e.getMessage());

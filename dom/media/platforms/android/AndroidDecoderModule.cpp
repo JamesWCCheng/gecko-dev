@@ -253,8 +253,8 @@ public:
     }
 
     // [FIXME] Use SurfaceView instead.
-    // if (NS_FAILED(InitDecoder(mSurfaceTexture->JavaSurface()))) {
-    if (NS_FAILED(InitDecoder(mSurfaceFromSurfaceView))) {
+    if (NS_FAILED(InitDecoder(mSurfaceTexture->JavaSurface()))) {
+    // if (NS_FAILED(InitDecoder(mSurfaceFromSurfaceView))) {
       return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
     }
 
@@ -566,6 +566,7 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
     mediaCrypto = fennecCDMProxy->GetMediaCrypto();
     bool isRequiresSecureDecoderComponent = false;
     Unused << mediaCrypto->RequiresSecureDecoderComponent(mMimeType, &isRequiresSecureDecoderComponent);
+    PG(isRequiresSecureDecoderComponent);
     mDecoder = CreateDecoder(mMimeType, (mProxy != nullptr)/*means EME, so assume it is encrypted data case*/
                              , isRequiresSecureDecoderComponent);
   } else {
