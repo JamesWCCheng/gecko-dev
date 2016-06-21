@@ -738,6 +738,17 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
       clearData.AppendElement(clear);
     }
 
+    uint32_t totalSize = 0;
+    uint32_t offset = 0;
+    for (auto& encrypted : cryptoObj.mEncryptedSizes) {
+      totalSize += encrypted;
+    }
+    for (auto& clear : cryptoObj.mPlainSizes) {
+      totalSize += clear;
+    }
+    offset = aSample->Size() - totalSize;
+    PR(totalSize, offset);
+
     auto snapshotIV(cryptoObj.mIV);
 
     auto length = snapshotIV.Length();
@@ -779,10 +790,10 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
                     mozilla::jni::ByteArray::Ref::From(newKey),
                     mozilla::jni::ByteArray::Ref::From(newIV),
                     MediaCodec::CRYPTO_MODE_AES_CTR);
-    // res = mDecoder->QueueSecureInputBuffer(inputIndex, 0,cryptoInfo,
+    // res = mDecoder->QueueSecureInputBuffer(inputIndex, static_cast<int>(offset), cryptoInfo,
     //                                        aSample->mTime, 0);
     // Call Java version to know the exception msg.
-    widget::GeckoAppShell::CallQueueSecureInputBuffer(mDecoder, cryptoInfo, inputIndex, 0, aSample->mTime, 0);
+    widget::GeckoAppShell::CallQueueSecureInputBuffer(mDecoder, cryptoInfo, inputIndex, static_cast<int>(offset), aSample->mTime, 0);
   } else {
     res = mDecoder->QueueInputBuffer(inputIndex, 0, aSample->Size(),
                                      aSample->mTime, 0);
