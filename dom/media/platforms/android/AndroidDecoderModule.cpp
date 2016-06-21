@@ -206,6 +206,15 @@ GetFeatureStatus(int32_t aFeature)
   return status == nsIGfxInfo::FEATURE_STATUS_OK;
 };
 
+static char*
+GetMediaType(MediaData::Type aType)
+{
+  if (aType == 0) {
+    return "\033[1;42mAudio\033[m";
+  }
+  return "\033[1;44mVideo\033[m";
+}
+
 class VideoDataDecoder : public MediaCodecDataDecoder
 {
 public:
@@ -229,6 +238,7 @@ public:
 
   RefPtr<InitPromise> Init() override
   {
+    LOG("\033[1;34m mediaType(%s) \033[m\n", GetMediaType(mType));
     mSurfaceTexture = AndroidSurfaceTexture::Create();
     if (!mSurfaceTexture) {
       NS_WARNING("Failed to create SurfaceTexture for video decode\n");
@@ -236,21 +246,21 @@ public:
     }
 
     // Get the SurfaceView created in GeckoAppShell.java.
-    mSurfaceView = widget::GeckoAppShell::GetSurfaceView();
-    if (!mSurfaceView) {
-      NS_WARNING("Failed to create SurfaceView for video decode\n");
-      return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
-    }
-    auto res = mSurfaceView->GetHolder(ReturnTo(&mSurfaceHolder));
-    if (NS_FAILED(res)) {
-      NS_WARNING("Failed to get  SurfaceHolder from SurfaceView\n");
-      return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
-    }
-    res = mSurfaceHolder->GetSurface(ReturnTo(&mSurfaceFromSurfaceView));
-    if (NS_FAILED(res)) {
-      NS_WARNING("Failed to get Surface from SurfaceView for video decode\n");
-      return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
-    }
+//    mSurfaceView = widget::GeckoAppShell::GetSurfaceView();
+//    if (!mSurfaceView) {
+//      NS_WARNING("Failed to create SurfaceView for video decode\n");
+//      return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+//    }
+//    auto res = mSurfaceView->GetHolder(ReturnTo(&mSurfaceHolder));
+//    if (NS_FAILED(res)) {
+//      NS_WARNING("Failed to get  SurfaceHolder from SurfaceView\n");
+//      return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+//    }
+//    res = mSurfaceHolder->GetSurface(ReturnTo(&mSurfaceFromSurfaceView));
+//    if (NS_FAILED(res)) {
+//      NS_WARNING("Failed to get Surface from SurfaceView for video decode\n");
+//      return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+//    }
 
     // [FIXME] Use SurfaceView instead.
     if (NS_FAILED(InitDecoder(mSurfaceTexture->JavaSurface()))) {
@@ -364,7 +374,7 @@ public:
 
     int32_t offset;
     NS_ENSURE_SUCCESS(rv = aInfo->Offset(&offset), rv);
-    PR(offset, size);
+    //PR(offset, size);
 
 #ifdef MOZ_SAMPLE_TYPE_S16
     const int32_t numSamples = size / 2;
@@ -426,7 +436,7 @@ AndroidDecoderModule::SupportsMimeType(const nsACString& aMimeType,
       aMimeType.EqualsLiteral("audio/wave; codecs=7") ||
       aMimeType.EqualsLiteral("audio/wave; codecs=65534")) {
     return false;
-  }  
+  }
 
   if ((VPXDecoder::IsVPX(aMimeType, VPXDecoder::VP8) &&
        !GetFeatureStatus(nsIGfxInfo::FEATURE_VP8_HW_DECODE)) ||
@@ -447,16 +457,13 @@ AndroidDecoderModule::CreateVideoDecoder(
     DecoderDoctorDiagnostics* aDiagnostics)
 {
   MediaFormat::LocalRef format;
-
   NS_ENSURE_SUCCESS(MediaFormat::CreateVideoFormat(
       TranslateMimeType(aConfig.mMimeType),
       aConfig.mDisplay.width,
       aConfig.mDisplay.height,
       &format), nullptr);
 
-  // TODO: Delete me. Print the decoder name found by format. Once set secure feature, the name will append .secure automatically.
-
-  // auto rvsetfeaturevideo = format->SetFeatureEnabled("secure-playback", true);
+  auto rvsetfeaturevideo = format->SetFeatureEnabled("secure-playback", true);
   // PR(rvsetfeaturevideo);
   // MediaCodecList::LocalRef mcl;
   // auto rvmcl = MediaCodecList::New(MediaCodecList::ALL_CODECS, &mcl);
@@ -541,11 +548,13 @@ MediaCodecDataDecoder::~MediaCodecDataDecoder()
 RefPtr<MediaDataDecoder::InitPromise>
 MediaCodecDataDecoder::Init()
 {
-  nsresult rv = InitDecoder(nullptr);
-
   TrackInfo::TrackType type =
     (mType == MediaData::AUDIO_DATA ? TrackInfo::TrackType::kAudioTrack
                                     : TrackInfo::TrackType::kVideoTrack);
+  LOG("\033[1;32m mediaType(%s) \033[m\n",
+    GetMediaType(mType));
+
+  nsresult rv = InitDecoder(nullptr);
 
   return NS_SUCCEEDED(rv) ?
            InitPromise::CreateAndResolve(type, __func__) :
@@ -566,7 +575,9 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
     mediaCrypto = fennecCDMProxy->GetMediaCrypto();
     bool isRequiresSecureDecoderComponent = false;
     Unused << mediaCrypto->RequiresSecureDecoderComponent(mMimeType, &isRequiresSecureDecoderComponent);
-    PG(isRequiresSecureDecoderComponent);
+
+    LOG("\033[1;34m RequireSecureDecoderComp(%d) / mime(%s) \033[m\n",
+      isRequiresSecureDecoderComponent, mMimeType.Data());
     mDecoder = CreateDecoder(mMimeType, (mProxy != nullptr)/*means EME, so assume it is encrypted data case*/
                              , isRequiresSecureDecoderComponent);
   } else {
@@ -577,13 +588,17 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
     INVOKE_CALLBACK(Error);
     return NS_ERROR_FAILURE;
   }
+
+  LOG("\033[1;34m Ready to Configure Decoder ... (%s)\033[m\n",
+    GetMediaType(mType));
   if (!fennecCDMProxy) {
     NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, nullptr, 0), rv);
   } else {
     NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, mediaCrypto, 0), rv);
   }
-  NS_ENSURE_SUCCESS(rv = mDecoder->Start(), rv);
 
+  LOG(" mDecoder->Start() (%s) \n", GetMediaType(mType));
+  NS_ENSURE_SUCCESS(rv = mDecoder->Start(), rv);
   NS_ENSURE_SUCCESS(rv = ResetInputBuffers(), rv);
   NS_ENSURE_SUCCESS(rv = ResetOutputBuffers(), rv);
 
@@ -771,17 +786,6 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
     auto newIV = FillJByteArray(&snapshotIV[0], snapshotIV.Length());
     auto newKey = FillJByteArray(&cryptoObj.mKeyId[0], cryptoObj.mKeyId.Length());
 
-    /*
-    // Take EMEMediaDataDecoderProxy::Input(MediaRawData* aSample) for reference.
-    //auto Set(int32_t, mozilla::jni::IntArray::Param, mozilla::jni::IntArray::Param, mozilla::jni::ByteArray::Param, mozilla::jni::ByteArray::Param, int32_t) const -> nsresult;
-    //set (int newNumSubSamples, int[] newNumBytesOfClearData, int[] newNumBytesOfEncryptedData, byte[] newKey, byte[] newIV, int newMode)
-
-    nsTArray<uint8_t> mKeyId;
-    nsTArray<uint16_t> mPlainSizes;
-    nsTArray<uint32_t> mEncryptedSizes;
-    nsTArray<uint8_t> mIV;
-    nsTArray<nsCString> mSessionIds;
-    */
     CryptoInfo::LocalRef cryptoInfo;
     Unused << CryptoInfo::New(&cryptoInfo);
     Unused << cryptoInfo->Set(newNumSubSamples,
@@ -899,6 +903,7 @@ MediaCodecDataDecoder::DecoderLoop()
     }
 
     if (sample) {
+      LOG("\033[1;36m [%s] Ready to QueueSampe \033[m\n", GetMediaType(mType));
       res = QueueSample(sample);
       if (NS_SUCCEEDED(res)) {
         // We've fed this into the decoder, so remove it from the queue.
@@ -910,12 +915,14 @@ MediaCodecDataDecoder::DecoderLoop()
     }
 
     if (isOutputDone) {
+      LOG("\033[1;36m [%s] isOutputDone(1) continue next loop \033[m\n", GetMediaType(mType));
       continue;
     }
     BufferInfo::LocalRef bufferInfo;
     nsresult res = BufferInfo::New(&bufferInfo);
     BREAK_ON_DECODER_ERROR();
 
+    LOG("\033[1;36m [%s] >>>> going to DequeueOutputBuffer \033[m\n", GetMediaType(mType));
     int32_t outputStatus = -1;
     res = mDecoder->DequeueOutputBuffer(bufferInfo, kDecoderTimeout,
                                         &outputStatus);
@@ -924,13 +931,17 @@ MediaCodecDataDecoder::DecoderLoop()
     if (outputStatus == MediaCodec::INFO_TRY_AGAIN_LATER) {
       // We might want to call mCallback->InputExhausted() here, but there seems
       // to be some possible bad interactions here with the threading.
+      LOG("\033[1;36m [%s] INFO_TRY_AGAIN_LATER \033[m\n", GetMediaType(mType));
     } else if (outputStatus == MediaCodec::INFO_OUTPUT_BUFFERS_CHANGED) {
+      LOG("\033[1;36m [%s] INFO_OUTPUT_BUFFERS_CHANGED \033[m\n", GetMediaType(mType));
       res = ResetOutputBuffers();
       BREAK_ON_DECODER_ERROR();
     } else if (outputStatus == MediaCodec::INFO_OUTPUT_FORMAT_CHANGED) {
+      LOG("\033[1;36m [%s] INFO_OUTPUT_FORMAT_CHANGED \033[m\n", GetMediaType(mType));
       res = mDecoder->GetOutputFormat(ReturnTo(&outputFormat));
       BREAK_ON_DECODER_ERROR();
     } else if (outputStatus < 0) {
+      LOG("\033[1;36m [%s] outputStatus < 0 \033[m\n", GetMediaType(mType));
       NS_WARNING("Unknown error from decoder!");
       INVOKE_CALLBACK(Error);
       // Don't break here just in case it's recoverable. If it's not, other
@@ -942,17 +953,19 @@ MediaCodecDataDecoder::DecoderLoop()
       BREAK_ON_DECODER_ERROR();
 
       if (flags & MediaCodec::BUFFER_FLAG_END_OF_STREAM) {
+        LOG("\033[1;36m [%s] BUFFER_FLAG_END_OF_STREAM \033[m\n", GetMediaType(mType));
         HandleEOS(outputStatus);
         isOutputDone = true;
         // We only queue empty EOF frames, so we're done for now.
         continue;
       }
-
+      LOG("\033[1;36m [%s] >>>> going to ProcessOutput \033[m\n", GetMediaType(mType));
       res = ProcessOutput(bufferInfo, outputFormat, outputStatus);
       BREAK_ON_DECODER_ERROR();
     }
   }
 
+  LOG("\033[1;36m [%s] >>>> going to Cleanup  \033[m\n", GetMediaType(mType));
   Cleanup();
 
   // We're done.
@@ -1068,7 +1081,7 @@ nsresult
 MediaCodecDataDecoder::Shutdown()
 {
   MonitorAutoLock lock(mMonitor);
-
+  LOG("\033[1;36m mType(%s) \033[m\n", GetMediaType(mType));
   State(kStopping);
   lock.Notify();
 
