@@ -238,6 +238,8 @@ EnsureMinCDMVersion(mozIGeckoMediaPluginService* aGMPService,
     uuid = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
   } else if (aKeySystem.EqualsLiteral("com.widevine.alpha")){
     uuid = GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
+  } else if (aKeySystem.EqualsLiteral("com.microsoft.playready")) {
+    uuid = GenDrmUUID(0x9a04f07998404286ll, 0xab92e658e0885f95ll);
   }
   // Ask MediaDrm and Crypto Plugin to check if supported.
   MediaDrm::LocalRef mediaDrmInstance;
@@ -360,6 +362,9 @@ MediaKeySystemAccess::GetKeySystemStatus(const nsAString& aKeySystem,
       aOutMessage = NS_LITERAL_CSTRING("Widevine EME disabled");
       return MediaKeySystemStatus::Cdm_disabled;
     }
+    return EnsureMinCDMVersion(mps, aKeySystem, aMinCdmVersion, aOutMessage, aOutCdmVersion);
+  } else if (aKeySystem.EqualsLiteral("com.microsoft.playready")) {
+    // TODO: consider more robust logic to handle playready case.
     return EnsureMinCDMVersion(mps, aKeySystem, aMinCdmVersion, aOutMessage, aOutCdmVersion);
   }
 //#endif

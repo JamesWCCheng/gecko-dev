@@ -42,6 +42,8 @@ public class MediaDrmBridge extends JNIObject {
       new UUID(0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL);
     private static final UUID WIDEVINE_SCHEME_UUID =
       new UUID(0xedef8ba979d64aceL, 0xa3c827dcd51d21edL);
+    private static final UUID PLAYREADY_SCHEME_UUID =
+      new UUID(0x9a04f07998404286L, 0xab92e658e0885f95L);
     private static final String INVALID_SESSION_ID = "Invalid";
 
     private MediaDrm mDrm;
@@ -89,6 +91,7 @@ public class MediaDrmBridge extends JNIObject {
         mPendingCreateSessionDataQueue = new ArrayDeque<PendingCreateSessionData>();
         mHandler = new Handler();
         mSchemeUUID = aKeySystem;
+        Log.e(LOGTAG, "mSchemeUUID : " + mSchemeUUID.toString());
         try {
             mDrm = new MediaDrm(mSchemeUUID);
             try {

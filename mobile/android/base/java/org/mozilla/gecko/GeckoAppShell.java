@@ -2421,12 +2421,12 @@ public class GeckoAppShell
       }
       catch(CryptoException e) {
           e.printStackTrace();
-          Log.e(LOGTAG, "!!!!!!!!!!!!!!!!GetSurfaceView MediaCodec.CryptoException getErrorCode = " + e.getErrorCode());
-          Log.e(LOGTAG, "!!!!!!!!!!!!!!!!GetSurfaceView MediaCodec.CryptoException getMessage = " + e.getMessage());
+          Log.e(LOGTAG, "!!!!!!!!!!!!!!!!CallQueueSecureInputBuffer MediaCodec.CryptoException getErrorCode = " + e.getErrorCode());
+          Log.e(LOGTAG, "!!!!!!!!!!!!!!!!CallQueueSecureInputBuffer MediaCodec.CryptoException getMessage = " + e.getMessage());
       }
       catch(IllegalStateException e) {
           e.printStackTrace();
-          Log.e(LOGTAG, "!!!!!!!!!!!!!!!!GetSurfaceView MediaCodec.IllegalStateException getMessage = " + e.getMessage());
+          Log.e(LOGTAG, "!!!!!!!!!!!!!!!!CallQueueSecureInputBuffer MediaCodec.IllegalStateException getMessage = " + e.getMessage());
       }
     }
 

@@ -24,6 +24,7 @@ static jbyteArray FillJByteArray(const T& data, jsize length)
 
 static UUID::GlobalRef clearkeyUUID;
 static UUID::GlobalRef widevineUUID;
+static UUID::GlobalRef playreadyUUID;
 
 namespace mozilla {
 
@@ -43,11 +44,14 @@ FennecMediaDrm::FennecMediaDrm(const nsAString& aKeySystem)
 {
   clearkeyUUID = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
   widevineUUID = GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
+  playreadyUUID = GenDrmUUID(0x9a04f07998404286ll, 0xab92e658e0885f95ll);
 
   if (mKeySystem.EqualsLiteral("org.w3.clearkey")) {
     mKeySystemUUID = clearkeyUUID;
   } else if (mKeySystem.EqualsLiteral("com.widevine.alpha")) {
     mKeySystemUUID = widevineUUID;
+  } else if (mKeySystem.EqualsLiteral("com.microsoft.playready")) {
+    mKeySystemUUID = playreadyUUID;
   } else {
     MOZ_ASSERT(false);
   }
