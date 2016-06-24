@@ -8,7 +8,6 @@
 #include "mozIGeckoMediaPluginService.h"
 #include "nsContentCID.h"
 #include "nsString.h"
-#include "mozilla/MediaDrmAdaptor.h"
 #include "mozilla/FennecMediaDrm.h"
 
 namespace mozilla {

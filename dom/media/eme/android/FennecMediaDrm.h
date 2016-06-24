@@ -7,15 +7,22 @@
 #define FennecMediaDrm_h__
 
 #include <jni.h>
+#include "mozilla/jni/Types.h"
+#include "mozilla/Logging.h"
 #include "GeneratedJNINatives.h"
 #include "GeneratedJNIWrappers.h"
 #include "GMPDecryptorProxy.h"
 #include "MediaCodec.h"
-#include "mozilla/FennecCDMProxy.h"
-#include "mozilla/jni/Types.h"
 #include "nsString.h"
 
+using namespace mozilla::widget::sdk;
+
 namespace mozilla {
+
+#ifndef FMDRM_LOG
+  LogModule* GetFMDRLog();
+  #define FMDRM_LOG(...) MOZ_LOG(GetFMDRLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+#endif
 
 class FennecMediaDrm final
   : public widget::MediaDrmBridge::Natives<FennecMediaDrm>
@@ -35,7 +42,9 @@ public:
   void OnSessionCreated(int aCreateSessionToken, int aPromiseId,
                         jni::ByteArray::Param aSessionId,
                         jni::ByteArray::Param aRequest);
-  void OnSessionUpdated(int aPromiseId, int aSessionId);
+
+  void OnSessionUpdated(int aPromiseId, jni::ByteArray::Param aSessionId);
+
   void OnSessoinClosed(int aPromiseId, int aSessionId);
 
   // === GMPDecryptorProxy ===

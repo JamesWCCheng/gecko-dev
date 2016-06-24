@@ -4356,10 +4356,10 @@ public:
         typedef void SetterType;
         typedef mozilla::jni::Args<
                 int32_t,
-                int32_t> Args;
+                mozilla::jni::ByteArray::Param> Args;
         static constexpr char name[] = "onSessionUpdated";
         static constexpr char signature[] =
-                "(II)V";
+                "(I[B)V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;

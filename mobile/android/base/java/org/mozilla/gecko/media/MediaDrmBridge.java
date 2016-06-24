@@ -208,7 +208,7 @@ public class MediaDrmBridge extends JNIObject {
                 // TODO(qinmin): remove this exception catch when b/10495563 is fixed.
                 Log.e(LOGTAG, "Exception intentionally caught when calling provideKeyResponse()", e);
             }
-            //onSessionReady(sessionId);
+            onSessionUpdated(aPromiseId, session.array());
             Log.d(LOGTAG, "Key successfully added for session " + aSessionId);
             return true;
         } catch (android.media.NotProvisionedException e) {
@@ -252,7 +252,7 @@ public class MediaDrmBridge extends JNIObject {
                                          byte[] aRequest);
 
     @WrapForJNI(allowMultithread = true)
-    private native void onSessionUpdated(int aPromiseId, int aSessionId);
+    private native void onSessionUpdated(int aPromiseId, byte[] aSessionId);
 
     @WrapForJNI(allowMultithread = true)
     private native void onSessoinClosed(int aPromiseId, int aSessionId);

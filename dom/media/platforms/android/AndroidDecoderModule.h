@@ -18,6 +18,11 @@
 
 namespace mozilla {
 
+#ifndef ADM_LOG
+  LogModule* GetADMLog();
+  #define ADM_LOG(...) MOZ_LOG(GetADMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+#endif
+
 typedef std::deque<RefPtr<MediaRawData>> SampleQueue;
 
 class AndroidDecoderModule : public PlatformDecoderModule {
@@ -103,6 +108,7 @@ protected:
 
   nsresult GetInputBuffer(JNIEnv* env, int index, jni::Object::LocalRef* buffer);
   bool WaitForInput();
+  void WaitForDecryptorKey(MediaRawData* aSample);
   already_AddRefed<MediaRawData> PeekNextSample();
   nsresult QueueSample(const MediaRawData* aSample);
   nsresult QueueEOS();

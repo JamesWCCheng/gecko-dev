@@ -28,6 +28,11 @@ static UUID::GlobalRef playreadyUUID;
 
 namespace mozilla {
 
+LogModule* GetFMDRLog() {
+  static LazyLogModule log("FMDRM");
+  return log;
+}
+
 static
 UUID::LocalRef GenDrmUUID(int64_t aFront, int64_t aRear)
 {
@@ -69,12 +74,12 @@ FennecMediaDrm::GetPluginId() const
 nsresult
 FennecMediaDrm::Init(GMPDecryptorProxyCallback* aCallback)
 {
-  EME_LOG("FennecMediaDrm::Init >>>>> ");
+  FMDRM_LOG("FennecMediaDrm::Init >>>>> ");
   MOZ_ASSERT(mBridge);
   mCallback = aCallback;
 
   bool success = mBridge->Init(mKeySystemUUID);
-  EME_LOG("FennecMediaDrm::Init <<<<< ");
+  FMDRM_LOG("FennecMediaDrm::Init <<<<< ");
   return success ? NS_OK : NS_ERROR_FAILURE;
 }
 
@@ -85,7 +90,7 @@ FennecMediaDrm::CreateSession(uint32_t aCreateSessionToken,
                               const nsTArray<uint8_t>& aInitData,
                               GMPSessionType aSessionType)
 {
-  EME_LOG("FennecMediaDrm::CreateSession >>>>> ");
+  FMDRM_LOG("FennecMediaDrm::CreateSession >>>>> ");
   MOZ_ASSERT(mBridge);
   NS_ConvertUTF8toUTF16 initDataType(aInitDataType);
 
@@ -99,7 +104,7 @@ FennecMediaDrm::CreateSession(uint32_t aCreateSessionToken,
                              mozilla::jni::ByteArray::Ref::From(initDataBytes));
 
 
-  EME_LOG("FennecMediaDrm::CreateSession <<<<< ");
+  FMDRM_LOG("FennecMediaDrm::CreateSession <<<<< ");
 }
 
 void
@@ -114,7 +119,7 @@ FennecMediaDrm::UpdateSession(uint32_t aPromiseId,
                               const nsCString& aSessionId,
                               const nsTArray<uint8_t>& aResponse)
 {
-  EME_LOG("FennecMediaDrm::UpdateSession >>>>> ");
+  FMDRM_LOG("FennecMediaDrm::UpdateSession >>>>> ");
   MOZ_ASSERT(mBridge);
 
   bool isClearkey = false;
@@ -137,7 +142,7 @@ FennecMediaDrm::UpdateSession(uint32_t aPromiseId,
   bool success = mBridge->UpdateSession(aPromiseId, sessionId,
                                           jni::ByteArray::Ref::From(jBAReponse));
   if (!success) {
-    EME_LOG("[%s][%s] provideKeyResponse Err.", __CLASS__, __FUNCTION__);
+    FMDRM_LOG("[%s][%s] provideKeyResponse Err.", __CLASS__, __FUNCTION__);
     mCallback->RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
                              NS_LITERAL_CSTRING(" ProvideKeyResponse error !!!"));
     return;
@@ -152,25 +157,24 @@ FennecMediaDrm::UpdateSession(uint32_t aPromiseId,
 //                                &((*it)[0]), (*it).size(), kGMPUsable);
 //  }
 
-  mCallback->ResolvePromise(aPromiseId);
-  EME_LOG("FennecMediaDrm::UpdateSession <<<<< ");
+  FMDRM_LOG("FennecMediaDrm::UpdateSession <<<<< ");
 }
 
 void
 FennecMediaDrm::CloseSession(uint32_t aPromiseId,
                              const nsCString& aSessionId)
 {
-  EME_LOG("FennecMediaDrm::CloseSession >>>>> ");
+  FMDRM_LOG("FennecMediaDrm::CloseSession >>>>> ");
   MOZ_ASSERT(mBridge);
 
-  auto jBASessionId = FillJByteArray((uint8_t*)aSessionId.Data(),
-                                      aSessionId.Length());
+//  auto jBASessionId = FillJByteArray((uint8_t*)aSessionId.Data(),
+//                                      aSessionId.Length());
 
   //mBridge->CloseSession(mozilla::jni::ByteArray::Ref::From(jBASessionId));
   mBridge->CloseSession(aSessionId);
   mCallback->ResolvePromise(aPromiseId);
   mCallback->SessionClosed(aSessionId);
-  EME_LOG("FennecMediaDrm::CloseSession <<<<< ");
+  FMDRM_LOG("FennecMediaDrm::CloseSession <<<<< ");
 }
 
 void
@@ -216,8 +220,8 @@ FennecMediaDrm::OnSessionCreated(int aCreateSessionToken, int aPromiseId,
                                  jni::ByteArray::Param aSessionId,
                                  jni::ByteArray::Param aRequest)
 {
-  EME_LOG("FennecMediaDrm::OnSessionCreated >>>>> ");
-  EME_LOG("FennecMediaDrm::OnSessionCreated : (%d) / (%d)",
+  FMDRM_LOG("FennecMediaDrm::OnSessionCreated >>>>> ");
+  FMDRM_LOG("FennecMediaDrm::OnSessionCreated : (%d) / (%d)",
     aCreateSessionToken, aPromiseId);
 
   //jni::String::LocalRef urlString;
@@ -228,7 +232,7 @@ FennecMediaDrm::OnSessionCreated(int aCreateSessionToken, int aPromiseId,
   //PR(reqDataArray);
   //PR(url.Length(), url);
 
-  EME_LOG("FennecMediaDrm::OnSessionCreated : ID Len(%d)", aSessionId->Length());
+  FMDRM_LOG("FennecMediaDrm::OnSessionCreated : ID Len(%d)", aSessionId->Length());
 
   nsCString sessionId((char*) (&(aSessionId->GetElements()[0])), aSessionId->Length());
   mCallback->SetSessionId(aCreateSessionToken, sessionId);
@@ -241,13 +245,18 @@ FennecMediaDrm::OnSessionCreated(int aCreateSessionToken, int aPromiseId,
                             retRequest);
 
 
-  EME_LOG("FennecMediaDrm::OnSessionCreated <<<<< ");
+  FMDRM_LOG("FennecMediaDrm::OnSessionCreated <<<<< ");
 }
 
 void
-FennecMediaDrm::OnSessionUpdated(int aPromiseId, int aSessionId)
+FennecMediaDrm::OnSessionUpdated(int aPromiseId, jni::ByteArray::Param aSessionId)
 {
+  FMDRM_LOG("FennecMediaDrm::OnSessionUpdated >>>>> ");
 
+  //nsCString sessionId((char*) (&(aSessionId->GetElements()[0])), aSessionId->Length());
+
+  mCallback->ResolvePromise(aPromiseId);
+  FMDRM_LOG("FennecMediaDrm::OnSessionUpdated <<<<< ");
 }
 
 void
