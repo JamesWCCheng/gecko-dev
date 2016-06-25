@@ -36,7 +36,8 @@
 #include "DecoderDoctorDiagnostics.h"
 #ifdef MOZ_WIDGET_ANDROID
 #include "ezlogger.h"
-#include "MediaCodec.h"
+#include "GeneratedJNIWrappers.h"
+using namespace mozilla::widget;
 #endif
 namespace mozilla {
 namespace dom {
@@ -217,13 +218,7 @@ MediaKeySystemAccess::IsGMPPresentOnDisk(const nsAString& aKeySystem,
 }
 
 #ifdef MOZ_WIDGET_ANDROID
-static UUID::LocalRef GenDrmUUID(int64_t m, int64_t l)
-{
-  UUID::LocalRef uuid;
-  auto rv = UUID::New(m, l, &uuid);
-  PR(rv);
-  return uuid;
-}
+
 static MediaKeySystemStatus
 EnsureMinCDMVersion(mozIGeckoMediaPluginService* aGMPService,
                     const nsAString& aKeySystem,
@@ -231,32 +226,13 @@ EnsureMinCDMVersion(mozIGeckoMediaPluginService* aGMPService,
                     nsACString& aOutMessage,
                     nsACString& aOutCdmVersion)
 {
-  // TODO: No need aMinCdmVersion and aGMPService, should delete it.
-  PG(ToPrintable(aKeySystem));
-  UUID::LocalRef uuid;
-  if (aKeySystem.EqualsLiteral("org.w3.clearkey")) {
-    uuid = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
-  } else if (aKeySystem.EqualsLiteral("com.widevine.alpha")){
-    uuid = GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
-  } else if (aKeySystem.EqualsLiteral("com.microsoft.playready")) {
-    uuid = GenDrmUUID(0x9a04f07998404286ll, 0xab92e658e0885f95ll);
-  }
-  // Ask MediaDrm and Crypto Plugin to check if supported.
-  MediaDrm::LocalRef mediaDrmInstance;
-  auto rv = MediaDrm::New(uuid, &mediaDrmInstance);
-  PG(rv);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    aOutMessage = NS_LITERAL_CSTRING("CDM unexpected error");
-    return MediaKeySystemStatus::Error;
-  }
-  bool isSupported = false;
-  rv = mediaDrmInstance->IsCryptoSchemeSupported(uuid, &isSupported);
-  PG(rv);
-  if (!isSupported) {
+  nsCString keySystem = NS_ConvertUTF16toUTF8(aKeySystem);
+
+  bool supported = MediaDrmBridge::IsSchemeSupported(keySystem);
+  if (!supported) {
     aOutMessage = NS_LITERAL_CSTRING("CDM is not installed");
     return MediaKeySystemStatus::Cdm_not_installed;
   }
-  PG0();
   return MediaKeySystemStatus::Available;
 }
 #else
@@ -461,36 +437,13 @@ static bool
 IsMediaDrmSupported(const nsAString& aKeySystem,
                     const nsAString& aType)
 {
-  PG(ToPrintable(aType));
-  PG(ToPrintable(aKeySystem));
-  UUID::LocalRef uuid;
-  if (aKeySystem.EqualsLiteral("org.w3.clearkey")) {
-    uuid = GenDrmUUID(0x1077efecc0b24d02ll, 0xace33c1e52e2fb4bll);
-  } else if (aKeySystem.EqualsLiteral("com.widevine.alpha")){
-    uuid = GenDrmUUID(0xedef8ba979d64acell, 0xa3c827dcd51d21edll);
-  }
-  // Ask MediaDrm and Crypto Plugin to check if supported.
-  MediaDrm::LocalRef mediaDrmInstance;
-  auto rv = MediaDrm::New(uuid, &mediaDrmInstance);
-  PG(rv);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return false;
-  }
-  nsContentTypeParser parser(aType);
-  nsAutoString mimeType;
-  parser.GetType(mimeType);
-  PG(mimeType);
-  bool isSupported = false;
-  // TODO: It's strange that it only accept cenc or webm in clearkey impl.
-  // http://androidxref.com/6.0.1_r10/xref/frameworks/av/drm/mediadrm/plugins/clearkey/DrmFactory.cpp#35
-  // return to for testing.
-  rv = mediaDrmInstance->IsCryptoSchemeSupported(uuid, mimeType, &isSupported);
-  PG(isSupported);
-  if (!isSupported) {
-    return true;
-  }
-  PG0();
-  return true;
+  // For Clearkey, the aType should be "cenc","webm","kid". Since there's no
+  // need to care about what kind of media mime it is for decryption.
+  // Only need to care about how to obtain the keyid inforamtion.
+  // For Other Scheme, aType is the media mimeType.
+  nsCString keySystem = NS_ConvertUTF16toUTF8(aKeySystem);
+  nsCString mimeType = NS_ConvertUTF16toUTF8(aType);
+  return MediaDrmBridge::IsSchemeMIMESupported(keySystem, mimeType);
 }
 static bool
 IsSupportedAudio(mozIGeckoMediaPluginService* aGMPService,

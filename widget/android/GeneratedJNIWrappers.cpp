@@ -1872,6 +1872,22 @@ auto MediaDrmBridge::Init(mozilla::jni::Object::Param a0) const -> bool
     return mozilla::jni::Method<Init_t>::Call(MediaDrmBridge::mCtx, nullptr, a0);
 }
 
+constexpr char MediaDrmBridge::IsSchemeMIMESupported_t::name[];
+constexpr char MediaDrmBridge::IsSchemeMIMESupported_t::signature[];
+
+auto MediaDrmBridge::IsSchemeMIMESupported(mozilla::jni::String::Param a0, mozilla::jni::String::Param a1) -> bool
+{
+    return mozilla::jni::Method<IsSchemeMIMESupported_t>::Call(MediaDrmBridge::Context(), nullptr, a0, a1);
+}
+
+constexpr char MediaDrmBridge::IsSchemeSupported_t::name[];
+constexpr char MediaDrmBridge::IsSchemeSupported_t::signature[];
+
+auto MediaDrmBridge::IsSchemeSupported(mozilla::jni::String::Param a0) -> bool
+{
+    return mozilla::jni::Method<IsSchemeSupported_t>::Call(MediaDrmBridge::Context(), nullptr, a0);
+}
+
 constexpr char MediaDrmBridge::UpdateSession_t::name[];
 constexpr char MediaDrmBridge::UpdateSession_t::signature[];
 

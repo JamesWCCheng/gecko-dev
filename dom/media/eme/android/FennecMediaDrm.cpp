@@ -101,7 +101,7 @@ FennecMediaDrm::CreateSession(uint32_t aCreateSessionToken,
   auto initDataBytes = FillJByteArray(&aInitData[0], len);
 
   mBridge->CreateSession(aCreateSessionToken, aPromiseId, initDataType,
-                             mozilla::jni::ByteArray::Ref::From(initDataBytes));
+                         mozilla::jni::ByteArray::Ref::From(initDataBytes));
 
 
   FMDRM_LOG("FennecMediaDrm::CreateSession <<<<< ");

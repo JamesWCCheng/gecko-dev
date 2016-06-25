@@ -4315,6 +4315,39 @@ public:
 
     auto Init(mozilla::jni::Object::Param) const -> bool;
 
+    struct IsSchemeMIMESupported_t {
+        typedef MediaDrmBridge Owner;
+        typedef bool ReturnType;
+        typedef bool SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::String::Param,
+                mozilla::jni::String::Param> Args;
+        static constexpr char name[] = "IsSchemeMIMESupported";
+        static constexpr char signature[] =
+                "(Ljava/lang/String;Ljava/lang/String;)Z";
+        static const bool isStatic = true;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    static auto IsSchemeMIMESupported(mozilla::jni::String::Param, mozilla::jni::String::Param) -> bool;
+
+    struct IsSchemeSupported_t {
+        typedef MediaDrmBridge Owner;
+        typedef bool ReturnType;
+        typedef bool SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::String::Param> Args;
+        static constexpr char name[] = "IsSchemeSupported";
+        static constexpr char signature[] =
+                "(Ljava/lang/String;)Z";
+        static const bool isStatic = true;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    static auto IsSchemeSupported(mozilla::jni::String::Param) -> bool;
+
     struct UpdateSession_t {
         typedef MediaDrmBridge Owner;
         typedef bool ReturnType;

@@ -82,6 +82,34 @@ public class MediaDrmBridge extends JNIObject {
         return this;
     }
 
+
+    @WrapForJNI
+    static public boolean IsSchemeSupported(String aKeySystem) {
+      if (aKeySystem.equals("org.w3.clearkey")) {
+          return MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID) &&
+              MediaCrypto.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID);
+      } else if (aKeySystem.equals("com.widevine.alpha")){
+          return MediaDrm.isCryptoSchemeSupported(WIDEVINE_SCHEME_UUID) &&
+              MediaCrypto.isCryptoSchemeSupported(WIDEVINE_SCHEME_UUID);
+      } else if (aKeySystem.equals("com.microsoft.playready")) {
+          return MediaDrm.isCryptoSchemeSupported(PLAYREADY_SCHEME_UUID) &&
+              MediaCrypto.isCryptoSchemeSupported(PLAYREADY_SCHEME_UUID);
+      }
+      return false;
+    }
+
+    @WrapForJNI
+    static public boolean IsSchemeMIMESupported(String aKeySystem, String aMIME) {
+      if (aKeySystem.equals("org.w3.clearkey")) {
+          return MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID, aMIME);
+      } else if (aKeySystem.equals("com.widevine.alpha")){
+          return MediaDrm.isCryptoSchemeSupported(WIDEVINE_SCHEME_UUID, aMIME);
+      } else if (aKeySystem.equals("com.microsoft.playready")) {
+          return MediaDrm.isCryptoSchemeSupported(PLAYREADY_SCHEME_UUID, aMIME);
+      }
+      return false;
+    }
+
     @WrapForJNI(allowMultithread = true)
     MediaDrmBridge(UUID aKeySystem) {
         Log.d(LOGTAG, "MediaDrmBridge()");
