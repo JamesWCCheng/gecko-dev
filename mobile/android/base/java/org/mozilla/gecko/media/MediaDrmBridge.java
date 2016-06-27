@@ -82,6 +82,19 @@ public class MediaDrmBridge extends JNIObject {
         return this;
     }
 
+    @WrapForJNI
+    static public boolean IsSchemeSupportedInitDataType(String aKeySystem,
+                                                        String aInitDataType) {
+      Log.d(LOGTAG, "MediaDrmBridge::IsSchemeSupportedInitDataType " + aInitDataType);
+      if (aKeySystem.equals("org.w3.clearkey")) {
+          return MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID, aInitDataType);
+      } else if (aKeySystem.equals("com.widevine.alpha")){
+          return MediaDrm.isCryptoSchemeSupported(WIDEVINE_SCHEME_UUID, aInitDataType);
+      } else if (aKeySystem.equals("com.microsoft.playready")) {
+          return MediaDrm.isCryptoSchemeSupported(PLAYREADY_SCHEME_UUID, aInitDataType);
+      }
+      return false;
+    }
 
     @WrapForJNI
     static public boolean IsSchemeSupported(String aKeySystem) {
@@ -100,8 +113,11 @@ public class MediaDrmBridge extends JNIObject {
 
     @WrapForJNI
     static public boolean IsSchemeMIMESupported(String aKeySystem, String aMIME) {
+      Log.d(LOGTAG, "MediaDrmBridge::IsSchemeMIMESupported " + aMIME);
       if (aKeySystem.equals("org.w3.clearkey")) {
-          return MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID, aMIME);
+          // For clearkey, there is no need to verify the mime type.
+          // clearkey plugin did not implement this mime type checking logic.
+          return MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID);
       } else if (aKeySystem.equals("com.widevine.alpha")){
           return MediaDrm.isCryptoSchemeSupported(WIDEVINE_SCHEME_UUID, aMIME);
       } else if (aKeySystem.equals("com.microsoft.playready")) {
@@ -166,11 +182,20 @@ public class MediaDrmBridge extends JNIObject {
             String strSessionId = null;
             try {
                 sessionId = openSession();
+                if (sessionId == null) {
+                  return false;
+                }
                 strSessionId = new String(sessionId.array());
+                mSessionIds.put(sessionId, strSessionId);
                 boolean hasCrypto = ensureMediaCryptoCreated(sessionId);
 
                 MediaDrm.KeyRequest request = null;
-                request = getKeyRequest(sessionId, aInitData, aInitDataType);
+                try {
+                  request = getKeyRequest(sessionId, aInitData, aInitDataType);
+                } catch (Exception e) {
+                  Log.e(LOGTAG, "Exception intentionally caught when calling getKeyRequest()", e);
+                }
+
                 if (request == null) {
                     if (sessionId != null) {
                         CloseSession(strSessionId);
@@ -181,7 +206,6 @@ public class MediaDrmBridge extends JNIObject {
                 onSessionCreated(aCreateSessionToken, aPromiseId, sessionId.array(),
                                  request.getData());
 
-                mSessionIds.put(sessionId, strSessionId);
                 mSessionMIMETypes.put(sessionId, aInitDataType);
                 Log.d(LOGTAG, " StringID : " + strSessionId + " is put into mSessionIds ");
                 return true;

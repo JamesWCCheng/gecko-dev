@@ -159,8 +159,9 @@ TranslateMimeType(const nsACString& aMimeType)
     return NS_LITERAL_CSTRING("video/x-vnd.on2.vp9");
   }
   nsCString mimetype(aMimeType);
+  // PG(mimetype);
   return mimetype;
-  //return PromiseFlatCString(aMimeType).get();
+  // return PromiseFlatCString(aMimeType).get();
 }
 
 static MediaCodec::LocalRef
@@ -195,7 +196,7 @@ GetFeatureStatus(int32_t aFeature)
   return status == nsIGfxInfo::FEATURE_STATUS_OK;
 };
 
-static char*
+static const char*
 GetMediaType(MediaData::Type aType)
 {
   if (aType == 0) {
@@ -234,22 +235,22 @@ public:
       return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
     }
 
-    // Get the SurfaceView created in GeckoAppShell.java.
-//    mSurfaceView = widget::GeckoAppShell::GetSurfaceView();
-//    if (!mSurfaceView) {
-//      NS_WARNING("Failed to create SurfaceView for video decode\n");
-//      return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
-//    }
-//    auto res = mSurfaceView->GetHolder(ReturnTo(&mSurfaceHolder));
-//    if (NS_FAILED(res)) {
-//      NS_WARNING("Failed to get  SurfaceHolder from SurfaceView\n");
-//      return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
-//    }
-//    res = mSurfaceHolder->GetSurface(ReturnTo(&mSurfaceFromSurfaceView));
-//    if (NS_FAILED(res)) {
-//      NS_WARNING("Failed to get Surface from SurfaceView for video decode\n");
-//      return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
-//    }
+   // Get the SurfaceView created in GeckoAppShell.java.
+   // mSurfaceView = widget::GeckoAppShell::GetSurfaceView();
+   // if (!mSurfaceView) {
+   //   NS_WARNING("Failed to create SurfaceView for video decode\n");
+   //   return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+   // }
+   // auto res = mSurfaceView->GetHolder(ReturnTo(&mSurfaceHolder));
+   // if (NS_FAILED(res)) {
+   //   NS_WARNING("Failed to get  SurfaceHolder from SurfaceView\n");
+   //   return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+   // }
+   // res = mSurfaceHolder->GetSurface(ReturnTo(&mSurfaceFromSurfaceView));
+   // if (NS_FAILED(res)) {
+   //   NS_WARNING("Failed to get Surface from SurfaceView for video decode\n");
+   //   return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+   // }
 
     // [FIXME] Use SurfaceView instead.
     if (NS_FAILED(InitDecoder(mSurfaceTexture->JavaSurface()))) {

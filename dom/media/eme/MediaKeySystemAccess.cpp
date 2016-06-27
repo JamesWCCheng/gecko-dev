@@ -35,7 +35,10 @@
 #include "gmp-video-decode.h"
 #include "DecoderDoctorDiagnostics.h"
 #ifdef MOZ_WIDGET_ANDROID
+#if defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wunused-function"
 #include "ezlogger.h"
+#endif
 #include "GeneratedJNIWrappers.h"
 using namespace mozilla::widget;
 #endif
@@ -284,7 +287,7 @@ MediaKeySystemAccess::GetKeySystemStatus(const nsAString& aKeySystem,
                                          nsACString& aOutMessage,
                                          nsACString& aOutCdmVersion)
 {
-  PG(ToPrintable(aKeySystem));
+  // PG(ToPrintable(aKeySystem));
   MOZ_ASSERT(Preferences::GetBool("media.eme.enabled", false));
   nsCOMPtr<mozIGeckoMediaPluginService> mps =
     do_GetService("@mozilla.org/gecko-media-plugin-service;1");
@@ -441,9 +444,7 @@ IsMediaDrmSupported(const nsAString& aKeySystem,
   // need to care about what kind of media mime it is for decryption.
   // Only need to care about how to obtain the keyid inforamtion.
   // For Other Scheme, aType is the media mimeType.
-  nsCString keySystem = NS_ConvertUTF16toUTF8(aKeySystem);
-  nsCString mimeType = NS_ConvertUTF16toUTF8(aType);
-  return MediaDrmBridge::IsSchemeMIMESupported(keySystem, mimeType);
+  return MediaDrmBridge::IsSchemeMIMESupported(aKeySystem, aType);
 }
 static bool
 IsSupportedAudio(mozIGeckoMediaPluginService* aGMPService,
@@ -451,7 +452,13 @@ IsSupportedAudio(mozIGeckoMediaPluginService* aGMPService,
                  const nsAString& aAudioType,
                  DecoderDoctorDiagnostics* aDiagnostics)
 {
-  return IsMediaDrmSupported(aKeySystem, aAudioType);
+  nsContentTypeParser parser(aAudioType);
+  nsAutoString mimeType;
+  if (NS_FAILED(parser.GetType(mimeType))) {
+    return false;
+  }
+  PG(mimeType);
+  return IsMediaDrmSupported(aKeySystem, mimeType);
 }
 
 static bool
@@ -460,8 +467,15 @@ IsSupportedVideo(mozIGeckoMediaPluginService* aGMPService,
                  const nsAString& aVideoType,
                  DecoderDoctorDiagnostics* aDiagnostics)
 {
-  return IsMediaDrmSupported(aKeySystem, aVideoType);
+  nsContentTypeParser parser(aVideoType);
+  nsAutoString mimeType;
+  if (NS_FAILED(parser.GetType(mimeType))) {
+    return false;
+  }
+  PG(mimeType);
+  return IsMediaDrmSupported(aKeySystem, mimeType);
 }
+
 #else
 static bool
 IsSupportedAudio(mozIGeckoMediaPluginService* aGMPService,
@@ -514,23 +528,30 @@ IsSupported(mozIGeckoMediaPluginService* aGMPService,
 
   return true;
 }
-
+#ifdef MOZ_WIDGET_ANDROID
 static bool
 IsSupportedInitDataType(const nsString& aCandidate, const nsAString& aKeySystem)
 {
-    PG0();
+  // PG(ToPrintable(aKeySystem), aCandidate);
+  // aCandidate should be cenc, keyids, webm.
+  // By testing, keyid did not support by Clearkey and WideVine plugin.
+  return MediaDrmBridge::IsSchemeSupportedInitDataType(aKeySystem, aCandidate);
+}
+#else
+static bool
+IsSupportedInitDataType(const nsString& aCandidate, const nsAString& aKeySystem)
+{
   // All supported keySystems can handle "cenc" initDataType.
   // ClearKey also supports "keyids" and "webm" initDataTypes.
   return aCandidate.EqualsLiteral("cenc") ||
     ((aKeySystem.EqualsLiteral("org.w3.clearkey")
-// TODO: For testing
-//#ifdef MOZ_WIDEVINE_EME
+#ifdef MOZ_WIDEVINE_EME
     || aKeySystem.EqualsLiteral("com.widevine.alpha")
-//#endif
+#endif
     ) &&
     (aCandidate.EqualsLiteral("keyids") || aCandidate.EqualsLiteral("webm)")));
 }
-
+#endif
 static bool
 GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
                    const nsAString& aKeySystem,
@@ -549,7 +570,7 @@ GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
       }
     }
     if (initDataTypes.IsEmpty()) {
-        PG0();
+      PG0();
       return false;
     }
     config.mInitDataTypes.Construct();
@@ -563,7 +584,7 @@ GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
       }
     }
     if (caps.IsEmpty()) {
-        PG0();
+      PG0();
       return false;
     }
     config.mAudioCapabilities.Construct();
