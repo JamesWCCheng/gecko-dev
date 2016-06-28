@@ -295,10 +295,12 @@ MediaKeys::Init(ErrorResult& aRv)
     return nullptr;
   }
 
-  bool useFennecCDMProxy = true;
-  mProxy = useFennecCDMProxy ?
-    static_cast<CDMProxy*>(new FennecCDMProxy(this, mKeySystem)) :
-    static_cast<CDMProxy*>(new GMPCDMProxy(this, mKeySystem));
+  mProxy =
+#ifdef MOZ_WIDGET_ANDROID
+    new FennecCDMProxy(this, mKeySystem);
+#else
+    new GMPCDMProxy(this, mKeySystem);
+#endif
 
   // Determine principal (at creation time) of the MediaKeys object.
   nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(GetParentObject());

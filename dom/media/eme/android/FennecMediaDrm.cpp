@@ -269,7 +269,7 @@ void
 FennecMediaDrm::OnSessionMessage(jni::ByteArray::Param aSessionId,
                                  int aSessionMessageType,
                                  jni::ByteArray::Param aRequest)
-            {
+{
   FMDRM_LOG("FennecMediaDrm::OnSessoinMessage >>>>> ");
   nsCString sessionId((char*) (&(aSessionId->GetElements()[0])), aSessionId->Length());
   auto reqDataArray = aRequest->GetElements();

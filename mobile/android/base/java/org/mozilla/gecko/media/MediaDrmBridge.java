@@ -20,8 +20,10 @@ import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.GeckoAppShell;
 
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR2;
+import static android.os.Build.VERSION_CODES.LOLLIPOP;
 import android.os.AsyncTask;
-//import android.os.Build;
 import android.os.Handler;
 import android.media.MediaCrypto;
 import android.media.MediaCryptoException;
@@ -34,6 +36,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.UUID;
+
 
 public class MediaDrmBridge extends JNIObject {
 
@@ -82,9 +85,23 @@ public class MediaDrmBridge extends JNIObject {
         return this;
     }
 
+    static public boolean PassMiniumSupportVersionCheck() {
+      // TODO : Determine the mini support level
+      // MediaDrm starts in API_LEVEL 18 - JELLY_BEAN_MR2.
+      // For developing, we use LOLLIPOP first.
+      if (SDK_INT < LOLLIPOP) {
+        Log.d(LOGTAG, "MediaDrmBridge::CheckMiniumSupportVersion Not supported !! ");
+        return false;
+      }
+      return true;
+    }
+
     @WrapForJNI
     static public boolean IsSchemeSupportedInitDataType(String aKeySystem,
                                                         String aInitDataType) {
+      if (!PassMiniumSupportVersionCheck()) {
+        return false;
+      }
       Log.d(LOGTAG, "MediaDrmBridge::IsSchemeSupportedInitDataType " + aInitDataType);
       if (aKeySystem.equals("org.w3.clearkey")) {
           return MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID, aInitDataType);
@@ -98,6 +115,9 @@ public class MediaDrmBridge extends JNIObject {
 
     @WrapForJNI
     static public boolean IsSchemeSupported(String aKeySystem) {
+      if (!PassMiniumSupportVersionCheck()) {
+        return false;
+      }
       if (aKeySystem.equals("org.w3.clearkey")) {
           return MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID) &&
               MediaCrypto.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID);
@@ -113,6 +133,9 @@ public class MediaDrmBridge extends JNIObject {
 
     @WrapForJNI
     static public boolean IsSchemeMIMESupported(String aKeySystem, String aMIME) {
+      if (!PassMiniumSupportVersionCheck()) {
+        return false;
+      }
       Log.d(LOGTAG, "MediaDrmBridge::IsSchemeMIMESupported " + aMIME);
       if (aKeySystem.equals("org.w3.clearkey")) {
           // For clearkey, there is no need to verify the mime type.
