@@ -199,10 +199,15 @@ GetFeatureStatus(int32_t aFeature)
 static const char*
 GetMediaType(MediaData::Type aType)
 {
-  if (aType == 0) {
+  if (aType == MediaData::AUDIO_DATA) {
     return "\033[1;42mAudio\033[m";
+  } else if (aType == MediaData::VIDEO_DATA) {
+    return "\033[1;44mVideo\033[m";
+  } else if (aType == MediaData::RAW_DATA) {
+    return "\033[1;44mRaw\033[m";
+  } else {
+    return "\033[1;44mNull\033[m";
   }
-  return "\033[1;44mVideo\033[m";
 }
 
 class VideoDataDecoder : public MediaCodecDataDecoder
@@ -796,6 +801,7 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
     // res = mDecoder->QueueSecureInputBuffer(inputIndex, static_cast<int>(offset), cryptoInfo,
     //                                        aSample->mTime, 0);
     // Call Java version to know the exception msg.
+    printf_stderr("\033[1;36m [%s] CallQueueSecureInputBuffer \033[m\n", GetMediaType(mType));
     widget::GeckoAppShell::CallQueueSecureInputBuffer(mDecoder, cryptoInfo, inputIndex, static_cast<int>(offset), aSample->mTime, 0);
   } else {
     res = mDecoder->QueueInputBuffer(inputIndex, 0, aSample->Size(),

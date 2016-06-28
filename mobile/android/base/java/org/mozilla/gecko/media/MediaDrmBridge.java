@@ -278,7 +278,7 @@ public class MediaDrmBridge extends JNIObject {
     private void CloseSession(String aSessionId) {
         Log.d(LOGTAG, "CloseSession");
         assert mDrm != null;
-        ByteBuffer session = getSession(aSessionId);
+        ByteBuffer session = removeSession(aSessionId);
         mDrm.closeSession(session.array());
     }
 
@@ -411,6 +411,16 @@ public class MediaDrmBridge extends JNIObject {
     private ByteBuffer getSession(String aSessionId) {
         for (ByteBuffer session : mSessionIds.keySet()) {
             if (mSessionIds.get(session).equals(aSessionId)) {
+                return session;
+            }
+        }
+        return null;
+    }
+
+    private ByteBuffer removeSession(String aSessionId) {
+        for (ByteBuffer session : mSessionIds.keySet()) {
+            if (mSessionIds.get(session).equals(aSessionId)) {
+                mSessionIds.remove(session);
                 return session;
             }
         }
