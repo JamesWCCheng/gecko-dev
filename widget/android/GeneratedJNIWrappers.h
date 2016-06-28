@@ -4400,6 +4400,22 @@ public:
                 mozilla::jni::ExceptionMode::ABORT;
     };
 
+    struct OnSessionMessage_t {
+        typedef MediaDrmBridge Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::ByteArray::Param,
+                int32_t,
+                mozilla::jni::ByteArray::Param> Args;
+        static constexpr char name[] = "onSessionMessage";
+        static constexpr char signature[] =
+                "([BI[B)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
     struct OnSessionUpdated_t {
         typedef MediaDrmBridge Owner;
         typedef void ReturnType;

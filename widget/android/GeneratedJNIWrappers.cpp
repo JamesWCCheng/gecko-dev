@@ -1907,6 +1907,9 @@ auto MediaDrmBridge::UpdateSession(int32_t a0, mozilla::jni::String::Param a1, m
 constexpr char MediaDrmBridge::OnSessionCreated_t::name[];
 constexpr char MediaDrmBridge::OnSessionCreated_t::signature[];
 
+constexpr char MediaDrmBridge::OnSessionMessage_t::name[];
+constexpr char MediaDrmBridge::OnSessionMessage_t::signature[];
+
 constexpr char MediaDrmBridge::OnSessionUpdated_t::name[];
 constexpr char MediaDrmBridge::OnSessionUpdated_t::signature[];
 

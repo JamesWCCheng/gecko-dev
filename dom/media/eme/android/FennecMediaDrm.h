@@ -47,6 +47,10 @@ public:
 
   void OnSessoinClosed(int aPromiseId, int aSessionId);
 
+  void OnSessionMessage(jni::ByteArray::Param aSessionId,
+                        int/*GMPSessionMessageType*/ aSessionMessageType,
+                        jni::ByteArray::Param aRequest);
+
   // === GMPDecryptorProxy ===
   uint32_t GetPluginId() const override;
   nsresult Init(GMPDecryptorProxyCallback* aCallback) override;

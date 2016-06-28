@@ -368,6 +368,10 @@ public:
                 mozilla::jni::NativeStub<MediaDrmBridge::OnSessionCreated_t, Impl>
                 ::template Wrap<&Impl::OnSessionCreated>),
 
+        mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessionMessage_t>(
+                mozilla::jni::NativeStub<MediaDrmBridge::OnSessionMessage_t, Impl>
+                ::template Wrap<&Impl::OnSessionMessage>),
+
         mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessionUpdated_t>(
                 mozilla::jni::NativeStub<MediaDrmBridge::OnSessionUpdated_t, Impl>
                 ::template Wrap<&Impl::OnSessionUpdated>),

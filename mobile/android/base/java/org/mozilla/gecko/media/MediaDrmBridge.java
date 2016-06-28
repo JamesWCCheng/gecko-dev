@@ -144,6 +144,9 @@ public class MediaDrmBridge extends JNIObject {
               mDrm.setPropertyString("securityLevel", "L3");
               currentSecurityLevel = mDrm.getPropertyString("securityLevel");
               Log.e(LOGTAG, "Security level: after L3 " + currentSecurityLevel);
+
+              mDrm.setPropertyString("privacyMode", "enable");
+              mDrm.setPropertyString("sessionSharing", "enable");
             }
             catch (Exception e) {
               Log.e(LOGTAG, "Failed to setPropertyString: " + e.getMessage());
@@ -181,13 +184,14 @@ public class MediaDrmBridge extends JNIObject {
             ByteBuffer sessionId = null;
             String strSessionId = null;
             try {
+                ensureMediaCryptoCreated();
+
                 sessionId = openSession();
                 if (sessionId == null) {
                   return false;
                 }
                 strSessionId = new String(sessionId.array());
                 mSessionIds.put(sessionId, strSessionId);
-                boolean hasCrypto = ensureMediaCryptoCreated(sessionId);
 
                 MediaDrm.KeyRequest request = null;
                 try {
@@ -284,6 +288,7 @@ public class MediaDrmBridge extends JNIObject {
 
     @WrapForJNI(allowMultithread = true)
     private MediaCrypto GetMediaCrypto() {
+        Log.d(LOGTAG, "GetMediaCrypto");
         synchronized (getLock()) {
             if (mCrypto == null) {
                 try {
@@ -309,6 +314,11 @@ public class MediaDrmBridge extends JNIObject {
     @WrapForJNI(allowMultithread = true)
     private native void onSessoinClosed(int aPromiseId, int aSessionId);
 
+    @WrapForJNI(allowMultithread = true)
+    private native void onSessionMessage(byte[] aSessionId,
+                                         int aSessionMessageType,
+                                         byte[] aRequest);
+
     // Refer to Android Java Implementation ==================================
     private MediaDrm.KeyRequest getKeyRequest(ByteBuffer session, byte[] data,
                                               String mime)
@@ -316,7 +326,7 @@ public class MediaDrmBridge extends JNIObject {
         assert mDrm != null;
         assert mCrypto != null;
         assert !mProvisioning;
-        Log.d(LOGTAG, "getKeyRequest mime = " + mime + ", data length = " + data.length);
+        //Log.d(LOGTAG, "getKeyRequest mime = " + mime + ", data length = " + data.length);
         HashMap<String, String> optionalParameters = new HashMap<String, String>();
         MediaDrm.KeyRequest request =
           mDrm.getKeyRequest(session.array(), data, mime,
@@ -342,10 +352,10 @@ public class MediaDrmBridge extends JNIObject {
 //                return;
 //            }
             String sessionId = mSessionIds.get(session);
-//            if (sessionId == null || sessionId == INVALID_SESSION_ID) {
-//                Log.e(LOGTAG, "MediaDrmListener: Invalid session ID.");
-//                return;
-//              }
+            if (sessionId == null || sessionId == INVALID_SESSION_ID) {
+               Log.e(LOGTAG, "MediaDrmListener: Invalid session ID.");
+               return;
+            }
             switch(event) {
                 case MediaDrm.EVENT_PROVISION_REQUIRED:
                     Log.d(LOGTAG, "MediaDrm.EVENT_PROVISION_REQUIRED");
@@ -356,6 +366,7 @@ public class MediaDrmBridge extends JNIObject {
                         return;
                     }
                     String initDataType = mSessionMIMETypes.get(session);
+                    Log.d(LOGTAG, "MediaDrm.EVENT_KEY_REQUIRED initDataType = " + initDataType + ", sessionId = " + sessionId);
                     MediaDrm.KeyRequest request = null;
                     try {
                         request = getKeyRequest(session, data, initDataType);
@@ -365,7 +376,7 @@ public class MediaDrmBridge extends JNIObject {
                         return;
                     }
                     if (request != null) {
-                        //onSessionMessage(sessionId, request);
+                        onSessionMessage(session.array(), 0/*kGMPLicenseRequest*/, request.getData());
                     } else {
                         //onSessionError(sessionId);
                     }
@@ -574,25 +585,30 @@ public class MediaDrmBridge extends JNIObject {
     }
 
     // ===============================================================================
-    private boolean ensureMediaCryptoCreated(ByteBuffer aSessionId) {
+    private boolean ensureMediaCryptoCreated() throws android.media.NotProvisionedException {
         if (mCrypto != null) {
             return true;
         }
         try {
+            ByteBuffer sessionId = openSession();
             if (MediaCrypto.isCryptoSchemeSupported(mSchemeUUID)) {
-                final byte [] cryptoSessionId = aSessionId.array();
+                final byte [] cryptoSessionId = sessionId.array();
                 mCrypto = new MediaCrypto(mSchemeUUID, cryptoSessionId);
                 getLock().notify();
-                String strCrypteSessionId = new String(aSessionId.array());
-                Log.d(LOGTAG, "MediaCrypto successfully created! - SId " + strCrypteSessionId);
+                String strCrypteSessionId = new String(sessionId.array());
+                mSessionIds.put(sessionId, INVALID_SESSION_ID);
+                Log.d(LOGTAG, "MediaCrypto successfully created! - SId " + INVALID_SESSION_ID + ", " + strCrypteSessionId);
                     return true;
-                } else {
-                    Log.e(LOGTAG, "Cannot create MediaCrypto for unsupported scheme.");
-                    return false;
-                }
+            } else {
+                Log.e(LOGTAG, "Cannot create MediaCrypto for unsupported scheme.");
+                return false;
+            }
         } catch (android.media.MediaCryptoException e) {
             Log.e(LOGTAG, "Cannot create MediaCrypto", e);
             return false;
+        } catch (android.media.NotProvisionedException e) {
+            Log.e(LOGTAG, "ensureMediaCryptoCreated::Device not provisioned", e);
+            throw e;
         }
     }
 }
