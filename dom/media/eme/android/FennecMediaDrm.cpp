@@ -221,7 +221,7 @@ FennecMediaDrm::OnSessionCreated(int aCreateSessionToken, int aPromiseId,
                                  jni::ByteArray::Param aRequest)
 {
   FMDRM_LOG("FennecMediaDrm::OnSessionCreated >>>>> ");
-  FMDRM_LOG("FennecMediaDrm::OnSessionCreated : (%d) / (%d)",
+  FMDRM_LOG("FennecMediaDrm::OnSessionCreated : aCreateSessionToken(%d) / aPromiseId(%d)",
     aCreateSessionToken, aPromiseId);
 
   //jni::String::LocalRef urlString;
@@ -232,14 +232,13 @@ FennecMediaDrm::OnSessionCreated(int aCreateSessionToken, int aPromiseId,
   //PR(reqDataArray);
   //PR(url.Length(), url);
 
-  FMDRM_LOG("FennecMediaDrm::OnSessionCreated : ID Len(%d)", aSessionId->Length());
-
-  nsCString sessionId((char*) (&(aSessionId->GetElements()[0])), aSessionId->Length());
+  nsCString sessionId(reinterpret_cast<char*>(aSessionId->GetElements().Elements()), aSessionId->Length());
+  FMDRM_LOG("FennecMediaDrm::OnSessionCreated : aSessionId(%s)", sessionId.get());
   mCallback->SetSessionId(aCreateSessionToken, sessionId);
   mCallback->ResolvePromise(aPromiseId);
 
   nsTArray<uint8_t> retRequest;
-  retRequest.AppendElements((unsigned char*)(&reqDataArray[0]), reqDataArray.Length());
+  retRequest.AppendElements(reinterpret_cast<uint8_t*>(reqDataArray.Elements()), reqDataArray.Length());
   mCallback->SessionMessage(sessionId,
                             kGMPLicenseRequest,
                             retRequest);
@@ -271,10 +270,13 @@ FennecMediaDrm::OnSessionMessage(jni::ByteArray::Param aSessionId,
                                  jni::ByteArray::Param aRequest)
 {
   FMDRM_LOG("FennecMediaDrm::OnSessoinMessage >>>>> ");
-  nsCString sessionId((char*) (&(aSessionId->GetElements()[0])), aSessionId->Length());
+
+  nsCString sessionId(reinterpret_cast<char*>(aSessionId->GetElements().Elements()), aSessionId->Length());
+  FMDRM_LOG("FennecMediaDrm::OnSessoinMessage : aSessionId(%s) / aSessionMessageType(%d)",
+    sessionId.get(), aSessionMessageType);
   auto reqDataArray = aRequest->GetElements();
   nsTArray<uint8_t> retRequest;
-  retRequest.AppendElements((unsigned char*)(&reqDataArray[0]), reqDataArray.Length());
+  retRequest.AppendElements(reinterpret_cast<uint8_t*>(reqDataArray.Elements()), reqDataArray.Length());
   mCallback->SessionMessage(sessionId,
                             static_cast<GMPSessionMessageType>(aSessionMessageType),
                             retRequest);
