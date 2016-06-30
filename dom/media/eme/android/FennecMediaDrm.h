@@ -45,7 +45,7 @@ public:
 
   void OnSessionUpdated(int aPromiseId, jni::ByteArray::Param aSessionId);
 
-  void OnSessoinClosed(int aPromiseId, int aSessionId);
+  void OnSessionClosed(int aPromiseId, int aSessionId);
 
   void OnSessionMessage(jni::ByteArray::Param aSessionId,
                         int/*GMPSessionMessageType*/ aSessionMessageType,

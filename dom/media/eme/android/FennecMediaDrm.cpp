@@ -260,7 +260,7 @@ FennecMediaDrm::OnSessionUpdated(int aPromiseId, jni::ByteArray::Param aSessionI
 }
 
 void
-FennecMediaDrm::OnSessoinClosed(int aPromiseId, int aSessionId)
+FennecMediaDrm::OnSessionClosed(int aPromiseId, int aSessionId)
 {
 
 }

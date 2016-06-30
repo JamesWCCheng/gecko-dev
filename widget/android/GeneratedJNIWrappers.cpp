@@ -1896,6 +1896,9 @@ auto MediaDrmBridge::IsSchemeSupportedInitDataType(mozilla::jni::String::Param a
     return mozilla::jni::Method<IsSchemeSupportedInitDataType_t>::Call(MediaDrmBridge::Context(), nullptr, a0, a1);
 }
 
+constexpr char MediaDrmBridge::OnSessionClosed_t::name[];
+constexpr char MediaDrmBridge::OnSessionClosed_t::signature[];
+
 constexpr char MediaDrmBridge::UpdateSession_t::name[];
 constexpr char MediaDrmBridge::UpdateSession_t::signature[];
 
@@ -1912,9 +1915,6 @@ constexpr char MediaDrmBridge::OnSessionMessage_t::signature[];
 
 constexpr char MediaDrmBridge::OnSessionUpdated_t::name[];
 constexpr char MediaDrmBridge::OnSessionUpdated_t::signature[];
-
-constexpr char MediaDrmBridge::OnSessoinClosed_t::name[];
-constexpr char MediaDrmBridge::OnSessoinClosed_t::signature[];
 
 template<> const char mozilla::jni::Context<Restrictions, jobject>::name[] =
         "org/mozilla/gecko/restrictions/Restrictions";

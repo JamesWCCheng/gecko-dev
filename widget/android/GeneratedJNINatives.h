@@ -364,6 +364,10 @@ class MediaDrmBridge::Natives : public mozilla::jni::NativeImpl<MediaDrmBridge, 
 public:
     static constexpr JNINativeMethod methods[] = {
 
+        mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessionClosed_t>(
+                mozilla::jni::NativeStub<MediaDrmBridge::OnSessionClosed_t, Impl>
+                ::template Wrap<&Impl::OnSessionClosed>),
+
         mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessionCreated_t>(
                 mozilla::jni::NativeStub<MediaDrmBridge::OnSessionCreated_t, Impl>
                 ::template Wrap<&Impl::OnSessionCreated>),
@@ -374,11 +378,7 @@ public:
 
         mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessionUpdated_t>(
                 mozilla::jni::NativeStub<MediaDrmBridge::OnSessionUpdated_t, Impl>
-                ::template Wrap<&Impl::OnSessionUpdated>),
-
-        mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessoinClosed_t>(
-                mozilla::jni::NativeStub<MediaDrmBridge::OnSessoinClosed_t, Impl>
-                ::template Wrap<&Impl::OnSessoinClosed>)
+                ::template Wrap<&Impl::OnSessionUpdated>)
     };
 };
 

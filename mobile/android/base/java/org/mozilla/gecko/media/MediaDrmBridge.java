@@ -335,7 +335,7 @@ public class MediaDrmBridge extends JNIObject {
     private native void onSessionUpdated(int aPromiseId, byte[] aSessionId);
 
     @WrapForJNI(allowMultithread = true)
-    private native void onSessoinClosed(int aPromiseId, int aSessionId);
+    private native void OnSessionClosed(int aPromiseId, int aSessionId);
 
     @WrapForJNI(allowMultithread = true)
     private native void onSessionMessage(byte[] aSessionId,

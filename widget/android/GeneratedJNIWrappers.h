@@ -4365,6 +4365,21 @@ public:
 
     static auto IsSchemeSupportedInitDataType(mozilla::jni::String::Param, mozilla::jni::String::Param) -> bool;
 
+    struct OnSessionClosed_t {
+        typedef MediaDrmBridge Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                int32_t,
+                int32_t> Args;
+        static constexpr char name[] = "OnSessionClosed";
+        static constexpr char signature[] =
+                "(II)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
     struct UpdateSession_t {
         typedef MediaDrmBridge Owner;
         typedef bool ReturnType;
@@ -4426,21 +4441,6 @@ public:
         static constexpr char name[] = "onSessionUpdated";
         static constexpr char signature[] =
                 "(I[B)V";
-        static const bool isStatic = false;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-    };
-
-    struct OnSessoinClosed_t {
-        typedef MediaDrmBridge Owner;
-        typedef void ReturnType;
-        typedef void SetterType;
-        typedef mozilla::jni::Args<
-                int32_t,
-                int32_t> Args;
-        static constexpr char name[] = "onSessoinClosed";
-        static constexpr char signature[] =
-                "(II)V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
