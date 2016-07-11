@@ -162,19 +162,28 @@ public class MediaDrmBridge extends JNIObject {
         try {
             mDrm = new MediaDrm(mSchemeUUID);
             try {
-              String currentSecurityLevel = mDrm.getPropertyString("securityLevel");
-              Log.e(LOGTAG, "Security level: current " + currentSecurityLevel);
-              mDrm.setPropertyString("securityLevel", "L3");
-              currentSecurityLevel = mDrm.getPropertyString("securityLevel");
-              Log.e(LOGTAG, "Security level: after L3 " + currentSecurityLevel);
+                String currentSecurityLevel = mDrm.getPropertyString("securityLevel");
+                Log.e(LOGTAG, "Security level: current " + currentSecurityLevel);
+                mDrm.setPropertyString("securityLevel", "L3");
+                currentSecurityLevel = mDrm.getPropertyString("securityLevel");
+                Log.e(LOGTAG, "Security level: after L3 " + currentSecurityLevel);
 
-              mDrm.setPropertyString("privacyMode", "enable");
-              mDrm.setPropertyString("sessionSharing", "enable");
+                // Reference chromium, if widevine, using multiple session mode.
+                // https://cs.chromium.org/chromium/src/media/base/android/java/src/org/chromium/media/MediaDrmBridge.java?q=mediadrmbridge&sq=package:chromium&dr=CSs&l=217
+
+                if (isWidevine()) {
+                    mDrm.setPropertyString("privacyMode", "enable");
+                    mDrm.setPropertyString("sessionSharing", "enable");
+                }
             }
             catch (Exception e) {
-              Log.e(LOGTAG, "Failed to setPropertyString: " + e.getMessage());
+                Log.e(LOGTAG, "Failed to setPropertyString: " + e.getMessage());
             }
             mDrm.setOnEventListener(new MediaDrmListener());
+            if (!ensureMediaCryptoCreated()) {
+              Log.e(LOGTAG, "Failed to create MediaCrypto: startProvisioning");
+              startProvisioning();
+            }
         } catch (MediaDrmException e) {
             Log.e(LOGTAG, "Failed to create MediaDrm: " + e.getMessage());
         }
@@ -313,16 +322,8 @@ public class MediaDrmBridge extends JNIObject {
     private MediaCrypto GetMediaCrypto() {
         Log.d(LOGTAG, "GetMediaCrypto");
         synchronized (getLock()) {
-            if (mCrypto == null) {
-                try {
-                    getLock().wait();
-                } catch (InterruptedException e){
-                    Log.d(LOGTAG, " Wait for MediaCrypto !!!");
-                    return null;
-                }
-            }
+            return mCrypto;
         }
-        return mCrypto;
     }
 
     @WrapForJNI(allowMultithread = true)
@@ -341,7 +342,9 @@ public class MediaDrmBridge extends JNIObject {
     private native void onSessionMessage(byte[] aSessionId,
                                          int aSessionMessageType,
                                          byte[] aRequest);
-
+    private boolean isWidevine() {
+        return mSchemeUUID.equals(WIDEVINE_SCHEME_UUID);
+    }
     // Refer to Android Java Implementation ==================================
     private MediaDrm.KeyRequest getKeyRequest(ByteBuffer session, byte[] data,
                                               String mime)
@@ -603,7 +606,16 @@ public class MediaDrmBridge extends JNIObject {
         boolean success = provideProvisionResponse(response);
 
         if (success) {
+            try {
+                if (!ensureMediaCryptoCreated()) {
+                  Log.e(LOGTAG, "Still failed to create MediaCrypto.");
+                }
+            } catch (Exception e) {
+                Log.e(LOGTAG, "ensureMediaCryptoCreated() Failed." + e.getMessage());
+            }
             resumePendingOperations();
+        } else {
+            Log.e(LOGTAG, "onProvisionResponse() Failed.");
         }
     }
 
@@ -617,7 +629,6 @@ public class MediaDrmBridge extends JNIObject {
             if (MediaCrypto.isCryptoSchemeSupported(mSchemeUUID)) {
                 final byte [] cryptoSessionId = sessionId.array();
                 mCrypto = new MediaCrypto(mSchemeUUID, cryptoSessionId);
-                getLock().notify();
                 String strCrypteSessionId = new String(sessionId.array());
                 mSessionIds.put(sessionId, INVALID_SESSION_ID);
                 Log.d(LOGTAG, "MediaCrypto successfully created! - SId " + INVALID_SESSION_ID + ", " + strCrypteSessionId);
