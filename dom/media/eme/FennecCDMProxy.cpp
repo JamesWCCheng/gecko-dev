@@ -330,6 +330,20 @@ FennecCDMProxy::GetMediaCrypto()
   return nullptr;
 }
 
+bool
+FennecCDMProxy::IsSecureDecoderComponentRequired(const nsCString& aMIMEType)
+{
+  MOZ_ASSERT(mCDM);
+  return mCDM->IsSecureDecoderComponentRequired(aMIMEType);
+}
+
+bool
+FennecCDMProxy::IsAllowPlayback()
+{
+  MOZ_ASSERT(mCDM);
+  return mCDM->IsAllowPlayback();
+}
+
 // ======== Private Implementation ========
 void
 FennecCDMProxy::OnCDMCreated(uint32_t aPromiseId)

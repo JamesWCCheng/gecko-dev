@@ -51,6 +51,8 @@ public:
                         int/*GMPSessionMessageType*/ aSessionMessageType,
                         jni::ByteArray::Param aRequest);
 
+  void OnSessionError(jni::ByteArray::Param aSessionId);
+
   // === GMPDecryptorProxy ===
   uint32_t GetPluginId() const override;
   nsresult Init(GMPDecryptorProxyCallback* aCallback) override;
@@ -84,6 +86,9 @@ public:
 
   // Utility =============================
   MediaCrypto::LocalRef GetMediaCrypto();
+
+  bool IsSecureDecoderComponentRequired(const nsCString& aMIMEType);
+  bool IsAllowPlayback();
 
 private:
   widget::MediaDrmBridge::GlobalRef mBridge;

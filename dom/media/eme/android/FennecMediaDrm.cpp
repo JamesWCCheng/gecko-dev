@@ -215,6 +215,21 @@ FennecMediaDrm::GetMediaCrypto()
   return mCrypto;
 }
 
+bool
+FennecMediaDrm::IsSecureDecoderComponentRequired(const nsCString& aMIMEType)
+{
+  MOZ_ASSERT(mBridge);
+  NS_ConvertUTF8toUTF16 mimeType(aMIMEType);
+  return mBridge->IsSecureDecoderComonentRequired(mimeType);
+}
+
+bool
+FennecMediaDrm::IsAllowPlayback()
+{
+  MOZ_ASSERT(mBridge);
+  return mBridge->IsAllowPlayback();
+}
+
 void
 FennecMediaDrm::OnSessionCreated(int aCreateSessionToken, int aPromiseId,
                                  jni::ByteArray::Param aSessionId,
@@ -236,13 +251,6 @@ FennecMediaDrm::OnSessionCreated(int aCreateSessionToken, int aPromiseId,
   FMDRM_LOG("FennecMediaDrm::OnSessionCreated : aSessionId(%s)", sessionId.get());
   mCallback->SetSessionId(aCreateSessionToken, sessionId);
   mCallback->ResolvePromise(aPromiseId);
-
-  nsTArray<uint8_t> retRequest;
-  retRequest.AppendElements(reinterpret_cast<uint8_t*>(reqDataArray.Elements()), reqDataArray.Length());
-  mCallback->SessionMessage(sessionId,
-                            kGMPLicenseRequest,
-                            retRequest);
-
 
   FMDRM_LOG("FennecMediaDrm::OnSessionCreated <<<<< ");
 }
@@ -269,10 +277,10 @@ FennecMediaDrm::OnSessionMessage(jni::ByteArray::Param aSessionId,
                                  int aSessionMessageType,
                                  jni::ByteArray::Param aRequest)
 {
-  FMDRM_LOG("FennecMediaDrm::OnSessoinMessage >>>>> ");
+  FMDRM_LOG("FennecMediaDrm::OnSessionMessage >>>>> ");
 
   nsCString sessionId(reinterpret_cast<char*>(aSessionId->GetElements().Elements()), aSessionId->Length());
-  FMDRM_LOG("FennecMediaDrm::OnSessoinMessage : aSessionId(%s) / aSessionMessageType(%d)",
+  FMDRM_LOG("FennecMediaDrm::OnSessionMessage : aSessionId(%s) / aSessionMessageType(%d)",
     sessionId.get(), aSessionMessageType);
   auto reqDataArray = aRequest->GetElements();
   nsTArray<uint8_t> retRequest;
@@ -280,7 +288,13 @@ FennecMediaDrm::OnSessionMessage(jni::ByteArray::Param aSessionId,
   mCallback->SessionMessage(sessionId,
                             static_cast<GMPSessionMessageType>(aSessionMessageType),
                             retRequest);
-  FMDRM_LOG("FennecMediaDrm::OnSessoinMessage <<<<< ");
+  FMDRM_LOG("FennecMediaDrm::OnSessionMessage <<<<< ");
+}
+
+void
+FennecMediaDrm::OnSessionError(jni::ByteArray::Param aSessionId)
+{
+
 }
 
 } // namespace mozilla

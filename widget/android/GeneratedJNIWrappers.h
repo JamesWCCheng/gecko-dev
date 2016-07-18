@@ -133,8 +133,8 @@ public:
 
     struct CallQueueSecureInputBuffer_t {
         typedef GeckoAppShell Owner;
-        typedef void ReturnType;
-        typedef void SetterType;
+        typedef bool ReturnType;
+        typedef bool SetterType;
         typedef mozilla::jni::Args<
                 mozilla::jni::Object::Param,
                 mozilla::jni::Object::Param,
@@ -144,13 +144,13 @@ public:
                 int32_t> Args;
         static constexpr char name[] = "CallQueueSecureInputBuffer";
         static constexpr char signature[] =
-                "(Landroid/media/MediaCodec;Landroid/media/MediaCodec$CryptoInfo;IIJI)V";
+                "(Landroid/media/MediaCodec;Landroid/media/MediaCodec$CryptoInfo;IIJI)Z";
         static const bool isStatic = true;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
     };
 
-    static auto CallQueueSecureInputBuffer(mozilla::jni::Object::Param, mozilla::jni::Object::Param, int32_t, int32_t, int64_t, int32_t) -> void;
+    static auto CallQueueSecureInputBuffer(mozilla::jni::Object::Param, mozilla::jni::Object::Param, int32_t, int32_t, int64_t, int32_t) -> bool;
 
     struct CheckIsAdaptivePlayback_t {
         typedef GeckoAppShell Owner;
@@ -4315,6 +4315,21 @@ public:
 
     auto Init(mozilla::jni::Object::Param) const -> bool;
 
+    struct IsAllowPlayback_t {
+        typedef MediaDrmBridge Owner;
+        typedef bool ReturnType;
+        typedef bool SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "IsAllowPlayback";
+        static constexpr char signature[] =
+                "()Z";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    auto IsAllowPlayback() const -> bool;
+
     struct IsSchemeMIMESupported_t {
         typedef MediaDrmBridge Owner;
         typedef bool ReturnType;
@@ -4365,6 +4380,22 @@ public:
 
     static auto IsSchemeSupportedInitDataType(mozilla::jni::String::Param, mozilla::jni::String::Param) -> bool;
 
+    struct IsSecureDecoderComonentRequired_t {
+        typedef MediaDrmBridge Owner;
+        typedef bool ReturnType;
+        typedef bool SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::String::Param> Args;
+        static constexpr char name[] = "IsSecureDecoderComonentRequired";
+        static constexpr char signature[] =
+                "(Ljava/lang/String;)Z";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    auto IsSecureDecoderComonentRequired(mozilla::jni::String::Param) const -> bool;
+
     struct OnSessionClosed_t {
         typedef MediaDrmBridge Owner;
         typedef void ReturnType;
@@ -4410,6 +4441,20 @@ public:
         static constexpr char name[] = "onSessionCreated";
         static constexpr char signature[] =
                 "(II[B[B)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    struct OnSessionError_t {
+        typedef MediaDrmBridge Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::ByteArray::Param> Args;
+        static constexpr char name[] = "onSessionError";
+        static constexpr char signature[] =
+                "([B)V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;

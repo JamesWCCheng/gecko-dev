@@ -7,7 +7,4 @@ android.media.MediaCodec$CryptoInfo
 android.media.MediaCodec$BufferInfo
 android.media.MediaFormat
 android.media.MediaDrm
-android.media.MediaDrm$KeyRequest
-android.media.MediaDrm$ProvisionRequest
-android.media.MediaDrm$CryptoSession
 android.media.MediaCrypto

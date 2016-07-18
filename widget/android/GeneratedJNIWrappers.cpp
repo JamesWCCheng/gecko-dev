@@ -53,7 +53,7 @@ template<> const char mozilla::jni::Context<GeckoAppShell, jobject>::name[] =
 constexpr char GeckoAppShell::CallQueueSecureInputBuffer_t::name[];
 constexpr char GeckoAppShell::CallQueueSecureInputBuffer_t::signature[];
 
-auto GeckoAppShell::CallQueueSecureInputBuffer(mozilla::jni::Object::Param a0, mozilla::jni::Object::Param a1, int32_t a2, int32_t a3, int64_t a4, int32_t a5) -> void
+auto GeckoAppShell::CallQueueSecureInputBuffer(mozilla::jni::Object::Param a0, mozilla::jni::Object::Param a1, int32_t a2, int32_t a3, int64_t a4, int32_t a5) -> bool
 {
     return mozilla::jni::Method<CallQueueSecureInputBuffer_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1, a2, a3, a4, a5);
 }
@@ -1872,6 +1872,14 @@ auto MediaDrmBridge::Init(mozilla::jni::Object::Param a0) const -> bool
     return mozilla::jni::Method<Init_t>::Call(MediaDrmBridge::mCtx, nullptr, a0);
 }
 
+constexpr char MediaDrmBridge::IsAllowPlayback_t::name[];
+constexpr char MediaDrmBridge::IsAllowPlayback_t::signature[];
+
+auto MediaDrmBridge::IsAllowPlayback() const -> bool
+{
+    return mozilla::jni::Method<IsAllowPlayback_t>::Call(MediaDrmBridge::mCtx, nullptr);
+}
+
 constexpr char MediaDrmBridge::IsSchemeMIMESupported_t::name[];
 constexpr char MediaDrmBridge::IsSchemeMIMESupported_t::signature[];
 
@@ -1896,6 +1904,14 @@ auto MediaDrmBridge::IsSchemeSupportedInitDataType(mozilla::jni::String::Param a
     return mozilla::jni::Method<IsSchemeSupportedInitDataType_t>::Call(MediaDrmBridge::Context(), nullptr, a0, a1);
 }
 
+constexpr char MediaDrmBridge::IsSecureDecoderComonentRequired_t::name[];
+constexpr char MediaDrmBridge::IsSecureDecoderComonentRequired_t::signature[];
+
+auto MediaDrmBridge::IsSecureDecoderComonentRequired(mozilla::jni::String::Param a0) const -> bool
+{
+    return mozilla::jni::Method<IsSecureDecoderComonentRequired_t>::Call(MediaDrmBridge::mCtx, nullptr, a0);
+}
+
 constexpr char MediaDrmBridge::OnSessionClosed_t::name[];
 constexpr char MediaDrmBridge::OnSessionClosed_t::signature[];
 
@@ -1909,6 +1925,9 @@ auto MediaDrmBridge::UpdateSession(int32_t a0, mozilla::jni::String::Param a1, m
 
 constexpr char MediaDrmBridge::OnSessionCreated_t::name[];
 constexpr char MediaDrmBridge::OnSessionCreated_t::signature[];
+
+constexpr char MediaDrmBridge::OnSessionError_t::name[];
+constexpr char MediaDrmBridge::OnSessionError_t::signature[];
 
 constexpr char MediaDrmBridge::OnSessionMessage_t::name[];
 constexpr char MediaDrmBridge::OnSessionMessage_t::signature[];

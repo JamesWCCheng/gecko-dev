@@ -2416,7 +2416,6 @@ public class GeckoAppShell
                                                   int flags)
     {
       try {
-        Log.e(LOGTAG, "!!!!!!!!!!!!!!!!CallQueueSecureInputBuffer !!!!!!!!!!!!!!!!!!!!");
         mc.queueSecureInputBuffer(index, offset, ci, presentationTimeUs, flags);
       }
       catch(CryptoException e) {

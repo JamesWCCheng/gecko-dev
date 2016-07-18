@@ -18,10 +18,12 @@
 
 namespace mozilla {
 
-#ifndef ADM_LOG
-  LogModule* GetADMLog();
-  #define ADM_LOG(...) MOZ_LOG(GetADMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
-#endif
+LogModule* GetADMLog();
+#undef ADM_LOGD
+#define ADM_LOGD(...) MOZ_LOG(GetADMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+#undef ADM_LOGV
+#define ADM_LOGV(...) MOZ_LOG(GetADMLog(), mozilla::LogLevel::Verbose, (__VA_ARGS__))
+
 
 typedef std::deque<RefPtr<MediaRawData>> SampleQueue;
 

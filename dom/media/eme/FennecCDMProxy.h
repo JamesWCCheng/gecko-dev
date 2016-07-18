@@ -177,6 +177,9 @@ public:
 
   mozilla::widget::sdk::MediaCrypto::LocalRef GetMediaCrypto();
 
+  bool IsSecureDecoderComponentRequired(const nsCString& aMIMEType);
+  bool IsAllowPlayback();
+
 private:
   virtual ~FennecCDMProxy();
 
