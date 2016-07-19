@@ -35,7 +35,7 @@ public:
   MOZ_DECLARE_WEAKREFERENCE_TYPENAME(FennecMediaDrm);
 
   FennecMediaDrm(const nsAString& aKeySystem);
-  ~FennecMediaDrm() {}
+  ~FennecMediaDrm() { mBridge->Destroy(); }
 
   // === Called from Java ===
   //void OnMediaDrmInited(int32_t aPromiseId);

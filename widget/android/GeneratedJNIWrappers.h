@@ -133,8 +133,8 @@ public:
 
     struct CallQueueSecureInputBuffer_t {
         typedef GeckoAppShell Owner;
-        typedef bool ReturnType;
-        typedef bool SetterType;
+        typedef void ReturnType;
+        typedef void SetterType;
         typedef mozilla::jni::Args<
                 mozilla::jni::Object::Param,
                 mozilla::jni::Object::Param,
@@ -144,13 +144,13 @@ public:
                 int32_t> Args;
         static constexpr char name[] = "CallQueueSecureInputBuffer";
         static constexpr char signature[] =
-                "(Landroid/media/MediaCodec;Landroid/media/MediaCodec$CryptoInfo;IIJI)Z";
+                "(Landroid/media/MediaCodec;Landroid/media/MediaCodec$CryptoInfo;IIJI)V";
         static const bool isStatic = true;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
     };
 
-    static auto CallQueueSecureInputBuffer(mozilla::jni::Object::Param, mozilla::jni::Object::Param, int32_t, int32_t, int64_t, int32_t) -> bool;
+    static auto CallQueueSecureInputBuffer(mozilla::jni::Object::Param, mozilla::jni::Object::Param, int32_t, int32_t, int64_t, int32_t) -> void;
 
     struct CheckIsAdaptivePlayback_t {
         typedef GeckoAppShell Owner;
@@ -4255,7 +4255,7 @@ public:
         typedef void SetterType;
         typedef mozilla::jni::Args<
                 mozilla::jni::String::Param> Args;
-        static constexpr char name[] = "CloseSession";
+        static constexpr char name[] = "closeSession";
         static constexpr char signature[] =
                 "(Ljava/lang/String;)V";
         static const bool isStatic = false;
@@ -4274,7 +4274,7 @@ public:
                 int32_t,
                 mozilla::jni::String::Param,
                 mozilla::jni::ByteArray::Param> Args;
-        static constexpr char name[] = "CreateSession";
+        static constexpr char name[] = "createSession";
         static constexpr char signature[] =
                 "(IILjava/lang/String;[B)Z";
         static const bool isStatic = false;
@@ -4284,12 +4284,27 @@ public:
 
     auto CreateSession(int32_t, int32_t, mozilla::jni::String::Param, mozilla::jni::ByteArray::Param) const -> bool;
 
+    struct Destroy_t {
+        typedef MediaDrmBridge Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "destroy";
+        static constexpr char signature[] =
+                "()V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    auto Destroy() const -> void;
+
     struct GetMediaCrypto_t {
         typedef MediaDrmBridge Owner;
         typedef mozilla::jni::Object::LocalRef ReturnType;
         typedef mozilla::jni::Object::Param SetterType;
         typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "GetMediaCrypto";
+        static constexpr char name[] = "getMediaCrypto";
         static constexpr char signature[] =
                 "()Landroid/media/MediaCrypto;";
         static const bool isStatic = false;
@@ -4305,7 +4320,7 @@ public:
         typedef bool SetterType;
         typedef mozilla::jni::Args<
                 mozilla::jni::Object::Param> Args;
-        static constexpr char name[] = "Init";
+        static constexpr char name[] = "init";
         static constexpr char signature[] =
                 "(Ljava/util/UUID;)Z";
         static const bool isStatic = false;
@@ -4320,7 +4335,7 @@ public:
         typedef bool ReturnType;
         typedef bool SetterType;
         typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "IsAllowPlayback";
+        static constexpr char name[] = "isAllowPlayback";
         static constexpr char signature[] =
                 "()Z";
         static const bool isStatic = false;
@@ -4337,7 +4352,7 @@ public:
         typedef mozilla::jni::Args<
                 mozilla::jni::String::Param,
                 mozilla::jni::String::Param> Args;
-        static constexpr char name[] = "IsSchemeMIMESupported";
+        static constexpr char name[] = "isSchemeMIMESupported";
         static constexpr char signature[] =
                 "(Ljava/lang/String;Ljava/lang/String;)Z";
         static const bool isStatic = true;
@@ -4353,7 +4368,7 @@ public:
         typedef bool SetterType;
         typedef mozilla::jni::Args<
                 mozilla::jni::String::Param> Args;
-        static constexpr char name[] = "IsSchemeSupported";
+        static constexpr char name[] = "isSchemeSupported";
         static constexpr char signature[] =
                 "(Ljava/lang/String;)Z";
         static const bool isStatic = true;
@@ -4370,7 +4385,7 @@ public:
         typedef mozilla::jni::Args<
                 mozilla::jni::String::Param,
                 mozilla::jni::String::Param> Args;
-        static constexpr char name[] = "IsSchemeSupportedInitDataType";
+        static constexpr char name[] = "isSchemeSupportedInitDataType";
         static constexpr char signature[] =
                 "(Ljava/lang/String;Ljava/lang/String;)Z";
         static const bool isStatic = true;
@@ -4386,7 +4401,7 @@ public:
         typedef bool SetterType;
         typedef mozilla::jni::Args<
                 mozilla::jni::String::Param> Args;
-        static constexpr char name[] = "IsSecureDecoderComonentRequired";
+        static constexpr char name[] = "isSecureDecoderComonentRequired";
         static constexpr char signature[] =
                 "(Ljava/lang/String;)Z";
         static const bool isStatic = false;
@@ -4403,31 +4418,13 @@ public:
         typedef mozilla::jni::Args<
                 int32_t,
                 int32_t> Args;
-        static constexpr char name[] = "OnSessionClosed";
+        static constexpr char name[] = "onSessionClosed";
         static constexpr char signature[] =
                 "(II)V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
     };
-
-    struct UpdateSession_t {
-        typedef MediaDrmBridge Owner;
-        typedef bool ReturnType;
-        typedef bool SetterType;
-        typedef mozilla::jni::Args<
-                int32_t,
-                mozilla::jni::String::Param,
-                mozilla::jni::ByteArray::Param> Args;
-        static constexpr char name[] = "UpdateSession";
-        static constexpr char signature[] =
-                "(ILjava/lang/String;[B)Z";
-        static const bool isStatic = false;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-    };
-
-    auto UpdateSession(int32_t, mozilla::jni::String::Param, mozilla::jni::ByteArray::Param) const -> bool;
 
     struct OnSessionCreated_t {
         typedef MediaDrmBridge Owner;
@@ -4490,6 +4487,24 @@ public:
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
     };
+
+    struct UpdateSession_t {
+        typedef MediaDrmBridge Owner;
+        typedef bool ReturnType;
+        typedef bool SetterType;
+        typedef mozilla::jni::Args<
+                int32_t,
+                mozilla::jni::String::Param,
+                mozilla::jni::ByteArray::Param> Args;
+        static constexpr char name[] = "updateSession";
+        static constexpr char signature[] =
+                "(ILjava/lang/String;[B)Z";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    auto UpdateSession(int32_t, mozilla::jni::String::Param, mozilla::jni::ByteArray::Param) const -> bool;
 
     static const bool isMultithreaded = true;
 

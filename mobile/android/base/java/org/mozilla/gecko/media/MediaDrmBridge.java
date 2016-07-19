@@ -58,6 +58,8 @@ public class MediaDrmBridge extends JNIObject {
     private HashMap<ByteBuffer, String> mSessionIds;
     private HashMap<ByteBuffer, String> mSessionMIMETypes;
     private ArrayDeque<PendingCreateSessionData> mPendingCreateSessionDataQueue;
+    // This flag is to protect using the native objected that has been destroyed.
+    private boolean mDestroyed;
 
     private static class PendingCreateSessionData {
         private final int mToken;
@@ -85,7 +87,7 @@ public class MediaDrmBridge extends JNIObject {
         return this;
     }
 
-    public void CalculateAllowState(int aDelta) {
+    public void calculateAllowState(int aDelta) {
         // TODO : Considering provision ?
         mReqCount += aDelta;
         if (mReqCount == 0) {
@@ -95,7 +97,7 @@ public class MediaDrmBridge extends JNIObject {
         }
     }
 
-    static public boolean PassMiniumSupportVersionCheck() {
+    static public boolean passMiniumSupportVersionCheck() {
       // TODO : Determine the mini support level
       // MediaDrm starts in API_LEVEL 18 - JELLY_BEAN_MR2.
       // For developing, we use LOLLIPOP first.
@@ -107,17 +109,17 @@ public class MediaDrmBridge extends JNIObject {
     }
 
     @WrapForJNI(allowMultithread = true)
-    public boolean IsAllowPlayback() {
+    public boolean isAllowPlayback() {
       return mAllowPlay;
     }
 
     @WrapForJNI
-    static public boolean IsSchemeSupportedInitDataType(String aKeySystem,
+    static public boolean isSchemeSupportedInitDataType(String aKeySystem,
                                                         String aInitDataType) {
-      if (!PassMiniumSupportVersionCheck()) {
+      if (!passMiniumSupportVersionCheck()) {
         return false;
       }
-      Log.d(LOGTAG, "MediaDrmBridge::IsSchemeSupportedInitDataType " + aInitDataType);
+      Log.d(LOGTAG, "MediaDrmBridge::isSchemeSupportedInitDataType " + aInitDataType);
       if (aKeySystem.equals("org.w3.clearkey")) {
           return MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID, aInitDataType);
       } else if (aKeySystem.equals("com.widevine.alpha")){
@@ -129,8 +131,8 @@ public class MediaDrmBridge extends JNIObject {
     }
 
     @WrapForJNI
-    static public boolean IsSchemeSupported(String aKeySystem) {
-      if (!PassMiniumSupportVersionCheck()) {
+    static public boolean isSchemeSupported(String aKeySystem) {
+      if (!passMiniumSupportVersionCheck()) {
         return false;
       }
       if (aKeySystem.equals("org.w3.clearkey")) {
@@ -147,11 +149,11 @@ public class MediaDrmBridge extends JNIObject {
     }
 
     @WrapForJNI
-    static public boolean IsSchemeMIMESupported(String aKeySystem, String aMIME) {
-      if (!PassMiniumSupportVersionCheck()) {
+    static public boolean isSchemeMIMESupported(String aKeySystem, String aMIME) {
+      if (!passMiniumSupportVersionCheck()) {
         return false;
       }
-      Log.d(LOGTAG, "MediaDrmBridge::IsSchemeMIMESupported " + aMIME);
+      Log.d(LOGTAG, "MediaDrmBridge::isSchemeMIMESupported " + aMIME);
       if (aKeySystem.equals("org.w3.clearkey")) {
           // For clearkey, there is no need to verify the mime type.
           // clearkey plugin did not implement this mime type checking logic.
@@ -165,7 +167,7 @@ public class MediaDrmBridge extends JNIObject {
     }
 
     @WrapForJNI(allowMultithread = true)
-    public boolean IsSecureDecoderComonentRequired(String aMIME) {
+    public boolean isSecureDecoderComonentRequired(String aMIME) {
       if (mCrypto != null) {
         return mCrypto.requiresSecureDecoderComponent(aMIME);
       }
@@ -181,6 +183,8 @@ public class MediaDrmBridge extends JNIObject {
 
         // Not sure in which case this is ture.
         mSingleSessionMode = false;
+
+        mDestroyed = false;
 
         mSessionIds = new HashMap<ByteBuffer, String>();
         mSessionMIMETypes = new HashMap<ByteBuffer, String>();
@@ -216,17 +220,17 @@ public class MediaDrmBridge extends JNIObject {
     }
 
     @WrapForJNI(allowMultithread = true)
-    public boolean Init(UUID aKeySystem) {
+    public boolean init(UUID aKeySystem) {
         synchronized (getLock()) {
-            Log.d(LOGTAG, "Init");
+            Log.d(LOGTAG, "init");
             return true;
         }
     }
 
     @WrapForJNI(allowMultithread = true)
-    private boolean CreateSession(int aCreateSessionToken, int aPromiseId,
+    private boolean createSession(int aCreateSessionToken, int aPromiseId,
                                   String aInitDataType, byte[] aInitData) {
-        Log.d(LOGTAG, "CreateSession");
+        Log.d(LOGTAG, "createSession");
         if (mDrm == null) {
             Log.d(LOGTAG, "mDrm not exists !");
             return false;
@@ -260,22 +264,22 @@ public class MediaDrmBridge extends JNIObject {
 
                 if (request == null) {
                     if (sessionId != null) {
-                        CloseSession(strSessionId);
+                        closeSession(strSessionId);
                     }
                     return false;
                 }
-
-                onSessionCreated(aCreateSessionToken, aPromiseId, sessionId.array(),
-                                 request.getData());
-
+                if (!mDestroyed) {
+                    onSessionCreated(aCreateSessionToken, aPromiseId, sessionId.array(),
+                                     request.getData());
+                    onSessionMessage(sessionId.array(), 0/*kGMPLicenseRequest*/, request.getData());
+                }
                 mSessionMIMETypes.put(sessionId, aInitDataType);
-                onSessionMessage(sessionId.array(), 0/*kGMPLicenseRequest*/, request.getData());
                 Log.d(LOGTAG, " StringID : " + strSessionId + " is put into mSessionIds ");
                 return true;
             } catch (android.media.NotProvisionedException e) {
                 Log.e(LOGTAG, "Device not provisioned", e);
                 if (sessionId != null) {
-                    CloseSession(strSessionId);
+                    closeSession(strSessionId);
                 }
                 savePendingCreateSessionData(aCreateSessionToken, aPromiseId,
                                              aInitData, aInitDataType);
@@ -286,9 +290,9 @@ public class MediaDrmBridge extends JNIObject {
     }
 
     @WrapForJNI(allowMultithread = true)
-    private boolean UpdateSession(int aPromiseId, String aSessionId,
+    private boolean updateSession(int aPromiseId, String aSessionId,
                                   byte[] aResponse) {
-      Log.d(LOGTAG, "UpdateSession >>> " + aSessionId);
+      Log.d(LOGTAG, "updateSession >>> " + aSessionId);
 
         if (mDrm == null) {
             Log.e(LOGTAG, "updateSession() called when MediaDrm is null.");
@@ -302,14 +306,16 @@ public class MediaDrmBridge extends JNIObject {
 
         if (!sessionExists(session)) {
             Log.e(LOGTAG, "Invalid session in updateSession.");
-            onSessionError(session.array());
+            if (!mDestroyed) {
+                onSessionError(session.array());
+            }
             return false;
         }
 
         try {
             try {
                 final byte [] keySetId = mDrm.provideKeyResponse(session.array(), aResponse);
-                CalculateAllowState(-1);
+                calculateAllowState(-1);
                 // Aandroid ClearKeyPlugin doesn't handle QueryKeyStatus
                 if (!mSchemeUUID.equals(CLEARKEY_SCHEME_UUID)) {
                     HashMap<String, String> infoMap = mDrm.queryKeyStatus(session.array());
@@ -324,7 +330,9 @@ public class MediaDrmBridge extends JNIObject {
                 // TODO(qinmin): remove this exception catch when b/10495563 is fixed.
                 Log.e(LOGTAG, "Exception intentionally caught when calling provideKeyResponse()", e);
             }
-            onSessionUpdated(aPromiseId, session.array());
+            if (!mDestroyed) {
+                onSessionUpdated(aPromiseId, session.array());
+            }
             Log.d(LOGTAG, "Key successfully added for session " + aSessionId);
             return true;
         } catch (android.media.NotProvisionedException e) {
@@ -339,17 +347,17 @@ public class MediaDrmBridge extends JNIObject {
     }
 
     @WrapForJNI(allowMultithread = true)
-    private void CloseSession(String aSessionId) {
-        Log.d(LOGTAG, "CloseSession");
+    private void closeSession(String aSessionId) {
+        Log.d(LOGTAG, "closeSession");
         assert mDrm != null;
         ByteBuffer session = removeSession(aSessionId);
         mDrm.closeSession(session.array());
     }
 
     @WrapForJNI(allowMultithread = true)
-    private MediaCrypto GetMediaCrypto() {
+    private MediaCrypto getMediaCrypto() {
       synchronized (getLock()) {
-          Log.d(LOGTAG, "GetMediaCrypto");
+          Log.d(LOGTAG, "getMediaCrypto");
           if (mCrypto == null) {
               try {
                   getLock().wait();
@@ -372,7 +380,7 @@ public class MediaDrmBridge extends JNIObject {
     private native void onSessionUpdated(int aPromiseId, byte[] aSessionId);
 
     @WrapForJNI(allowMultithread = true)
-    private native void OnSessionClosed(int aPromiseId, int aSessionId);
+    private native void onSessionClosed(int aPromiseId, int aSessionId);
 
     @WrapForJNI(allowMultithread = true)
     private native void onSessionMessage(byte[] aSessionId,
@@ -381,6 +389,15 @@ public class MediaDrmBridge extends JNIObject {
 
     @WrapForJNI(allowMultithread = true)
     private native void onSessionError(byte[] aSessionId);
+
+    @WrapForJNI(allowMultithread = true) // Called when natvie object is destroyed.
+    public void destroy() {
+        Log.d(LOGTAG, "MediaDrmBridge::destroy!! Natvie object is destroyed.");
+        if (mDestroyed) {
+            return;
+        }
+        mDestroyed = true;
+    }
 
     private boolean isWidevine() {
         return mSchemeUUID.equals(WIDEVINE_SCHEME_UUID);
@@ -403,7 +420,7 @@ public class MediaDrmBridge extends JNIObject {
                              MediaDrm.KEY_TYPE_STREAMING, optionalParameters);
         String result = (request != null) ? "successed" : "failed";
         if (request != null) {
-          CalculateAllowState(1);
+          calculateAllowState(1);
         }
         Log.d(LOGTAG, "getKeyRequest " + result + "!");
         return request;
@@ -450,14 +467,20 @@ public class MediaDrmBridge extends JNIObject {
                         return;
                     }
                     if (request != null) {
-                        onSessionMessage(session.array(), 0/*kGMPLicenseRequest*/, request.getData());
+                      if (!mDestroyed) {
+                          onSessionMessage(session.array(), 0/*kGMPLicenseRequest*/, request.getData());
+                      }
                     } else {
-                        onSessionError(session.array());
+                      if (!mDestroyed) {
+                          onSessionError(session.array());
+                      }
                     }
                     break;
                 case MediaDrm.EVENT_KEY_EXPIRED:
                     Log.d(LOGTAG, "MediaDrm.EVENT_KEY_EXPIRED");
-                    onSessionError(session.array());
+                    if (!mDestroyed) {
+                        onSessionError(session.array());
+                    }
                     break;
                 case MediaDrm.EVENT_VENDOR_DEFINED:
                     Log.d(LOGTAG, "MediaDrm.EVENT_VENDOR_DEFINED");
@@ -632,7 +655,7 @@ public class MediaDrmBridge extends JNIObject {
             Log.d(LOGTAG, "processPendingCreateSessionData() >>>> promiseId : " + promiseId + " ... ");
             byte[] initData = pendingData.initData();
             String mime = pendingData.mimeType();
-            CreateSession(token, promiseId, mime, initData);
+            createSession(token, promiseId, mime, initData);
         }
     }
 

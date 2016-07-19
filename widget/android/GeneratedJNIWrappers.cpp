@@ -53,7 +53,7 @@ template<> const char mozilla::jni::Context<GeckoAppShell, jobject>::name[] =
 constexpr char GeckoAppShell::CallQueueSecureInputBuffer_t::name[];
 constexpr char GeckoAppShell::CallQueueSecureInputBuffer_t::signature[];
 
-auto GeckoAppShell::CallQueueSecureInputBuffer(mozilla::jni::Object::Param a0, mozilla::jni::Object::Param a1, int32_t a2, int32_t a3, int64_t a4, int32_t a5) -> bool
+auto GeckoAppShell::CallQueueSecureInputBuffer(mozilla::jni::Object::Param a0, mozilla::jni::Object::Param a1, int32_t a2, int32_t a3, int64_t a4, int32_t a5) -> void
 {
     return mozilla::jni::Method<CallQueueSecureInputBuffer_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1, a2, a3, a4, a5);
 }
@@ -1856,6 +1856,14 @@ auto MediaDrmBridge::CreateSession(int32_t a0, int32_t a1, mozilla::jni::String:
     return mozilla::jni::Method<CreateSession_t>::Call(MediaDrmBridge::mCtx, nullptr, a0, a1, a2, a3);
 }
 
+constexpr char MediaDrmBridge::Destroy_t::name[];
+constexpr char MediaDrmBridge::Destroy_t::signature[];
+
+auto MediaDrmBridge::Destroy() const -> void
+{
+    return mozilla::jni::Method<Destroy_t>::Call(MediaDrmBridge::mCtx, nullptr);
+}
+
 constexpr char MediaDrmBridge::GetMediaCrypto_t::name[];
 constexpr char MediaDrmBridge::GetMediaCrypto_t::signature[];
 
@@ -1915,14 +1923,6 @@ auto MediaDrmBridge::IsSecureDecoderComonentRequired(mozilla::jni::String::Param
 constexpr char MediaDrmBridge::OnSessionClosed_t::name[];
 constexpr char MediaDrmBridge::OnSessionClosed_t::signature[];
 
-constexpr char MediaDrmBridge::UpdateSession_t::name[];
-constexpr char MediaDrmBridge::UpdateSession_t::signature[];
-
-auto MediaDrmBridge::UpdateSession(int32_t a0, mozilla::jni::String::Param a1, mozilla::jni::ByteArray::Param a2) const -> bool
-{
-    return mozilla::jni::Method<UpdateSession_t>::Call(MediaDrmBridge::mCtx, nullptr, a0, a1, a2);
-}
-
 constexpr char MediaDrmBridge::OnSessionCreated_t::name[];
 constexpr char MediaDrmBridge::OnSessionCreated_t::signature[];
 
@@ -1934,6 +1934,14 @@ constexpr char MediaDrmBridge::OnSessionMessage_t::signature[];
 
 constexpr char MediaDrmBridge::OnSessionUpdated_t::name[];
 constexpr char MediaDrmBridge::OnSessionUpdated_t::signature[];
+
+constexpr char MediaDrmBridge::UpdateSession_t::name[];
+constexpr char MediaDrmBridge::UpdateSession_t::signature[];
+
+auto MediaDrmBridge::UpdateSession(int32_t a0, mozilla::jni::String::Param a1, mozilla::jni::ByteArray::Param a2) const -> bool
+{
+    return mozilla::jni::Method<UpdateSession_t>::Call(MediaDrmBridge::mCtx, nullptr, a0, a1, a2);
+}
 
 template<> const char mozilla::jni::Context<Restrictions, jobject>::name[] =
         "org/mozilla/gecko/restrictions/Restrictions";
