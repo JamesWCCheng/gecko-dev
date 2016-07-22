@@ -772,6 +772,9 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
 //     PR(snapshotIV, snapshotIV.Length());
 //     PR(cryptoObj.mKeyId);
 
+    // Tricky step... Observe the behavior from chrome app.
+    clearData[0] += offset;
+
     auto newNumBytesOfClearData = FillJIntArray(&clearData[0], clearData.Length());
     auto newNumBytesOfEncryptedData = FillJIntArray(&cryptoObj.mEncryptedSizes[0], cryptoObj.mEncryptedSizes.Length());
     auto newIV = FillJByteArray(&snapshotIV[0], snapshotIV.Length());
