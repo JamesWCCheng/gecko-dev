@@ -206,7 +206,7 @@ public class MediaDrmBridge extends JNIObject {
                 // https://cs.chromium.org/chromium/src/media/base/android/java/src/org/chromium/media/MediaDrmBridge.java?q=mediadrmbridge&sq=package:chromium&dr=CSs&l=217
 
                 if (isWidevine()) {
-                    mDrm.setPropertyString("privacyMode", "enable");
+                    //mDrm.setPropertyString("privacyMode", "enable");
                     mDrm.setPropertyString("sessionSharing", "enable");
                 }
             }
