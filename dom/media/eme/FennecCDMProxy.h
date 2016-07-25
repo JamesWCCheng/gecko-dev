@@ -140,6 +140,9 @@ public:
                       const nsAString& aMsg);
 
   // Main thread only.
+  void OnSessionKeysChanged();
+
+  // Main thread only.
   void OnRejectPromise(uint32_t aPromiseId,
                        nsresult aDOMException,
                        const nsCString& aMsg);

@@ -4417,10 +4417,10 @@ public:
         typedef void SetterType;
         typedef mozilla::jni::Args<
                 int32_t,
-                int32_t> Args;
+                mozilla::jni::ByteArray::Param> Args;
         static constexpr char name[] = "onSessionClosed";
         static constexpr char signature[] =
-                "(II)V";
+                "(I[B)V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -4452,6 +4452,22 @@ public:
         static constexpr char name[] = "onSessionError";
         static constexpr char signature[] =
                 "([B)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+    };
+
+    struct OnSessionKeyChanged_t {
+        typedef MediaDrmBridge Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::ByteArray::Param,
+                mozilla::jni::ByteArray::Param,
+                int32_t> Args;
+        static constexpr char name[] = "onSessionKeyChanged";
+        static constexpr char signature[] =
+                "([B[BI)V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;

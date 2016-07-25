@@ -376,6 +376,10 @@ public:
                 mozilla::jni::NativeStub<MediaDrmBridge::OnSessionError_t, Impl>
                 ::template Wrap<&Impl::OnSessionError>),
 
+        mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessionKeyChanged_t>(
+                mozilla::jni::NativeStub<MediaDrmBridge::OnSessionKeyChanged_t, Impl>
+                ::template Wrap<&Impl::OnSessionKeyChanged>),
+
         mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessionMessage_t>(
                 mozilla::jni::NativeStub<MediaDrmBridge::OnSessionMessage_t, Impl>
                 ::template Wrap<&Impl::OnSessionMessage>),

@@ -303,7 +303,9 @@ FennecCDMProxy::Capabilites()
 void
 FennecCDMProxy::OnKeyStatusesChange(const nsAString& aSessionId)
 {
-
+  // TODO: Implment the key status behavior to notify JS.
+  EME_LOG("FennecCDMProxy::OnKeyStatusesChange ====> ");
+  MOZ_ASSERT(NS_IsMainThread());
 }
 
 void

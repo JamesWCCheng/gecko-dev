@@ -24,9 +24,11 @@ import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.GeckoAppShell;
 
+import android.annotation.TargetApi;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR2;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
+import static android.os.Build.VERSION_CODES.M;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.media.MediaCrypto;
@@ -34,6 +36,7 @@ import android.media.MediaCryptoException;
 import android.media.MediaDrm;
 import android.media.MediaDrmException;
 import android.util.Log;
+import java.util.List;
 
 public class MediaDrmBridge extends JNIObject {
 
@@ -214,6 +217,11 @@ public class MediaDrmBridge extends JNIObject {
                 Log.e(LOGTAG, "Failed to setPropertyString: " + e.getMessage());
             }
             mDrm.setOnEventListener(new MediaDrmListener());
+            if (SDK_INT >= M) {
+                // TODO: Implement ExpirationUpdateListener for M.
+                // https://cs.chromium.org/chromium/src/media/base/android/java/src/org/chromium/media/MediaDrmBridge.java?q=mediadrmbridge.java&sq=package:chromium&dr&l=1037
+                mDrm.setOnKeyStatusChangeListener(new KeyStatusChangeListener(), null);
+            }
         } catch (MediaDrmException e) {
             Log.e(LOGTAG, "Failed to create MediaDrm: " + e.getMessage());
         }
@@ -380,7 +388,7 @@ public class MediaDrmBridge extends JNIObject {
     private native void onSessionUpdated(int aPromiseId, byte[] aSessionId);
 
     @WrapForJNI(allowMultithread = true)
-    private native void onSessionClosed(int aPromiseId, int aSessionId);
+    private native void onSessionClosed(int aPromiseId, byte[] aSessionId);
 
     @WrapForJNI(allowMultithread = true)
     private native void onSessionMessage(byte[] aSessionId,
@@ -389,6 +397,17 @@ public class MediaDrmBridge extends JNIObject {
 
     @WrapForJNI(allowMultithread = true)
     private native void onSessionError(byte[] aSessionId);
+
+    // Key status change callback.
+    // MediaDrm.KeyStatus is available in API level 23(M)
+    // https://developer.android.com/reference/android/media/MediaDrm.KeyStatus.html
+    // Just unwrap the structure and pass the keyid and status code to native for
+    // compatibility between L and M.
+    // Reference: https://cs.chromium.org/chromium/src/media/base/android/java/src/org/chromium/media/MediaDrmBridge.java?q=mediadrmbridge.java&sq=package:chromium&dr&l=96
+    @WrapForJNI(allowMultithread = true)
+    private native void  onSessionKeyChanged(byte[] aSessionId,
+                                             byte[] aKeyId,
+                                             int aStatusCode);
 
     @WrapForJNI(allowMultithread = true) // Called when natvie object is destroyed.
     public void destroy() {
@@ -407,8 +426,9 @@ public class MediaDrmBridge extends JNIObject {
      * Refers to Android Java Implementation
      */
 
-    private MediaDrm.KeyRequest getKeyRequest(ByteBuffer session, byte[] data,
-                                              String mime)
+    private MediaDrm.KeyRequest getKeyRequest(ByteBuffer aSession,
+                                              byte[] aData,
+                                              String aMime)
         throws android.media.NotProvisionedException {
         assert mDrm != null;
         assert mCrypto != null;
@@ -416,7 +436,7 @@ public class MediaDrmBridge extends JNIObject {
         //Log.d(LOGTAG, "getKeyRequest mime = " + mime + ", data length = " + data.length);
         HashMap<String, String> optionalParameters = new HashMap<String, String>();
         MediaDrm.KeyRequest request =
-          mDrm.getKeyRequest(session.array(), data, mime,
+          mDrm.getKeyRequest(aSession.array(), aData, aMime,
                              MediaDrm.KEY_TYPE_STREAMING, optionalParameters);
         String result = (request != null) ? "successed" : "failed";
         if (request != null) {
@@ -424,6 +444,28 @@ public class MediaDrmBridge extends JNIObject {
         }
         Log.d(LOGTAG, "getKeyRequest " + result + "!");
         return request;
+    }
+
+    @TargetApi(M)
+    private class KeyStatusChangeListener implements MediaDrm.OnKeyStatusChangeListener {
+        @Override
+        public void onKeyStatusChange(MediaDrm aMediaDrm,
+                                      byte[] aSessionId,
+                                      List<MediaDrm.KeyStatus> aKeyInformation,
+                                      boolean aHasNewUsableKey) {
+            // TODO: Check all the parameter is dealing properly.
+            // aHasNewUsableKey seems not use but only log it.
+            // https://cs.chromium.org/chromium/src/third_party/WebKit/Source/modules/encryptedmedia/MediaKeySession.cpp?cl=GROK&l=853
+            Log.e(LOGTAG, "KeyStatusChangeListener:onKeyStatusChange() is called !!!!!!!!!!, aHasNewUsableKey = " + aHasNewUsableKey);
+            // Iterate to callback the status change event for all key in this session.
+            // Update the key status map in
+            // https://dxr.mozilla.org/mozilla-central/rev/4c05938a64a7fde3ac2d7f4493aee1c5f2ad8a0a/dom/media/gmp/GMPCDMCallbackProxy.cpp#293
+            for (MediaDrm.KeyStatus keyStatus : aKeyInformation) {
+                if (!mDestroyed) {
+                    onSessionKeyChanged(aSessionId, keyStatus.getKeyId(), keyStatus.getStatusCode());
+                }
+            }
+        }
     }
 
     private class MediaDrmListener implements MediaDrm.OnEventListener {
@@ -535,7 +577,7 @@ public class MediaDrmBridge extends JNIObject {
         return null;
     }
 
-    private boolean sessionExists(ByteBuffer session) {
+    private boolean sessionExists(ByteBuffer aSession) {
         if (mCryptoSessionId == null) {
             assert mSessionIds.isEmpty();
             Log.e(LOGTAG, "Session doesn't exist because media crypto session is not created.");
@@ -543,9 +585,9 @@ public class MediaDrmBridge extends JNIObject {
         }
         assert mSessionIds.containsKey(mCryptoSessionId);
         if (mSingleSessionMode) {
-            return mCryptoSessionId.equals(session);
+            return mCryptoSessionId.equals(aSession);
         }
-        return !session.equals(mCryptoSessionId) && mSessionIds.containsKey(session);
+        return !aSession.equals(mCryptoSessionId) && mSessionIds.containsKey(aSession);
     }
 
     // TODO : release the resources

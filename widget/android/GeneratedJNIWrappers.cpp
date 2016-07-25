@@ -1929,6 +1929,9 @@ constexpr char MediaDrmBridge::OnSessionCreated_t::signature[];
 constexpr char MediaDrmBridge::OnSessionError_t::name[];
 constexpr char MediaDrmBridge::OnSessionError_t::signature[];
 
+constexpr char MediaDrmBridge::OnSessionKeyChanged_t::name[];
+constexpr char MediaDrmBridge::OnSessionKeyChanged_t::signature[];
+
 constexpr char MediaDrmBridge::OnSessionMessage_t::name[];
 constexpr char MediaDrmBridge::OnSessionMessage_t::signature[];
 

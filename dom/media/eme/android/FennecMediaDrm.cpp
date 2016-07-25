@@ -267,9 +267,9 @@ FennecMediaDrm::OnSessionUpdated(int aPromiseId, jni::ByteArray::Param aSessionI
 }
 
 void
-FennecMediaDrm::OnSessionClosed(int aPromiseId, int aSessionId)
+FennecMediaDrm::OnSessionClosed(int aPromiseId, jni::ByteArray::Param aSessionId)
 {
-
+  FMDRM_LOG("FennecMediaDrm::OnSessionClosed >>>>> ");
 }
 
 void
@@ -294,7 +294,61 @@ FennecMediaDrm::OnSessionMessage(jni::ByteArray::Param aSessionId,
 void
 FennecMediaDrm::OnSessionError(jni::ByteArray::Param aSessionId)
 {
+  FMDRM_LOG("FennecMediaDrm::OnSessionError >>>>> ");
+  FMDRM_LOG("FennecMediaDrm::OnSessionError <<<<< ");
+}
 
+/*
+
+TODO: Delete this if code is stable and make GMPMediaKeyStatus to FennecMediaKeyStatus to get rid of GMP.
+A Helper to translate MediaDrm.KeyStatus into
+GMPMediaKeyStatus(FennecMediaKeyStatus)
+
+
+int STATUS_EXPIRED Constant Value: 1 (0x00000001)
+The key is no longer usable to decrypt media data because its expiration time has passed.
+int STATUS_INTERNAL_ERROR Constant Value: 4 (0x00000004)
+The key is not currently usable to decrypt media data because of an internal error in processing unrelated to input parameters.
+int STATUS_OUTPUT_NOT_ALLOWED Constant Value: 2 (0x00000002)
+The key is not currently usable to decrypt media data because its output requirements cannot currently be met.
+int STATUS_PENDING Constant Value: 3 (0x00000003)
+The status of the key is not yet known and is being determined.
+int STATUS_USABLE Constant Value: 0 (0x00000000)
+The key is currently usable to decrypt media data.
+
+*/
+GMPMediaKeyStatus
+ToGMPMediaKeyStatus(int aKeyStatusCode)
+{
+  switch(aKeyStatusCode) {
+
+    case 0x00000000/*STATUS_USABLE*/: return kGMPUsable;
+    case 0x00000001/*STATUS_EXPIRED*/: return kGMPExpired;
+    // TODO: MediaDrm.Status cannot tell kGMPOutputDownscaled.
+    // Need to find a way to deal with this case.
+    // https://w3c.github.io/encrypted-media/#mediakeystatusmap-interface
+    case 0x00000002/*STATUS_OUTPUT_NOT_ALLOWED*/: return kGMPOutputRestricted;
+    case 0x00000003/*STATUS_PENDING*/: return kGMPStatusPending;
+    case 0x00000004/*STATUS_INTERNAL_ERROR*/: return kGMPInternalError;
+    default: return kGMPUnknown;
+  };
+}
+void
+FennecMediaDrm::OnSessionKeyChanged(jni::ByteArray::Param aSessionId,
+                                    jni::ByteArray::Param aKeyId,
+                                    int aStatusCode)
+{
+  FMDRM_LOG("FennecMediaDrm::OnSessionKeyChanged >>>>> ");
+  nsCString sessionId(reinterpret_cast<char*>(aSessionId->GetElements().Elements()), aSessionId->Length());
+  FMDRM_LOG("FennecMediaDrm::OnSessionKeyChanged : aSessionId(%s) / aStatusCode(%d)",
+    sessionId.get(), aStatusCode);
+  auto keyIdArray = aKeyId->GetElements();
+  nsTArray<uint8_t> keyId;
+  keyId.AppendElements(reinterpret_cast<uint8_t*>(keyIdArray.Elements()), keyIdArray.Length());
+  mCallback->KeyStatusChanged(sessionId,
+                              keyId,
+                              ToGMPMediaKeyStatus(aStatusCode));
+  FMDRM_LOG("FennecMediaDrm::OnSessionKeyChanged <<<<< ");
 }
 
 } // namespace mozilla
