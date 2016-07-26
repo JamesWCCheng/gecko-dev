@@ -224,9 +224,10 @@ private:
 
   const nsString mKeySystem;
 
-  // Gecko Media Plugin thread. All interactions with the out-of-process
+  // [TODO] this will be moved to CDMProxy base class and call mOwnerThread.
+  // Working thread for any command to CDM. All interactions with the out-of-process
   // EME plugin must come from this thread.
-  RefPtr<nsIThread> mGMPThread;
+  RefPtr<nsIThread> mCDMThread;
 
   nsCString mNodeId;
 

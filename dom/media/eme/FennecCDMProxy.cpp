@@ -18,7 +18,7 @@ extern dom::MediaKeyMessageType ToMediaKeyMessageType(GMPSessionMessageType aMes
 FennecCDMProxy::FennecCDMProxy(dom::MediaKeys* aKeys, const nsAString& aKeySystem)
   : mKeys(aKeys)
   , mKeySystem(aKeySystem)
-  , mGMPThread(nullptr)
+  , mCDMThread(nullptr)
   , mCDM(nullptr)
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -45,19 +45,12 @@ FennecCDMProxy::Init(PromiseId aPromiseId,
           NS_ConvertUTF16toUTF8(aTopLevelOrigin).get(),
           (aInPrivateBrowsing ? "PrivateBrowsing" : "NonPrivateBrowsing"));
 
-  // Obtain GMPThread to work with OR we could create a new thread ?
-  if (!mGMPThread) {
-    nsCOMPtr<mozIGeckoMediaPluginService> mps =
-      do_GetService("@mozilla.org/gecko-media-plugin-service;1");
-    if (!mps) {
+  // Create a CDM Thread to work with.
+  if (!mCDMThread) {
+    nsresult rv = NS_NewNamedThread("FennecCDMThread", getter_AddRefs(mCDMThread));
+    if (NS_FAILED(rv)) {
       RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
-                    NS_LITERAL_CSTRING("Couldn't get MediaPluginService in FennecCDMProxy::Init"));
-      return;
-    }
-    mps->GetThread(getter_AddRefs(mGMPThread));
-    if (!mGMPThread) {
-      RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
-                    NS_LITERAL_CSTRING("Couldn't get GMP thread FennecCDMProxy::Init"));
+                    NS_LITERAL_CSTRING("Couldn't create CDM thread FennecCDMProxy::Init"));
       return;
     }
   }
@@ -79,7 +72,7 @@ FennecCDMProxy::Init(PromiseId aPromiseId,
   nsCOMPtr<nsIRunnable> task(
     NewRunnableMethod<nsAutoPtr<InitData>>(this, &FennecCDMProxy::fmd_Init,
                                            Move(data)));
-  mGMPThread->Dispatch(task, NS_DISPATCH_NORMAL);
+  mCDMThread->Dispatch(task, NS_DISPATCH_NORMAL);
 }
 
 void
@@ -90,7 +83,7 @@ FennecCDMProxy::CreateSession(uint32_t aCreateSessionToken,
                               nsTArray<uint8_t>& aInitData)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(mGMPThread);
+  MOZ_ASSERT(mCDMThread);
   EME_LOG("FennecCDMProxy::CreateSession >>>>>>>> ");
 
   nsAutoPtr<CreateSessionData> data(new CreateSessionData());
@@ -104,7 +97,7 @@ FennecCDMProxy::CreateSession(uint32_t aCreateSessionToken,
     NewRunnableMethod<nsAutoPtr<CreateSessionData>>(this,
                                                     &FennecCDMProxy::fmd_CreateSession,
                                                     data));
-  mGMPThread->Dispatch(task, NS_DISPATCH_NORMAL);
+  mCDMThread->Dispatch(task, NS_DISPATCH_NORMAL);
 }
 
 void
@@ -127,7 +120,7 @@ FennecCDMProxy::UpdateSession(const nsAString& aSessionId,
                               nsTArray<uint8_t>& aResponse)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(mGMPThread);
+  MOZ_ASSERT(mCDMThread);
   NS_ENSURE_TRUE_VOID(!mKeys.IsNull());
 
   nsAutoPtr<UpdateSessionData> data(new UpdateSessionData());
@@ -139,7 +132,7 @@ FennecCDMProxy::UpdateSession(const nsAString& aSessionId,
     NewRunnableMethod<nsAutoPtr<UpdateSessionData>>(this,
                                                     &FennecCDMProxy::fmd_UpdateSession,
                                                     data));
-  mGMPThread->Dispatch(task, NS_DISPATCH_NORMAL);
+  mCDMThread->Dispatch(task, NS_DISPATCH_NORMAL);
 }
 
 void
@@ -157,7 +150,7 @@ FennecCDMProxy::CloseSession(const nsAString& aSessionId,
     NewRunnableMethod<nsAutoPtr<SessionOpData>>(this,
                                                 &FennecCDMProxy::fmd_CloseSession,
                                                 data));
-  mGMPThread->Dispatch(task, NS_DISPATCH_NORMAL);
+  mCDMThread->Dispatch(task, NS_DISPATCH_NORMAL);
 }
 
 void
@@ -170,7 +163,10 @@ FennecCDMProxy::RemoveSession(const nsAString& aSessionId,
 void
 FennecCDMProxy::Shutdown()
 {
-
+  if (mCDMThread) {
+    mCDMThread->Shutdown();
+    mCDMThread = nullptr;
+  }
 }
 
 void
