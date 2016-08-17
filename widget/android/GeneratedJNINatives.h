@@ -501,6 +501,41 @@ const JNINativeMethod NativePanZoomController::Natives<Impl>::methods[] = {
 };
 
 template<class Impl>
+class MediaDrmBridge::Natives : public mozilla::jni::NativeImpl<MediaDrmBridge, Impl>
+{
+public:
+    static const JNINativeMethod methods[6];
+};
+
+template<class Impl>
+const JNINativeMethod MediaDrmBridge::Natives<Impl>::methods[] = {
+
+    mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessionClosed_t>(
+            mozilla::jni::NativeStub<MediaDrmBridge::OnSessionClosed_t, Impl>
+            ::template Wrap<&Impl::OnSessionClosed>),
+
+    mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessionCreated_t>(
+            mozilla::jni::NativeStub<MediaDrmBridge::OnSessionCreated_t, Impl>
+            ::template Wrap<&Impl::OnSessionCreated>),
+
+    mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessionError_t>(
+            mozilla::jni::NativeStub<MediaDrmBridge::OnSessionError_t, Impl>
+            ::template Wrap<&Impl::OnSessionError>),
+
+    mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessionKeyChanged_t>(
+            mozilla::jni::NativeStub<MediaDrmBridge::OnSessionKeyChanged_t, Impl>
+            ::template Wrap<&Impl::OnSessionKeyChanged>),
+
+    mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessionMessage_t>(
+            mozilla::jni::NativeStub<MediaDrmBridge::OnSessionMessage_t, Impl>
+            ::template Wrap<&Impl::OnSessionMessage>),
+
+    mozilla::jni::MakeNativeMethod<MediaDrmBridge::OnSessionUpdated_t>(
+            mozilla::jni::NativeStub<MediaDrmBridge::OnSessionUpdated_t, Impl>
+            ::template Wrap<&Impl::OnSessionUpdated>)
+};
+
+template<class Impl>
 class NativeJSContainer::Natives : public mozilla::jni::NativeImpl<NativeJSContainer, Impl>
 {
 public:
