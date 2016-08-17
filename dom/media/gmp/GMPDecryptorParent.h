@@ -89,7 +89,7 @@ private:
                           nsTArray<uint8_t>&& aMessage) override;
 
   bool RecvExpirationChange(const nsCString& aSessionId,
-                            const double& aExpiryTime) override;
+                            const int64_t& aExpiryTime) override;
 
   bool RecvSessionClosed(const nsCString& aSessionId) override;
 

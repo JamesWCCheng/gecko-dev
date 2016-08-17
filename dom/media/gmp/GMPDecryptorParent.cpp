@@ -295,9 +295,9 @@ GMPDecryptorParent::RecvSessionMessage(const nsCString& aSessionId,
 
 bool
 GMPDecryptorParent::RecvExpirationChange(const nsCString& aSessionId,
-                                         const double& aExpiryTime)
+                                         const int64_t& aExpiryTime)
 {
-  LOGD(("GMPDecryptorParent[%p]::RecvExpirationChange(sessionId='%s', expiry=%lf)",
+  LOGD(("GMPDecryptorParent[%p]::RecvExpirationChange(sessionId='%s', expiry=%lld)",
         this, aSessionId.get(), aExpiryTime));
 
   if (!mIsOpen) {

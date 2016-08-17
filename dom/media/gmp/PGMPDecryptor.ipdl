@@ -70,7 +70,7 @@ parent:
                        GMPSessionMessageType aMessageType,
                        uint8_t[] aMessage);
 
-  async ExpirationChange(nsCString aSessionId, double aExpiryTime);
+  async ExpirationChange(nsCString aSessionId, int64_t aExpiryTime);
 
   async SessionClosed(nsCString aSessionId);
 
@@ -82,7 +82,7 @@ parent:
   async KeyStatusChanged(nsCString aSessionId, uint8_t[] aKey,
                          GMPMediaKeyStatus aStatus);
 
-  async KeyStatusUnknown(nsCString aSessionId, uint8_t[] aKey);
+  async ForgetKeyStatus(nsCString aSessionId, uint8_t[] aKey);
 
   async Decrypted(uint32_t aId, GMPErr aResult, uint8_t[] aBuffer);
 
