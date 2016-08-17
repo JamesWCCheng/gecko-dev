@@ -19,6 +19,8 @@
 
 #include <jni.h>
 
+#include "mozilla/MediaDrmCDMProxy.h"
+#include <unistd.h>
 namespace {
   template<class T>
   static jbyteArray FillJByteArray(const T& data, jsize length)
@@ -411,7 +413,7 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
   // [TODO] Need a way to let AndroidDecoderModule / or Java impl
   // know that it needs crypto instance for configuration.
   // e.g. MediaCrypto::LocalRef mediaCrypto = mProxy->mBridge->GetCrypto();
-  MediaCrypto::LocalRef mediaCrypto;
+  MediaCrypto::LocalRef mediaCrypto = (static_cast<MediaDrmCDMProxy*>(mProxy.get()))->GetMediaDrmBridge()->GetMediaCrypto();
   if (!mProxy) {
     NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, nullptr, 0), rv);
   } else {
@@ -700,6 +702,11 @@ MediaCodecDataDecoder::DecoderLoop()
 
     if (sample) {
       // [TODO] Need a way to WaitForDecryptorKey.
+      static bool once = true;
+      if(once){
+        sleep(10);
+        once = false;
+      }
       res = QueueSample(sample);
       if (NS_SUCCEEDED(res)) {
         // We've fed this into the decoder, so remove it from the queue.
