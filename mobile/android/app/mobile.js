@@ -627,6 +627,10 @@ pref("media.android-media-codec.preferred", true);
 // Enable MSE
 pref("media.mediasource.enabled", true);
 
+// Enable EME(Encrypted media extensions)
+pref("media.eme.enabled", true);
+pref("media.eme.apiVisible", true);
+
 // optimize images memory usage
 pref("image.downscale-during-decode.enabled", true);
 
