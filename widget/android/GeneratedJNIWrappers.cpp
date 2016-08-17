@@ -2096,14 +2096,6 @@ auto MediaDrmBridge::IsSchemeSupported(mozilla::jni::String::Param a0) -> bool
     return mozilla::jni::Method<IsSchemeSupported_t>::Call(MediaDrmBridge::Context(), nullptr, a0);
 }
 
-constexpr char MediaDrmBridge::IsSchemeSupportedInitDataType_t::name[];
-constexpr char MediaDrmBridge::IsSchemeSupportedInitDataType_t::signature[];
-
-auto MediaDrmBridge::IsSchemeSupportedInitDataType(mozilla::jni::String::Param a0, mozilla::jni::String::Param a1) -> bool
-{
-    return mozilla::jni::Method<IsSchemeSupportedInitDataType_t>::Call(MediaDrmBridge::Context(), nullptr, a0, a1);
-}
-
 constexpr char MediaDrmBridge::IsSecureDecoderComonentRequired_t::name[];
 constexpr char MediaDrmBridge::IsSecureDecoderComonentRequired_t::signature[];
 

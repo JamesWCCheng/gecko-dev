@@ -154,4 +154,17 @@ IsClearkeyKeySystem(const nsAString& aKeySystem)
   return aKeySystem.EqualsASCII(kEMEKeySystemClearkey);
 }
 
+bool
+IsUsingMediaDrm(const nsAString& aKeySystem)
+{
+  return aKeySystem.EqualsASCII(kEMEKeySystemWidevine) ?
+#ifdef MOZ_WIDGET_ANDROID
+      true :
+#else
+      false :
+#endif
+      false;
+
+}
+
 } // namespace mozilla

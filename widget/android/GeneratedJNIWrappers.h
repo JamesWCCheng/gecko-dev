@@ -6072,27 +6072,6 @@ public:
 
     static auto IsSchemeSupported(mozilla::jni::String::Param) -> bool;
 
-    struct IsSchemeSupportedInitDataType_t {
-        typedef MediaDrmBridge Owner;
-        typedef bool ReturnType;
-        typedef bool SetterType;
-        typedef mozilla::jni::Args<
-                mozilla::jni::String::Param,
-                mozilla::jni::String::Param> Args;
-        static constexpr char name[] = "isSchemeSupportedInitDataType";
-        static constexpr char signature[] =
-                "(Ljava/lang/String;Ljava/lang/String;)Z";
-        static const bool isStatic = true;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    static auto IsSchemeSupportedInitDataType(mozilla::jni::String::Param, mozilla::jni::String::Param) -> bool;
-
     struct IsSecureDecoderComonentRequired_t {
         typedef MediaDrmBridge Owner;
         typedef bool ReturnType;

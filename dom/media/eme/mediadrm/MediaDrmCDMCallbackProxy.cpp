@@ -280,6 +280,7 @@ MediaDrmCDMCallbackProxy::SessionError(const nsCString& aSessionId,
   NS_DispatchToMainThread(task);
 }
 
+
 void
 MediaDrmCDMCallbackProxy::KeyStatusChanged(const nsCString& aSessionId,
                                            const nsTArray<uint8_t>& aKeyId,
@@ -287,6 +288,27 @@ MediaDrmCDMCallbackProxy::KeyStatusChanged(const nsCString& aSessionId,
 {
   MOZ_ASSERT(mProxy->IsOnOwnerThread());
 
+  KeyStatusChangedInternal(aSessionId,
+                           aKeyId,
+                           dom::Optional<dom::MediaKeyStatus>(aStatus));
+}
+
+void
+MediaDrmCDMCallbackProxy::ForgetKeyStatus(const nsCString& aSessionId,
+                                          const nsTArray<uint8_t>& aKeyId)
+{
+  MOZ_ASSERT(mProxy->IsOnOwnerThread());
+
+  KeyStatusChangedInternal(aSessionId,
+                           aKeyId,
+                           dom::Optional<dom::MediaKeyStatus>());
+}
+
+void
+MediaDrmCDMCallbackProxy::KeyStatusChangedInternal(const nsCString& aSessionId,
+                                                   const nsTArray<uint8_t>& aKeyId,
+                                                   const dom::Optional<dom::MediaKeyStatus>& aStatus)
+{
   bool keyStatusesChange = false;
   {
     CDMCaps::AutoLock caps(mProxy->Capabilites());

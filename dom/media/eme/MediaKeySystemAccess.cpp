@@ -38,6 +38,11 @@
 #include "nsUnicharUtils.h"
 #include "mozilla/dom/MediaSource.h"
 
+#ifdef MOZ_WIDGET_ANDROID
+#include "GeneratedJNIWrappers.h"
+using namespace mozilla::java;
+#endif
+
 namespace mozilla {
 namespace dom {
 
@@ -297,8 +302,8 @@ MediaKeySystemAccess::GetKeySystemStatus(const nsAString& aKeySystem,
     }
   }
 
-  if (Preferences::GetBool("media.gmp-widevinecdm.visible", false)) {
-    if (aKeySystem.EqualsASCII(kEMEKeySystemWidevine)) {
+  if (aKeySystem.EqualsASCII(kEMEKeySystemWidevine)) {
+    if (Preferences::GetBool("media.gmp-widevinecdm.visible", false)) {
 #ifdef XP_WIN
       // Win Vista and later only.
       if (!IsVistaOrLater()) {
@@ -311,6 +316,16 @@ MediaKeySystemAccess::GetKeySystemStatus(const nsAString& aKeySystem,
         return MediaKeySystemStatus::Cdm_disabled;
       }
       return EnsureMinCDMVersion(mps, aKeySystem, aMinCdmVersion, aOutMessage, aOutCdmVersion);
+#ifdef MOZ_WIDGET_ANDROID
+    } else if (Preferences::GetBool("media.mediadrm-widevinecdm.visible", true)) {
+      nsCString keySystem = NS_ConvertUTF16toUTF8(aKeySystem);
+      bool supported = MediaDrmBridge::IsSchemeSupported(keySystem);
+      if (!supported) {
+        aOutMessage = NS_LITERAL_CSTRING("CDM is not installed");
+        return MediaKeySystemStatus::Cdm_not_installed;
+      }
+      return MediaKeySystemStatus::Available;
+#endif
     }
   }
 
@@ -465,6 +480,10 @@ GetSupportedKeySystems()
       widevine.mPersistentState = KeySystemFeatureSupport::Requestable;
       widevine.mDistinctiveIdentifier = KeySystemFeatureSupport::Prohibited;
       widevine.mSessionTypes.AppendElement(MediaKeySessionType::Temporary);
+      // [TODO] Check if any other attributes on Fennec are required
+#ifdef MOZ_WIDGET_ANDROID
+      widevine.mSessionTypes.AppendElement(MediaKeySessionType::Persistent_license);
+#endif
       widevine.mAudioRobustness.AppendElement(NS_LITERAL_STRING("SW_SECURE_CRYPTO"));
       widevine.mVideoRobustness.AppendElement(NS_LITERAL_STRING("SW_SECURE_DECODE"));
 #if defined(XP_WIN)
@@ -826,20 +845,33 @@ GetSupportedCapabilities(const CodecType aCodecType,
     // robustness and local accumulated configuration in combination with
     // restrictions...
     const auto& containerSupport = isMP4 ? aKeySystem.mMP4 : aKeySystem.mWebM;
-    if (!CanDecryptAndDecode(aGMPService,
+    if (!IsUsingMediaDrm(aKeySystem.mKeySystem) &&
+        !CanDecryptAndDecode(aGMPService,
                              aKeySystem.mKeySystem,
                              contentType,
                              majorType,
                              containerSupport,
                              codecs,
                              aDiagnostics)) {
-        EME_LOG("MediaKeySystemConfiguration (label='%s') "
-                "MediaKeySystemMediaCapability('%s','%s') unsupported; "
-                "codec unsupported by CDM requested.",
-                NS_ConvertUTF16toUTF8(aPartialConfig.mLabel).get(),
-                NS_ConvertUTF16toUTF8(contentType).get(),
-                NS_ConvertUTF16toUTF8(robustness).get());
+      EME_LOG("MediaKeySystemConfiguration (label='%s') "
+              "MediaKeySystemMediaCapability('%s','%s') unsupported; "
+              "codec unsupported by CDM requested.",
+              NS_ConvertUTF16toUTF8(aPartialConfig.mLabel).get(),
+              NS_ConvertUTF16toUTF8(contentType).get(),
+              NS_ConvertUTF16toUTF8(robustness).get());
+      continue;
+    } else {
+#ifdef MOZ_WIDGET_ANDROID
+      // Check if the scheme+MIME is supported by MediaDrm/MediaCrypto
+      nsCString keySystem = NS_ConvertUTF16toUTF8(aKeySystem.mKeySystem);
+      nsCString mimeType = NS_ConvertUTF16toUTF8(contentType);
+      EME_LOG("Checking if Scheme(%s)/MIMEType(%s) are supported by MediaDrm/MediaCrypto.",
+             keySystem.get(), mimeType.get());
+      bool mimeSupported = MediaDrmBridge::IsSchemeMIMESupported(keySystem, container);
+      if (!mimeSupported) {
         continue;
+      }
+#endif
     }
 
     // ... add requested media capability to supported media capabilities.
@@ -1164,12 +1196,19 @@ MediaKeySystemAccess::GetSupportedConfig(const nsAString& aKeySystem,
     return false;
   }
   const KeySystemConfig* implementation = nullptr;
-  if (!HaveGMPFor(mps,
-                  NS_ConvertUTF16toUTF8(aKeySystem),
-                  NS_LITERAL_CSTRING(GMP_API_DECRYPTOR)) ||
-      !(implementation = GetKeySystemConfig(aKeySystem))) {
+
+  if (!(implementation = GetKeySystemConfig(aKeySystem))) {
+    // No supported keysystem configuration.
+    return false;
+  } else if (IsUsingMediaDrm(aKeySystem)) {
+    // Do nothing if it's Fennec WV.
+  } else if (!HaveGMPFor(mps,
+                         NS_ConvertUTF16toUTF8(aKeySystem),
+                         NS_LITERAL_CSTRING(GMP_API_DECRYPTOR))) {
+    // No supported GMP.
     return false;
   }
+
   for (const MediaKeySystemConfiguration& candidate : aConfigs) {
     if (mozilla::dom::GetSupportedConfig(mps,
                                          *implementation,
@@ -1179,7 +1218,6 @@ MediaKeySystemAccess::GetSupportedConfig(const nsAString& aKeySystem,
       return true;
     }
   }
-
   return false;
 }
 

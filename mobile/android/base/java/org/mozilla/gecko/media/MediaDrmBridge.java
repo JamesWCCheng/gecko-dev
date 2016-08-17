@@ -101,9 +101,7 @@ public class MediaDrmBridge extends JNIObject {
     }
 
     static public boolean passMiniumSupportVersionCheck() {
-      // [TODO] Determine the mini support level
-      // MediaDrm starts in API_LEVEL 18 - JELLY_BEAN_MR2.
-      // For developing, we use LOLLIPOP first.
+      // Support versions >= LOLLIPOP
       if (SDK_INT < LOLLIPOP) {
           Log.e(LOGTAG, "CheckMiniumSupportVersion Not supported !! ");
           return false;
@@ -117,56 +115,27 @@ public class MediaDrmBridge extends JNIObject {
     }
 
     @WrapForJNI
-    static public boolean isSchemeSupportedInitDataType(String aKeySystem,
-                                                        String aInitDataType) {
-      if (!passMiniumSupportVersionCheck()) {
-          return false;
-      }
-      Log.d(LOGTAG, "isSchemeSupportedInitDataType " + aInitDataType);
-      if (aKeySystem.equals("org.w3.clearkey")) {
-          return MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID, aInitDataType);
-      } else if (aKeySystem.equals("com.widevine.alpha")){
-          return MediaDrm.isCryptoSchemeSupported(WIDEVINE_SCHEME_UUID, aInitDataType);
-      } else if (aKeySystem.equals("com.microsoft.playready")) {
-          return MediaDrm.isCryptoSchemeSupported(PLAYREADY_SCHEME_UUID, aInitDataType);
-      }
-      return false;
-    }
-
-    @WrapForJNI
     static public boolean isSchemeSupported(String aKeySystem) {
-      if (!passMiniumSupportVersionCheck()) {
-          return false;
-      }
-      if (aKeySystem.equals("org.w3.clearkey")) {
-          return MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID) &&
-              MediaCrypto.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID);
-      } else if (aKeySystem.equals("com.widevine.alpha")){
-          return MediaDrm.isCryptoSchemeSupported(WIDEVINE_SCHEME_UUID) &&
-              MediaCrypto.isCryptoSchemeSupported(WIDEVINE_SCHEME_UUID);
-      } else if (aKeySystem.equals("com.microsoft.playready")) {
-          return MediaDrm.isCryptoSchemeSupported(PLAYREADY_SCHEME_UUID) &&
-              MediaCrypto.isCryptoSchemeSupported(PLAYREADY_SCHEME_UUID);
-      }
-      return false;
+        if (!passMiniumSupportVersionCheck()) {
+            return false;
+        }
+        if (aKeySystem.equals("com.widevine.alpha")){
+            return MediaDrm.isCryptoSchemeSupported(WIDEVINE_SCHEME_UUID) &&
+                MediaCrypto.isCryptoSchemeSupported(WIDEVINE_SCHEME_UUID);
+        }
+        return false;
     }
 
     @WrapForJNI
     static public boolean isSchemeMIMESupported(String aKeySystem, String aMIME) {
-      if (!passMiniumSupportVersionCheck()) {
-          return false;
-      }
-      Log.d(LOGTAG, "isSchemeMIMESupported " + aMIME);
-      if (aKeySystem.equals("org.w3.clearkey")) {
-          // For clearkey, there is no need to verify the mime type.
-          // clearkey plugin did not implement this mime type checking logic.
-          return MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID);
-      } else if (aKeySystem.equals("com.widevine.alpha")){
-          return MediaDrm.isCryptoSchemeSupported(WIDEVINE_SCHEME_UUID, aMIME);
-      } else if (aKeySystem.equals("com.microsoft.playready")) {
-          return MediaDrm.isCryptoSchemeSupported(PLAYREADY_SCHEME_UUID, aMIME);
-      }
-      return false;
+        if (!passMiniumSupportVersionCheck()) {
+            return false;
+        }
+        Log.d(LOGTAG, "isSchemeMIMESupported " + aMIME);
+        if (aKeySystem.equals("com.widevine.alpha")){
+            return MediaDrm.isCryptoSchemeSupported(WIDEVINE_SCHEME_UUID, aMIME);
+        }
+        return false;
     }
 
     @WrapForJNI
