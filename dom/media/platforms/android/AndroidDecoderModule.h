@@ -16,7 +16,8 @@
 #include <deque>
 
 namespace mozilla {
-
+// [TODO] Use MediaDrmCDMProxy instead.
+class CDMProxy;
 typedef std::deque<RefPtr<MediaRawData>> SampleQueue;
 
 class AndroidDecoderModule : public PlatformDecoderModule {
@@ -27,8 +28,8 @@ public:
   already_AddRefed<MediaDataDecoder>
   CreateAudioDecoder(const CreateDecoderParams& aParams) override;
 
-
-  AndroidDecoderModule() {}
+  // [TODO] Need a CDMProxy when in EME case.
+  AndroidDecoderModule(CDMProxy *aProxy = nullptr);
   virtual ~AndroidDecoderModule() {}
 
   bool SupportsMimeType(const nsACString& aMimeType,
@@ -36,6 +37,10 @@ public:
 
   ConversionRequired
   DecoderNeedsConversion(const TrackInfo& aConfig) const override;
+
+private:
+  // [TODO] Use MediaDrmCDMProxy type to store directly.
+  RefPtr<CDMProxy> mProxy;
 };
 
 class MediaCodecDataDecoder : public MediaDataDecoder {
@@ -44,7 +49,8 @@ public:
   MediaCodecDataDecoder(MediaData::Type aType,
                         const nsACString& aMimeType,
                         java::sdk::MediaFormat::Param aFormat,
-                        MediaDataDecoderCallback* aCallback);
+                        MediaDataDecoderCallback* aCallback,
+                        CDMProxy* aProxy);
 
   virtual ~MediaCodecDataDecoder();
 
@@ -131,6 +137,10 @@ protected:
   SampleQueue mQueue;
   // Durations are stored in microseconds.
   std::deque<media::TimeUnit> mDurations;
+
+  // [TODO] This member is for getting the MediaDrmBridge instance e.g.
+  // mProxy->GetMediaDrmBridge() passing to the Java for out of process decoding.
+  RefPtr<CDMProxy> mProxy;
 };
 
 } // namespace mozilla

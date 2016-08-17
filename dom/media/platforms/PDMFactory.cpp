@@ -342,8 +342,13 @@ PDMFactory::GetDecoder(const nsACString& aMimeType,
 void
 PDMFactory::SetCDMProxy(CDMProxy* aProxy)
 {
+#ifndef MOZ_WIDGET_ANDROID
   RefPtr<PDMFactory> m = new PDMFactory();
   mEMEPDM = new EMEDecoderModule(aProxy, m);
+#else
+  // Need a CDMProxy to get a bridge instance in ADM internally.
+  mEMEPDM = new AndroidDecoderModule(aProxy);
+#endif
 }
 #endif
 

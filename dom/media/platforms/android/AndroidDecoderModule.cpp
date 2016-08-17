@@ -19,6 +19,24 @@
 
 #include <jni.h>
 
+namespace {
+  template<class T>
+  static jbyteArray FillJByteArray(const T& data, jsize length)
+  {
+    JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
+    jbyteArray result = jenv->NewByteArray(length);
+    jenv->SetByteArrayRegion(result, 0, length, reinterpret_cast<const jbyte*>(const_cast<T>(data)));
+    return result;
+  }
+  template<class T>
+  static jintArray FillJIntArray(const T& data, jsize length)
+  {
+    JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
+    jintArray result = jenv->NewIntArray(length);
+    jenv->SetIntArrayRegion(result, 0, length, reinterpret_cast<const jint*>(const_cast<T>(data)));
+    return result;
+  }
+}
 static PRLogModuleInfo* AndroidDecoderModuleLog()
 {
   static PRLogModuleInfo* sLogModule = nullptr;
@@ -33,6 +51,7 @@ static PRLogModuleInfo* AndroidDecoderModuleLog()
     mozilla::LogLevel::Debug, ("AndroidDecoderModule(%p)::%s: " arg, \
       this, __func__, ##__VA_ARGS__))
 
+static const int kExpectedIVLength = 16;
 using namespace mozilla;
 using namespace mozilla::gl;
 using namespace mozilla::java::sdk;
@@ -85,9 +104,10 @@ public:
   VideoDataDecoder(const VideoInfo& aConfig,
                    MediaFormat::Param aFormat,
                    MediaDataDecoderCallback* aCallback,
-                   layers::ImageContainer* aImageContainer)
+                   layers::ImageContainer* aImageContainer,
+                   CDMProxy* aProxy)
     : MediaCodecDataDecoder(MediaData::Type::VIDEO_DATA, aConfig.mMimeType,
-                            aFormat, aCallback)
+                            aFormat, aCallback, aProxy)
     , mImageContainer(aImageContainer)
     , mConfig(aConfig)
   {
@@ -167,9 +187,9 @@ class AudioDataDecoder : public MediaCodecDataDecoder
 {
 public:
   AudioDataDecoder(const AudioInfo& aConfig, MediaFormat::Param aFormat,
-                   MediaDataDecoderCallback* aCallback)
+                   MediaDataDecoderCallback* aCallback, CDMProxy* aProxy)
     : MediaCodecDataDecoder(MediaData::Type::AUDIO_DATA, aConfig.mMimeType,
-                            aFormat, aCallback)
+                            aFormat, aCallback, aProxy)
   {
     JNIEnv* const env = jni::GetEnvForThread();
 
@@ -244,6 +264,12 @@ public:
   }
 };
 
+AndroidDecoderModule::AndroidDecoderModule(CDMProxy *aProxy)
+  :mProxy(aProxy)
+{
+
+}
+
 bool
 AndroidDecoderModule::SupportsMimeType(const nsACString& aMimeType,
                                        DecoderDoctorDiagnostics* aDiagnostics) const
@@ -296,7 +322,8 @@ AndroidDecoderModule::CreateVideoDecoder(const CreateDecoderParams& aParams)
     new VideoDataDecoder(config,
                          format,
                          aParams.mCallback,
-                         aParams.mImageContainer);
+                         aParams.mImageContainer,
+                         mProxy);
 
   return decoder.forget();
 }
@@ -319,7 +346,7 @@ AndroidDecoderModule::CreateAudioDecoder(const CreateDecoderParams& aParams)
       &format), nullptr);
 
   RefPtr<MediaDataDecoder> decoder =
-    new AudioDataDecoder(config, format, aParams.mCallback);
+    new AudioDataDecoder(config, format, aParams.mCallback, mProxy);
 
   return decoder.forget();
 }
@@ -336,7 +363,8 @@ AndroidDecoderModule::DecoderNeedsConversion(const TrackInfo& aConfig) const
 MediaCodecDataDecoder::MediaCodecDataDecoder(MediaData::Type aType,
                                              const nsACString& aMimeType,
                                              MediaFormat::Param aFormat,
-                                             MediaDataDecoderCallback* aCallback)
+                                             MediaDataDecoderCallback* aCallback,
+                                             CDMProxy* aProxy)
   : mType(aType)
   , mMimeType(aMimeType)
   , mFormat(aFormat)
@@ -345,6 +373,7 @@ MediaCodecDataDecoder::MediaCodecDataDecoder(MediaData::Type aType,
   , mOutputBuffers(nullptr)
   , mMonitor("MediaCodecDataDecoder::mMonitor")
   , mState(kDecoding)
+  , mProxy(aProxy)
 {
 
 }
@@ -379,7 +408,15 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
   }
 
   nsresult rv;
-  NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, nullptr, 0), rv);
+  // [TODO] Need a way to let AndroidDecoderModule / or Java impl
+  // know that it needs crypto instance for configuration.
+  // e.g. MediaCrypto::LocalRef mediaCrypto = mProxy->mBridge->GetCrypto();
+  MediaCrypto::LocalRef mediaCrypto;
+  if (!mProxy) {
+    NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, nullptr, 0), rv);
+  } else {
+    NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, mediaCrypto, 0), rv);
+  }
   NS_ENSURE_SUCCESS(rv = mDecoder->Start(), rv);
 
   NS_ENSURE_SUCCESS(rv = ResetInputBuffers(), rv);
@@ -499,8 +536,63 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
 
   PodCopy(static_cast<uint8_t*>(directBuffer), aSample->Data(), aSample->Size());
 
-  res = mDecoder->QueueInputBuffer(inputIndex, 0, aSample->Size(),
-                                   aSample->mTime, 0);
+  auto& cryptoObj = aSample->mCrypto;
+  if (cryptoObj.mValid) {
+    // [TODO] Need to implement GetSessionIdsForKeyId.
+    // nsAutoPtr<MediaRawDataWriter> writer(const_cast<MediaRawData*>(aSample)->CreateWriter());
+    // mProxy->GetSessionIdsForKeyId(cryptoObj.mKeyId,
+    //                               writer->mCrypto.mSessionIds);
+
+
+    int newNumSubSamples = std::min<uint32_t>(cryptoObj.mPlainSizes.Length(), cryptoObj.mEncryptedSizes.Length());
+
+    // mPlainSizes is uint16_t, need to transform to uint32_t first
+    nsTArray<uint32_t> clearData;
+    for (auto& clear : cryptoObj.mPlainSizes) {
+      clearData.AppendElement(clear);
+    }
+
+    uint32_t totalSubsamplesSize = 0;
+    uint32_t codecSpecificDataSize = 0;
+    for (auto& encrypted : cryptoObj.mEncryptedSizes) {
+      totalSubsamplesSize += encrypted;
+    }
+    for (auto& plain : cryptoObj.mPlainSizes) {
+      totalSubsamplesSize += plain;
+    }
+    codecSpecificDataSize = aSample->Size() - totalSubsamplesSize;
+
+    auto snapshotIV(cryptoObj.mIV);
+    auto length = snapshotIV.Length();
+    if (length < kExpectedIVLength) {
+      for (size_t i = 0; i < (kExpectedIVLength - length); i++) {
+        snapshotIV.AppendElement(0); // pad with 0
+      }
+    }
+
+    // Intended behavior observed from chromium.
+    clearData[0] += codecSpecificDataSize;
+
+    auto newNumBytesOfClearData = FillJIntArray(&clearData[0], clearData.Length());
+    auto newNumBytesOfEncryptedData = FillJIntArray(&cryptoObj.mEncryptedSizes[0], cryptoObj.mEncryptedSizes.Length());
+    auto newIV = FillJByteArray(&snapshotIV[0], snapshotIV.Length());
+    auto newKey = FillJByteArray(&cryptoObj.mKeyId[0], cryptoObj.mKeyId.Length());
+
+    CryptoInfo::LocalRef cryptoInfo;
+    Unused << CryptoInfo::New(&cryptoInfo);
+    Unused << cryptoInfo->Set(newNumSubSamples,
+                    mozilla::jni::IntArray::Ref::From(newNumBytesOfClearData),
+                    mozilla::jni::IntArray::Ref::From(newNumBytesOfEncryptedData),
+                    mozilla::jni::ByteArray::Ref::From(newKey),
+                    mozilla::jni::ByteArray::Ref::From(newIV),
+                    MediaCodec::CRYPTO_MODE_AES_CTR);
+    res = mDecoder->QueueSecureInputBuffer(inputIndex, 0, cryptoInfo,
+                                           aSample->mTime, 0);
+  } else {
+    res = mDecoder->QueueInputBuffer(inputIndex, 0, aSample->Size(),
+                                     aSample->mTime, 0);
+  }
+
   if (NS_FAILED(res)) {
     return res;
   }
@@ -607,6 +699,7 @@ MediaCodecDataDecoder::DecoderLoop()
     }
 
     if (sample) {
+      // [TODO] Need a way to WaitForDecryptorKey.
       res = QueueSample(sample);
       if (NS_SUCCEEDED(res)) {
         // We've fed this into the decoder, so remove it from the queue.
