@@ -99,7 +99,7 @@ public final class CodecProxy {
 
     private static final class RemoteManager implements IBinder.DeathRecipient {
         private List<CodecProxy> mProxies = new LinkedList<CodecProxy>();
-        private ICodecManager mRemote;
+        private IMediaManager mRemote;
         private volatile CountDownLatch mConnectionLatch;
         private final ServiceConnection mConnection = new ServiceConnection() {
             @Override
@@ -110,7 +110,7 @@ public final class CodecProxy {
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
-                mRemote = ICodecManager.Stub.asInterface(service);
+                mRemote = IMediaManager.Stub.asInterface(service);
                 if (mConnectionLatch != null) {
                     mConnectionLatch.countDown();
                 }
@@ -145,7 +145,7 @@ public final class CodecProxy {
             if (DEBUG) Log.d(LOGTAG, "init remote manager " + this);
             Context appCtxt = GeckoAppShell.getApplicationContext();
             if (DEBUG) Log.d(LOGTAG, "ctxt=" + appCtxt);
-            appCtxt.bindService(new Intent(appCtxt, CodecManager.class),
+            appCtxt.bindService(new Intent(appCtxt, MediaManager.class),
                     mConnection, Context.BIND_AUTO_CREATE);
             if (!waitConnection()) {
                 appCtxt.unbindService(mConnection);

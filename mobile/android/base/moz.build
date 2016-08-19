@@ -499,11 +499,11 @@ gbjar.sources += ['java/org/mozilla/gecko/' + x for x in [
     'media/AsyncCodecFactory.java',
     'media/AudioFocusAgent.java',
     'media/Codec.java',
-    'media/CodecManager.java',
     'media/CodecProxy.java',
     'media/FormatParam.java',
     'media/JellyBeanAsyncCodec.java',
     'media/MediaControlService.java',
+    'media/MediaManager.java',
     'media/Sample.java',
     'MediaCastingBar.java',
     'MemoryMonitor.java',
@@ -1037,5 +1037,7 @@ OBJDIR_PP_FILES.mobile.android.base += [
 gbjar.sources += ['generated/org/mozilla/gecko/' + x for x in [
     'media/ICodec.java',
     'media/ICodecCallbacks.java',
-    'media/ICodecManager.java',
+    'media/IMediaDrmBridge.java',
+    'media/IMediaDrmBridgeCallbacks.java',
+    'media/IMediaManager.java',
 ]]

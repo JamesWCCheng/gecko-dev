@@ -10,11 +10,17 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.RemoteException;
 
-public final class CodecManager extends Service {
-    private Binder mBinder = new ICodecManager.Stub() {
+public final class MediaManager extends Service {
+    private Binder mBinder = new IMediaManager.Stub() {
         @Override
         public ICodec createCodec() throws RemoteException {
             return new Codec();
+        }
+
+        @Override
+        public IMediaDrmBridge createMediaDrmBridge(String keySystem)
+            throws RemoteException {
+            return null;
         }
     };
 

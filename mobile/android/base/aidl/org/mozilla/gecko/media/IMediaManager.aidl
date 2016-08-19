@@ -6,8 +6,12 @@ package org.mozilla.gecko.media;
 
 // Non-default types used in interface.
 import org.mozilla.gecko.media.ICodec;
+import org.mozilla.gecko.media.IMediaDrmBridge;
 
-interface ICodecManager {
+interface IMediaManager {
     /** Creates a remote ICodec object. */
     ICodec createCodec();
+
+    /** Creates a remote IMediaDrmBridge object. */
+    IMediaDrmBridge createMediaDrmBridge(in String keySystem);
 }
