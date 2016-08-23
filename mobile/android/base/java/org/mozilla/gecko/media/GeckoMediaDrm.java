@@ -9,7 +9,7 @@ public interface GeckoMediaDrm {
         void onSessionCreated(int createSessionToken,
                               int promiseId,
                               byte[] sessionId,
-                              in byte[] request);
+                              byte[] request);
         void onSessionUpdated(int promiseId, byte[] sessionId);
         void onSessionClosed(int promiseId, byte[] sessionId);
         void onSessionMessage(byte[] sessionId,
