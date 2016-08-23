@@ -4,9 +4,10 @@
 
 package org.mozilla.gecko.media;
 
-// Non-default types used in interface.
+import org.mozilla.gecko.media.IMediaDrmBridgeCallbacks;
 
 interface IMediaDrmBridge {
+    void setCallbacks(in IMediaDrmBridgeCallbacks callbacks);
 
     oneway void createSession(int createSessionToken,
                               int promiseId,
