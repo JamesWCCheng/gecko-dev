@@ -37,7 +37,7 @@ public final class RemoteManager implements IBinder.DeathRecipient {
     }
 
     private List<CodecProxy> mProxies = new LinkedList<CodecProxy>();
-    private volatile ICodecManager mRemote;
+    private volatile IMediaManager mRemote;
     private volatile CountDownLatch mConnectionLatch;
     private final ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -48,7 +48,7 @@ public final class RemoteManager implements IBinder.DeathRecipient {
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
-            mRemote = ICodecManager.Stub.asInterface(service);
+            mRemote = IMediaManager.Stub.asInterface(service);
             if (mConnectionLatch != null) {
                 mConnectionLatch.countDown();
             }
@@ -137,6 +137,13 @@ public final class RemoteManager implements IBinder.DeathRecipient {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public synchronized MediaDrmProxy createMediaDrmBridge(String keySystem,
+                                                           CodecProxy.Callbacks callbacks) {
+        MediaDrmProxy proxy = MediaDrmProxy.createMediaDrmProxy(keySystem,
+                                                                callbacks,
+                                                                true);
     }
 
     @Override
