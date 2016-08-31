@@ -2081,6 +2081,100 @@ constexpr char CodecProxy::NativeCallbacks::OnOutput_t::signature[];
 constexpr char CodecProxy::NativeCallbacks::OnOutputFormatChanged_t::name[];
 constexpr char CodecProxy::NativeCallbacks::OnOutputFormatChanged_t::signature[];
 
+const char MediaDrmProxy::name[] =
+        "org/mozilla/gecko/media/MediaDrmProxy";
+
+constexpr char MediaDrmProxy::CloseSession_t::name[];
+constexpr char MediaDrmProxy::CloseSession_t::signature[];
+
+auto MediaDrmProxy::CloseSession(int32_t a0, mozilla::jni::String::Param a1) const -> void
+{
+    return mozilla::jni::Method<CloseSession_t>::Call(MediaDrmProxy::mCtx, nullptr, a0, a1);
+}
+
+constexpr char MediaDrmProxy::Create_t::name[];
+constexpr char MediaDrmProxy::Create_t::signature[];
+
+auto MediaDrmProxy::Create(mozilla::jni::String::Param a0, mozilla::jni::Object::Param a1, bool a2) -> MediaDrmProxy::LocalRef
+{
+    return mozilla::jni::Method<Create_t>::Call(MediaDrmProxy::Context(), nullptr, a0, a1, a2);
+}
+
+constexpr char MediaDrmProxy::CreateSession_t::name[];
+constexpr char MediaDrmProxy::CreateSession_t::signature[];
+
+auto MediaDrmProxy::CreateSession(int32_t a0, int32_t a1, mozilla::jni::String::Param a2, mozilla::jni::ByteArray::Param a3) const -> void
+{
+    return mozilla::jni::Method<CreateSession_t>::Call(MediaDrmProxy::mCtx, nullptr, a0, a1, a2, a3);
+}
+
+constexpr char MediaDrmProxy::Destroy_t::name[];
+constexpr char MediaDrmProxy::Destroy_t::signature[];
+
+auto MediaDrmProxy::Destroy() const -> void
+{
+    return mozilla::jni::Method<Destroy_t>::Call(MediaDrmProxy::mCtx, nullptr);
+}
+
+constexpr char MediaDrmProxy::IsSchemeMIMESupported_t::name[];
+constexpr char MediaDrmProxy::IsSchemeMIMESupported_t::signature[];
+
+auto MediaDrmProxy::IsSchemeMIMESupported(mozilla::jni::String::Param a0, mozilla::jni::String::Param a1) -> bool
+{
+    return mozilla::jni::Method<IsSchemeMIMESupported_t>::Call(MediaDrmProxy::Context(), nullptr, a0, a1);
+}
+
+constexpr char MediaDrmProxy::IsSchemeSupported_t::name[];
+constexpr char MediaDrmProxy::IsSchemeSupported_t::signature[];
+
+auto MediaDrmProxy::IsSchemeSupported(mozilla::jni::String::Param a0) -> bool
+{
+    return mozilla::jni::Method<IsSchemeSupported_t>::Call(MediaDrmProxy::Context(), nullptr, a0);
+}
+
+constexpr char MediaDrmProxy::UpdateSession_t::name[];
+constexpr char MediaDrmProxy::UpdateSession_t::signature[];
+
+auto MediaDrmProxy::UpdateSession(int32_t a0, mozilla::jni::String::Param a1, mozilla::jni::ByteArray::Param a2) const -> void
+{
+    return mozilla::jni::Method<UpdateSession_t>::Call(MediaDrmProxy::mCtx, nullptr, a0, a1, a2);
+}
+
+const char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::name[] =
+        "org/mozilla/gecko/media/MediaDrmProxy$NativeCallbacksToMediaDrmProxySupport";
+
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::New_t::name[];
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::New_t::signature[];
+
+auto MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::New() -> NativeCallbacksToMediaDrmProxySupport::LocalRef
+{
+    return mozilla::jni::Constructor<New_t>::Call(NativeCallbacksToMediaDrmProxySupport::Context(), nullptr);
+}
+
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::DisposeNative_t::name[];
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::DisposeNative_t::signature[];
+
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnError_t::name[];
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnError_t::signature[];
+
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionClosed_t::name[];
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionClosed_t::signature[];
+
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionCreated_t::name[];
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionCreated_t::signature[];
+
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionError_t::name[];
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionError_t::signature[];
+
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionKeyChanged_t::name[];
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionKeyChanged_t::signature[];
+
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionMessage_t::name[];
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionMessage_t::signature[];
+
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionUpdated_t::name[];
+constexpr char MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionUpdated_t::signature[];
+
 const char Restrictions::name[] =
         "org/mozilla/gecko/restrictions/Restrictions";
 
