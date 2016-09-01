@@ -154,4 +154,16 @@ IsClearkeyKeySystem(const nsAString& aKeySystem)
   return !CompareUTF8toUTF16(kEMEKeySystemClearkey, aKeySystem);
 }
 
+bool
+IsUsingMediaDrm(const nsAString& aKeySystem)
+{
+  return !CompareUTF8toUTF16(kEMEKeySystemWidevine, aKeySystem) ?
+#ifdef MOZ_WIDGET_ANDROID
+      true :
+#else
+      false :
+#endif
+      false;
+}
+
 } // namespace mozilla
