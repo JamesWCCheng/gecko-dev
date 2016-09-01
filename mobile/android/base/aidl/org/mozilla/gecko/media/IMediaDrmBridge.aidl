@@ -21,5 +21,4 @@ interface IMediaDrmBridge {
     oneway void closeSession(int promiseId, String sessionId);
 
     oneway void release();
-
 }

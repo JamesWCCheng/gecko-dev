@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.media;
 
+import android.media.MediaCrypto;
 import android.os.IBinder;
 import android.os.DeadObjectException;
 import android.os.RemoteException;
@@ -175,6 +176,12 @@ final class RemoteMediaDrmBridge implements GeckoMediaDrm {
             log("fail to release");
             reportError(e);
         }
+    }
+
+    @Override
+    public MediaCrypto getMediaCrypto() {
+        log("getMediaCrypto");
+        return null;
     }
 
     private void reportError(Exception e) {

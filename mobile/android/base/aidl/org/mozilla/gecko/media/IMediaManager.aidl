@@ -13,5 +13,5 @@ interface IMediaManager {
     ICodec createCodec();
 
     /** Creates a remote IMediaDrmBridge object. */
-    IMediaDrmBridge createMediaDrmBridge(in String keySystem);
+    IMediaDrmBridge createMediaDrmBridge(in String keySystem, in String uuid);
 }

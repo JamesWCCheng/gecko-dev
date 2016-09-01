@@ -124,12 +124,6 @@ public class LollipopGeckoMediaDrmBridge implements GeckoMediaDrm {
         }
     }
 
-    public MediaCrypto getMediaCrypto() throws Exception {
-        assertMediaCrypto();
-        log("getMediaCrypto");
-        return mCrypto;
-    }
-
     @Override
     public void createSession(int createSessionToken,
                               int promiseId,
@@ -272,6 +266,12 @@ public class LollipopGeckoMediaDrmBridge implements GeckoMediaDrm {
             mDrm.release();
             mDrm = null;
         }
+    }
+
+    @Override
+    public MediaCrypto getMediaCrypto() {
+        log("getMediaCrypto");
+        return mCrypto;
     }
 
     protected void onSessionCreated(int createSessionToken,

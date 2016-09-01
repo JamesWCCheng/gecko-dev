@@ -4,6 +4,9 @@
 
 package org.mozilla.gecko.media;
 
+import java.util.ArrayList;
+
+import android.media.MediaCrypto;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
 import static android.os.Build.VERSION_CODES.M;
@@ -12,11 +15,33 @@ import android.os.RemoteException;
 import android.util.Log;
 
 /* package */
-final class MediaDrmBridge extends IMediaDrmBridge.Stub implements IBinder.DeathRecipient {
-    private static final String LOGTAG = "StubRemoteMediaDrmBridge";
+final class RemoteMediaDrmBridgeStub extends IMediaDrmBridge.Stub implements IBinder.DeathRecipient {
+    private static final String LOGTAG = "RemoteMediaDrmBridgeStub";
     private static final boolean DEBUG = false;
     private volatile IMediaDrmBridgeCallbacks mCallbacks = null;
     private GeckoMediaDrm mBridge = null;
+    private String mStubUUID = "";
+
+    public static ArrayList<RemoteMediaDrmBridgeStub> mStubList =
+        new ArrayList<RemoteMediaDrmBridgeStub>();
+
+    private String getUUID() {
+        return mStubUUID;
+    }
+
+    private MediaCrypto getMediaCryptoFromBridge() {
+        return mBridge != null ? mBridge.getMediaCrypto() : null;
+    }
+
+    public static MediaCrypto getMediaCrypto(String uuid) {
+        for (int i = 0; i < mStubList.size(); i++) {
+            if (mStubList.get(i) != null &&
+                mStubList.get(i).getUUID().equals(uuid)) {
+                return mStubList.get(i).getMediaCryptoFromBridge();
+            }
+        }
+        return null;
+    }
 
     private final class Callbacks implements GeckoMediaDrm.Callbacks {
         private IMediaDrmBridgeCallbacks mRemote;
@@ -144,7 +169,7 @@ final class MediaDrmBridge extends IMediaDrmBridge.Stub implements IBinder.Death
         mCallbacks = null;
     }
 
-    MediaDrmBridge(String keySystem) {
+    RemoteMediaDrmBridgeStub(String keySystem, String uuid) {
         if (M > SDK_INT && SDK_INT >= LOLLIPOP) {
             mBridge = new LollipopGeckoMediaDrmBridge(keySystem);
         } else if (SDK_INT >= M) {
@@ -152,6 +177,8 @@ final class MediaDrmBridge extends IMediaDrmBridge.Stub implements IBinder.Death
         } else {
             throw new IllegalStateException(LOGTAG + "Bridge cannot be created correctly !!");
         }
+        mStubUUID = uuid;
+        mStubList.add(this);
     }
 
     @Override

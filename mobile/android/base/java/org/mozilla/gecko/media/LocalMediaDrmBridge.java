@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.media;
 
+import android.media.MediaCrypto;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
 import static android.os.Build.VERSION_CODES.M;
@@ -152,6 +153,12 @@ final class LocalMediaDrmBridge implements GeckoMediaDrm {
             log("fail to release");
             reportError(e);
         }
+    }
+
+    @Override
+    public MediaCrypto getMediaCrypto() {
+        log("getMediaCrypto");
+        return mBridge != null ? mBridge.getMediaCrypto() : null;
     }
 
     private void reportError(Exception e) {

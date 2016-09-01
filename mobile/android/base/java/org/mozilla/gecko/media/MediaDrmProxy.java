@@ -181,7 +181,9 @@ public final class MediaDrmProxy extends JNIObject {
 
         MediaDrmProxy proxy = null;
         if (isRemote) {
-            proxy = RemoteManager.getInstance().createMediaDrmBridge(keySystem);
+            // [TODO] : Pass the following uuid to corresponding AsyncCodec
+            String uuid = UUID.randomUUID().toString();
+            proxy = RemoteManager.getInstance().createMediaDrmBridge(keySystem, uuid);
             if (proxy == null) {
                 return null;
             }
