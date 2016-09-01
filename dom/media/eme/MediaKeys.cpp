@@ -14,6 +14,9 @@
 #include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/UnionTypes.h"
 #include "GMPCDMProxy.h"
+#ifdef MOZ_WIDGET_ANDROID
+#include "mozilla/MediaDrmCDMProxy.h"
+#endif
 #include "mozilla/EMEUtils.h"
 #include "nsContentUtils.h"
 #include "nsIScriptObjectPrincipal.h"
@@ -317,11 +320,19 @@ MediaKeys::Init(ErrorResult& aRv)
     return nullptr;
   }
 
-  mProxy = new GMPCDMProxy(this,
-                           mKeySystem,
-                           new MediaKeysGMPCrashHelper(this),
-                           mDistinctiveIdentifierRequired,
-                           mPersistentStateRequired);
+  if (IsUsingMediaDrm(mKeySystem)) {
+    mProxy = new MediaDrmCDMProxy(this,
+                                  mKeySystem,
+                                  mDistinctiveIdentifierRequired,
+                                  mPersistentStateRequired);
+  } else {
+    mProxy = new GMPCDMProxy(this,
+                             mKeySystem,
+                             new MediaKeysGMPCrashHelper(this),
+                             mDistinctiveIdentifierRequired,
+                             mPersistentStateRequired);
+  }
+
 
   // Determine principal (at creation time) of the MediaKeys object.
   nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(GetParentObject());
