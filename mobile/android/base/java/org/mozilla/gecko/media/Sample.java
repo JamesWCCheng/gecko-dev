@@ -6,6 +6,7 @@ package org.mozilla.gecko.media;
 
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
+import android.media.MediaCodec.CryptoInfo;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -17,15 +18,17 @@ public final class Sample implements Parcelable {
     static {
         BufferInfo eosInfo = new BufferInfo();
         eosInfo.set(0, 0, Long.MIN_VALUE, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
-        EOS = new Sample(null, eosInfo);
+        EOS = new Sample(null, eosInfo, null);
     }
 
     public BufferInfo info;
     public ByteBuffer bytes;
+    public CryptoInfo crypto;
 
-    public Sample(ByteBuffer bytes, BufferInfo info) {
+    public Sample(ByteBuffer bytes, BufferInfo info, CryptoInfo crypto) {
         this.info = info;
         this.bytes = bytes;
+        this.crypto = crypto;
     }
 
     protected Sample(Parcel in) {
@@ -35,7 +38,7 @@ public final class Sample implements Parcelable {
     public static Sample createDummyWithInfo(BufferInfo info) {
         BufferInfo dummyInfo = new BufferInfo();
         dummyInfo.set(0, 0, info.presentationTimeUs, info.flags);
-        return new Sample(null, dummyInfo);
+        return new Sample(null, dummyInfo, null);
     }
 
     public boolean isDummy() {
@@ -74,6 +77,16 @@ public final class Sample implements Parcelable {
         }
         info = new BufferInfo();
         info.set(0, size, pts, flags);
+
+        byte[] iv = in.createByteArray();
+        byte[] key = in.createByteArray();
+        int mode = in.readInt();
+        int[] numBytesOfClearData = in.createIntArray();
+        int[] numBytesOfEncryptedData = in.createIntArray();
+        int numSubSamples = in.readInt();
+        crypto = new CryptoInfo();
+        crypto.set(numSubSamples, numBytesOfClearData, numBytesOfEncryptedData,
+                   key, iv, mode);
     }
 
     @Override
@@ -81,6 +94,12 @@ public final class Sample implements Parcelable {
         dest.writeLong(info.presentationTimeUs);
         dest.writeInt(info.flags);
         dest.writeByteArray(byteArrayFromBuffer(bytes, info.offset, info.size));
+        dest.writeByteArray(crypto.iv);
+        dest.writeByteArray(crypto.key);
+        dest.writeInt(crypto.mode);
+        dest.writeIntArray(crypto.numBytesOfClearData);
+        dest.writeIntArray(crypto.numBytesOfEncryptedData);
+        dest.writeInt(crypto.numSubSamples);
     }
 
     public static byte[] byteArrayFromBuffer(ByteBuffer buffer, int offset, int size) {
