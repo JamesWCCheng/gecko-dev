@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
+import android.media.MediaCodec.CryptoInfo;
 import android.media.MediaFormat;
 import android.os.DeadObjectException;
 import android.os.RemoteException;
@@ -131,7 +132,7 @@ public final class CodecProxy {
     }
 
     @WrapForJNI
-    public synchronized boolean input(byte[] bytes, BufferInfo info) {
+    public synchronized boolean input(byte[] bytes, BufferInfo info, CryptoInfo cryptoInfo) {
         if (mRemote == null) {
             Log.e(LOGTAG, "cannot send input to an ended codec");
             return false;
