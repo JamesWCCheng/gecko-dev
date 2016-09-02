@@ -30,10 +30,6 @@ MediaDrmProxySupport::MediaDrmProxySupport(const nsAString& aKeySystem)
   : mKeySystem(aKeySystem)
   , mDestroyed(false)
 {
-  mJavaCallbacks = MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::New();
-  // [TODO] read pref
-  mBridgeProxy = MediaDrmProxy::Create(mKeySystem, mJavaCallbacks, true);
-  MDBridge::AttachNative(mJavaCallbacks, this);
 }
 
 MediaDrmProxySupport::~MediaDrmProxySupport()
@@ -151,14 +147,19 @@ MediaDrmProxySupport::OnError(jni::String aMessage)
   MDRMN_LOG("OnError aMessage(%s) ", aMessage.ToCString().get());
   // [TODO] Need to callback or handle this.
 }
+
 nsresult
 MediaDrmProxySupport::Init(DecryptorProxyCallback* aCallback)
 {
   MOZ_ASSERT(mBridgeProxy);
   mCallback = aCallback;
 
-  bool isSuccess = mBridgeProxy->Init(mKeySystem);
-  return isSuccess ? NS_OK : NS_ERROR_FAILURE;
+   mJavaCallbacks = MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::New();
+  // [TODO] read pref
+  mBridgeProxy = MediaDrmProxy::Create(mKeySystem, mJavaCallbacks, true);
+  MDBridge::AttachNative(mJavaCallbacks, this);
+
+  return mBridgeProxy != nullptr ? NS_OK : NS_ERROR_FAILURE;
 }
 
 void
@@ -193,7 +194,7 @@ MediaDrmProxySupport::UpdateSession(uint32_t aPromiseId,
   auto jBAReponse = FillJByteArray(newResponse.Elements(), newResponse.Length());
 
   bool success = mBridgeProxy->UpdateSession(aPromiseId, sessionId,
-                                        jni::ByteArray::Ref::From(jBAReponse));
+                                             jni::ByteArray::Ref::From(jBAReponse));
   if (!success) {
     return false;
   }
