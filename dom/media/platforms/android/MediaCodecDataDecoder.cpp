@@ -56,9 +56,10 @@ public:
   VideoDataDecoder(const VideoInfo& aConfig,
                    MediaFormat::Param aFormat,
                    MediaDataDecoderCallback* aCallback,
-                   layers::ImageContainer* aImageContainer)
+                   layers::ImageContainer* aImageContainer,
+                   const nsString& aDrmStubId)
     : MediaCodecDataDecoder(MediaData::Type::VIDEO_DATA, aConfig.mMimeType,
-                            aFormat, aCallback)
+                            aFormat, aCallback, aDrmStubId)
     , mImageContainer(aImageContainer)
     , mConfig(aConfig)
   {
@@ -138,9 +139,9 @@ class AudioDataDecoder : public MediaCodecDataDecoder
 {
 public:
   AudioDataDecoder(const AudioInfo& aConfig, MediaFormat::Param aFormat,
-                   MediaDataDecoderCallback* aCallback)
+                   MediaDataDecoderCallback* aCallback, const nsString& aDrmStubId)
     : MediaCodecDataDecoder(MediaData::Type::AUDIO_DATA, aConfig.mMimeType,
-                            aFormat, aCallback)
+                            aFormat, aCallback, aDrmStubId)
   {
     JNIEnv* const env = jni::GetEnvForThread();
 
@@ -218,24 +219,27 @@ public:
 MediaDataDecoder*
 MediaCodecDataDecoder::CreateAudioDecoder(const AudioInfo& aConfig,
                                           MediaFormat::Param aFormat,
-                                          MediaDataDecoderCallback* aCallback)
+                                          MediaDataDecoderCallback* aCallback,
+                                          const nsString& aDrmStubId)
 {
-  return new AudioDataDecoder(aConfig, aFormat, aCallback);
+  return new AudioDataDecoder(aConfig, aFormat, aCallback, aDrmStubId);
 }
 
 MediaDataDecoder*
 MediaCodecDataDecoder::CreateVideoDecoder(const VideoInfo& aConfig,
                                           MediaFormat::Param aFormat,
                                           MediaDataDecoderCallback* aCallback,
-                                          layers::ImageContainer* aImageContainer)
+                                          layers::ImageContainer* aImageContainer,
+                                          const nsString& aDrmStubId)
 {
-  return new VideoDataDecoder(aConfig, aFormat, aCallback, aImageContainer);
+  return new VideoDataDecoder(aConfig, aFormat, aCallback, aImageContainer, aDrmStubId);
 }
 
 MediaCodecDataDecoder::MediaCodecDataDecoder(MediaData::Type aType,
                                              const nsACString& aMimeType,
                                              MediaFormat::Param aFormat,
-                                             MediaDataDecoderCallback* aCallback)
+                                             MediaDataDecoderCallback* aCallback,
+                                             const nsString& aDrmStubId)
   : mType(aType)
   , mMimeType(aMimeType)
   , mFormat(aFormat)
@@ -244,6 +248,7 @@ MediaCodecDataDecoder::MediaCodecDataDecoder(MediaData::Type aType,
   , mOutputBuffers(nullptr)
   , mMonitor("MediaCodecDataDecoder::mMonitor")
   , mState(ModuleState::kDecoding)
+  , mDrmStubId(aDrmStubId)
 {
 
 }
@@ -278,7 +283,8 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
   }
 
   nsresult rv;
-  NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, nullptr, 0), rv);
+  MediaCrypto::LocalRef crypto = MediaDrmProxy::GetMediaCrypto(mDrmStubId);
+  NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, crypto, 0), rv);
   NS_ENSURE_SUCCESS(rv = mDecoder->Start(), rv);
 
   NS_ENSURE_SUCCESS(rv = ResetInputBuffers(), rv);
@@ -398,8 +404,15 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
 
   PodCopy(static_cast<uint8_t*>(directBuffer), aSample->Data(), aSample->Size());
 
-  res = mDecoder->QueueInputBuffer(inputIndex, 0, aSample->Size(),
-                                   aSample->mTime, 0);
+  CryptoInfo::LocalRef cryptoInfo = GetCryptoInfoFromSample(aSample);
+  if (cryptoInfo) {
+    res = mDecoder->QueueSecureInputBuffer(inputIndex, 0, cryptoInfo,
+                                           aSample->mTime, 0);
+  } else {
+    res = mDecoder->QueueInputBuffer(inputIndex, 0, aSample->Size(),
+                                     aSample->mTime, 0);
+  }
+
   if (NS_FAILED(res)) {
     return res;
   }

@@ -34,25 +34,6 @@ using namespace mozilla::java;
 using namespace mozilla::java::sdk;
 using media::TimeUnit;
 
-namespace {
-  template<class T>
-  static jbyteArray CreateAndInitJByteArray(const T& data, jsize length)
-  {
-    JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
-    jbyteArray result = jenv->NewByteArray(length);
-    jenv->SetByteArrayRegion(result, 0, length, reinterpret_cast<const jbyte*>(const_cast<T>(data)));
-    return result;
-  }
-  template<class T>
-  static jintArray CreateAndInitJIntArray(const T& data, jsize length)
-  {
-    JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
-    jintArray result = jenv->NewIntArray(length);
-    jenv->SetIntArrayRegion(result, 0, length, reinterpret_cast<const jint*>(const_cast<T>(data)));
-    return result;
-  }
-}
-
 namespace mozilla {
 
 class JavaCallbacksSupport
@@ -201,11 +182,12 @@ public:
   };
 
   RemoteVideoDecoder(const VideoInfo& aConfig,
-                   MediaFormat::Param aFormat,
-                   MediaDataDecoderCallback* aCallback,
-                   layers::ImageContainer* aImageContainer)
+                     MediaFormat::Param aFormat,
+                     MediaDataDecoderCallback* aCallback,
+                     layers::ImageContainer* aImageContainer,
+                     const nsString& aDrmStubId)
     : RemoteDataDecoder(MediaData::Type::VIDEO_DATA, aConfig.mMimeType,
-                        aFormat, aCallback)
+                        aFormat, aCallback, aDrmStubId)
     , mImageContainer(aImageContainer)
     , mConfig(aConfig)
   {
@@ -226,8 +208,10 @@ public:
     JavaCallbacksSupport::AttachNative(mJavaCallbacks,
                                        mozilla::MakeUnique<CallbacksSupport>(this, mCallback));
 
-    nsString stubId = NS_LITERAL_STRING("");
-    mJavaDecoder = CodecProxy::Create(mFormat, mSurfaceTexture->JavaSurface(), mJavaCallbacks, stubId);
+    mJavaDecoder = CodecProxy::Create(mFormat,
+                                      mSurfaceTexture->JavaSurface(),
+                                      mJavaCallbacks,
+                                      mDrmStubId);
     if (mJavaDecoder == nullptr) {
       return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
     }
@@ -292,10 +276,11 @@ class RemoteAudioDecoder final : public RemoteDataDecoder
 {
 public:
   RemoteAudioDecoder(const AudioInfo& aConfig,
-                   MediaFormat::Param aFormat,
-                   MediaDataDecoderCallback* aCallback)
+                     MediaFormat::Param aFormat,
+                     MediaDataDecoderCallback* aCallback,
+                     const nsString& aDrmStubId)
     : RemoteDataDecoder(MediaData::Type::AUDIO_DATA, aConfig.mMimeType,
-                        aFormat, aCallback)
+                        aFormat, aCallback, aDrmStubId)
     , mConfig(aConfig)
   {
     JNIEnv* const env = jni::GetEnvForThread();
@@ -322,8 +307,7 @@ public:
     JavaCallbacksSupport::AttachNative(mJavaCallbacks,
                                        mozilla::MakeUnique<CallbacksSupport>(this, mCallback));
 
-    nsString stubId = NS_LITERAL_STRING("");
-    mJavaDecoder = CodecProxy::Create(mFormat, nullptr, mJavaCallbacks, stubId);
+    mJavaDecoder = CodecProxy::Create(mFormat, nullptr, mJavaCallbacks, mDrmStubId);
     if (mJavaDecoder == nullptr) {
       return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
     }
@@ -419,29 +403,33 @@ private:
 
 MediaDataDecoder*
 RemoteDataDecoder::CreateAudioDecoder(const AudioInfo& aConfig,
-                                          MediaFormat::Param aFormat,
-                                          MediaDataDecoderCallback* aCallback)
+                                      MediaFormat::Param aFormat,
+                                      MediaDataDecoderCallback* aCallback,
+                                      const nsString& aDrmStubId)
 {
-  return new RemoteAudioDecoder(aConfig, aFormat, aCallback);
+  return new RemoteAudioDecoder(aConfig, aFormat, aCallback, aDrmStubId);
 }
 
 MediaDataDecoder*
 RemoteDataDecoder::CreateVideoDecoder(const VideoInfo& aConfig,
                                           MediaFormat::Param aFormat,
                                           MediaDataDecoderCallback* aCallback,
-                                          layers::ImageContainer* aImageContainer)
+                                          layers::ImageContainer* aImageContainer,
+                                          const nsString& aDrmStubId)
 {
-  return new RemoteVideoDecoder(aConfig, aFormat, aCallback, aImageContainer);
+  return new RemoteVideoDecoder(aConfig, aFormat, aCallback, aImageContainer, aDrmStubId);
 }
 
 RemoteDataDecoder::RemoteDataDecoder(MediaData::Type aType,
                                      const nsACString& aMimeType,
                                      MediaFormat::Param aFormat,
-                                     MediaDataDecoderCallback* aCallback)
+                                     MediaDataDecoderCallback* aCallback,
+                                     const nsString& aDrmStubId)
   : mType(aType)
   , mMimeType(aMimeType)
   , mFormat(aFormat)
   , mCallback(aCallback)
+  , mDrmStubId(aDrmStubId)
 {
 }
 
@@ -501,58 +489,9 @@ RemoteDataDecoder::Input(MediaRawData* aSample)
   NS_ENSURE_SUCCESS(rv, rv);
   bufferInfo->Set(0, aSample->Size(), aSample->mTime, 0);
 
-  auto& cryptoObj = aSample->mCrypto;
-  if (cryptoObj.mValid) {
-    CryptoInfo::LocalRef cryptoInfo;
-    rv = CryptoInfo::New(&cryptoInfo);
-    NS_ENSURE_SUCCESS(rv, rv);
+  CryptoInfo::LocalRef cryptoInfo = GetCryptoInfoFromSample(aSample);
 
-    uint32_t numSubSamples =
-      std::min<uint32_t>(cryptoObj.mPlainSizes.Length(), cryptoObj.mEncryptedSizes.Length());
-
-    uint32_t totalSubSamplesSize = 0;
-    for (auto& size : cryptoObj.mEncryptedSizes) {
-      totalSubSamplesSize += size;
-    }
-    // mPlainSizes is uint16_t, need to transform to uint32_t first
-    nsTArray<uint32_t> plainSizes;
-    for (auto& size : cryptoObj.mPlainSizes) {
-      totalSubSamplesSize += size;
-      plainSizes.AppendElement(size);
-    }
-
-    uint32_t codecSpecificDataSize = aSample->Size() - totalSubSamplesSize;
-    // Size of codec specific data(For Andriod MediaCodec usage) should be
-    // considered into the 1st plain size.
-    plainSizes[0] += codecSpecificDataSize;
-
-    // IV length for Andriod API is 16
-    static const int kExpectedIVLength = 16;
-    auto tempIV(cryptoObj.mIV);
-    auto tempIVlength = tempIV.Length();
-    if (tempIVlength < kExpectedIVLength) {
-      // Padding with 0
-      for (size_t i = 0; i < (kExpectedIVLength - tempIVlength); i++) {
-        tempIV.AppendElement(0);
-      }
-    }
-
-    auto numBytesOfPlainData = CreateAndInitJIntArray(&plainSizes[0], plainSizes.Length());
-    auto numBytesOfEncryptedData = CreateAndInitJIntArray(&cryptoObj.mEncryptedSizes[0],
-                                                          cryptoObj.mEncryptedSizes.Length());
-    auto iv = CreateAndInitJByteArray(&tempIV[0], tempIV.Length());
-    auto keyId = CreateAndInitJByteArray(&cryptoObj.mKeyId[0], cryptoObj.mKeyId.Length());
-    cryptoInfo->Set(numSubSamples,
-                    mozilla::jni::IntArray::Ref::From(numBytesOfPlainData),
-                    mozilla::jni::IntArray::Ref::From(numBytesOfEncryptedData),
-                    mozilla::jni::ByteArray::Ref::From(keyId),
-                    mozilla::jni::ByteArray::Ref::From(iv),
-                    MediaCodec::CRYPTO_MODE_AES_CTR);
-    mJavaDecoder->Input(bytes, bufferInfo, cryptoInfo);
-  } else {
-    mJavaDecoder->Input(bytes, bufferInfo, nullptr);
-  }
-
+  mJavaDecoder->Input(bytes, bufferInfo, cryptoInfo);
   return NS_OK;
 }
 

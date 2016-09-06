@@ -42,6 +42,7 @@
 #ifdef MOZ_EME
 #include "EMEDecoderModule.h"
 #include "mozilla/CDMProxy.h"
+#include "mozilla/MediaDrmCDMProxy.h"
 #endif
 
 #include "DecoderDoctorDiagnostics.h"
@@ -418,8 +419,12 @@ PDMFactory::GetDecoder(const nsACString& aMimeType,
 void
 PDMFactory::SetCDMProxy(CDMProxy* aProxy)
 {
+#ifndef MOZ_WIDGET_ANDROID
   RefPtr<PDMFactory> m = new PDMFactory();
   mEMEPDM = new EMEDecoderModule(aProxy, m);
+#else
+  mEMEPDM = new AndroidDecoderModule(static_cast<MediaDrmCDMProxy*>(aProxy));
+#endif
 }
 #endif
 

@@ -349,6 +349,12 @@ MediaDrmCDMProxy::Capabilites()
   return mCapabilites;
 }
 
+const nsString&
+MediaDrmCDMProxy::GetMediaDrmStubUUID() const
+{
+  return mMediaDrmStubUUID;
+}
+
 void
 MediaDrmCDMProxy::OnKeyStatusesChange(const nsAString& aSessionId)
 {

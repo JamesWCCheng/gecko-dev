@@ -121,8 +121,7 @@ public:
   bool IsOnOwnerThread() override;
 #endif
 
-  sdk::MediaCrypto::LocalRef GetMediaCrypto();
-
+  const nsString& GetMediaDrmStubUUID() const;
 //  bool IsAllowPlayback();
 //  void OnSessionKeysChanged();
 
@@ -178,6 +177,7 @@ private:
   nsAutoPtr<MediaDrmCDMCallbackProxy> mCallback;
   bool mShutdownCalled;
 
+  nsString mMediaDrmStubUUID;
 // =====================================================================
 // For MediaDrmProxySupport
 //  [TODO] Check if nsAutoPtr<InitData>&& aData is needed

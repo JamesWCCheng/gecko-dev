@@ -6,6 +6,7 @@
 #include "AndroidBridge.h"
 
 #include "MediaCodecDataDecoder.h"
+#include "mozilla/MediaDrmCDMProxy.h"
 #include "RemoteDataDecoder.h"
 
 #include "MediaInfo.h"
@@ -28,6 +29,25 @@ using namespace mozilla;
 using namespace mozilla::gl;
 using namespace mozilla::java::sdk;
 using media::TimeUnit;
+
+namespace {
+  template<class T>
+  static jbyteArray CreateAndInitJByteArray(const T& data, jsize length)
+  {
+    JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
+    jbyteArray result = jenv->NewByteArray(length);
+    jenv->SetByteArrayRegion(result, 0, length, reinterpret_cast<const jbyte*>(const_cast<T>(data)));
+    return result;
+  }
+  template<class T>
+  static jintArray CreateAndInitJIntArray(const T& data, jsize length)
+  {
+    JNIEnv* const jenv = mozilla::jni::GetEnvForThread();
+    jintArray result = jenv->NewIntArray(length);
+    jenv->SetIntArrayRegion(result, 0, length, reinterpret_cast<const jint*>(const_cast<T>(data)));
+    return result;
+  }
+}
 
 namespace mozilla {
 
@@ -55,6 +75,66 @@ GetFeatureStatus(int32_t aFeature)
   }
   return status == nsIGfxInfo::FEATURE_STATUS_OK;
 };
+
+CryptoInfo::LocalRef GetCryptoInfoFromSample(const MediaRawData* aSample)
+{
+  auto& cryptoObj = aSample->mCrypto;
+  if (cryptoObj.mValid) {
+    CryptoInfo::LocalRef cryptoInfo;
+    nsresult rv = CryptoInfo::New(&cryptoInfo);
+    NS_ENSURE_SUCCESS(rv, nullptr);
+
+    uint32_t numSubSamples =
+      std::min<uint32_t>(cryptoObj.mPlainSizes.Length(), cryptoObj.mEncryptedSizes.Length());
+
+    uint32_t totalSubSamplesSize = 0;
+    for (auto& size : cryptoObj.mEncryptedSizes) {
+      totalSubSamplesSize += size;
+    }
+    // mPlainSizes is uint16_t, need to transform to uint32_t first
+    nsTArray<uint32_t> plainSizes;
+    for (auto& size : cryptoObj.mPlainSizes) {
+      totalSubSamplesSize += size;
+      plainSizes.AppendElement(size);
+    }
+
+    uint32_t codecSpecificDataSize = aSample->Size() - totalSubSamplesSize;
+    // Size of codec specific data(For Andriod MediaCodec usage) should be
+    // considered into the 1st plain size.
+    plainSizes[0] += codecSpecificDataSize;
+
+    // IV length for Andriod API is 16
+    static const int kExpectedIVLength = 16;
+    auto tempIV(cryptoObj.mIV);
+    auto tempIVlength = tempIV.Length();
+    if (tempIVlength < kExpectedIVLength) {
+      // Padding with 0
+      for (size_t i = 0; i < (kExpectedIVLength - tempIVlength); i++) {
+        tempIV.AppendElement(0);
+      }
+    }
+
+    auto numBytesOfPlainData = CreateAndInitJIntArray(&plainSizes[0], plainSizes.Length());
+    auto numBytesOfEncryptedData = CreateAndInitJIntArray(&cryptoObj.mEncryptedSizes[0],
+                                                          cryptoObj.mEncryptedSizes.Length());
+    auto iv = CreateAndInitJByteArray(&tempIV[0], tempIV.Length());
+    auto keyId = CreateAndInitJByteArray(&cryptoObj.mKeyId[0], cryptoObj.mKeyId.Length());
+    cryptoInfo->Set(numSubSamples,
+                    mozilla::jni::IntArray::Ref::From(numBytesOfPlainData),
+                    mozilla::jni::IntArray::Ref::From(numBytesOfEncryptedData),
+                    mozilla::jni::ByteArray::Ref::From(keyId),
+                    mozilla::jni::ByteArray::Ref::From(iv),
+                    MediaCodec::CRYPTO_MODE_AES_CTR);
+    return cryptoInfo;
+  }
+  return nullptr;
+}
+
+
+AndroidDecoderModule::AndroidDecoderModule(MediaDrmCDMProxy* aProxy)
+  : mProxy(aProxy)
+{
+}
 
 bool
 AndroidDecoderModule::SupportsMimeType(const nsACString& aMimeType,
@@ -104,16 +184,12 @@ AndroidDecoderModule::CreateVideoDecoder(const CreateDecoderParams& aParams)
       config.mDisplay.height,
       &format), nullptr);
 
+  nsString stubId = mProxy ? mProxy->GetMediaDrmStubUUID() : NS_LITERAL_STRING("");
   RefPtr<MediaDataDecoder> decoder = MediaPrefs::PDMAndroidRemoteCodecEnabled() ?
-      RemoteDataDecoder::CreateVideoDecoder(config,
-                                            format,
-                                            aParams.mCallback,
-                                            aParams.mImageContainer) :
-      MediaCodecDataDecoder::CreateVideoDecoder(config,
-                                                format,
-                                                aParams.mCallback,
-                                                aParams.mImageContainer);
-
+    RemoteDataDecoder::CreateVideoDecoder(config, format, aParams.mCallback,
+                                          aParams.mImageContainer, stubId) :
+    MediaCodecDataDecoder::CreateVideoDecoder(config, format, aParams.mCallback,
+                                              aParams.mImageContainer, stubId);
   return decoder.forget();
 }
 
@@ -134,10 +210,10 @@ AndroidDecoderModule::CreateAudioDecoder(const CreateDecoderParams& aParams)
       config.mChannels,
       &format), nullptr);
 
+  nsString stubId = mProxy ? mProxy->GetMediaDrmStubUUID() : NS_LITERAL_STRING("");
   RefPtr<MediaDataDecoder> decoder = MediaPrefs::PDMAndroidRemoteCodecEnabled() ?
-      RemoteDataDecoder::CreateAudioDecoder(config, format, aParams.mCallback) :
-      MediaCodecDataDecoder::CreateAudioDecoder(config, format, aParams.mCallback);
-
+    RemoteDataDecoder::CreateAudioDecoder(config, format, aParams.mCallback, stubId) :
+    MediaCodecDataDecoder::CreateAudioDecoder(config, format, aParams.mCallback, stubId);
   return decoder.forget();
 }
 
