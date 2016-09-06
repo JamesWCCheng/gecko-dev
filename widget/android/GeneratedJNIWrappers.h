@@ -5990,10 +5990,11 @@ public:
         typedef mozilla::jni::Args<
                 mozilla::jni::Object::Param,
                 mozilla::jni::Object::Param,
-                mozilla::jni::Object::Param> Args;
+                mozilla::jni::Object::Param,
+                mozilla::jni::String::Param> Args;
         static constexpr char name[] = "create";
         static constexpr char signature[] =
-                "(Landroid/media/MediaFormat;Landroid/view/Surface;Lorg/mozilla/gecko/media/CodecProxy$Callbacks;)Lorg/mozilla/gecko/media/CodecProxy;";
+                "(Landroid/media/MediaFormat;Landroid/view/Surface;Lorg/mozilla/gecko/media/CodecProxy$Callbacks;Ljava/lang/String;)Lorg/mozilla/gecko/media/CodecProxy;";
         static const bool isStatic = true;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -6003,7 +6004,7 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    static auto Create(mozilla::jni::Object::Param, mozilla::jni::Object::Param, mozilla::jni::Object::Param) -> CodecProxy::LocalRef;
+    static auto Create(mozilla::jni::Object::Param, mozilla::jni::Object::Param, mozilla::jni::Object::Param, mozilla::jni::String::Param) -> CodecProxy::LocalRef;
 
     struct Flush_t {
         typedef CodecProxy Owner;
@@ -6284,6 +6285,26 @@ public:
     };
 
     auto Destroy() const -> void;
+
+    struct GetMediaCrypto_t {
+        typedef MediaDrmProxy Owner;
+        typedef mozilla::jni::Object::LocalRef ReturnType;
+        typedef mozilla::jni::Object::Param SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::String::Param> Args;
+        static constexpr char name[] = "getMediaCrypto";
+        static constexpr char signature[] =
+                "(Ljava/lang/String;)Landroid/media/MediaCrypto;";
+        static const bool isStatic = true;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    static auto GetMediaCrypto(mozilla::jni::String::Param) -> mozilla::jni::Object::LocalRef;
 
     struct IsSchemeMIMESupported_t {
         typedef MediaDrmProxy Owner;

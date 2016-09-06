@@ -7,6 +7,7 @@ package org.mozilla.gecko.media;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
+import android.media.MediaCrypto;
 import android.media.MediaFormat;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -128,7 +129,19 @@ import java.util.Queue;
                         e.printStackTrace();
                     }
                 }
-                mCodec.queueInputBuffer(index, 0, len, sample.info.presentationTimeUs, sample.info.flags);
+                if (sample.crypto != null) {
+                    mCodec.queueSecureInputBuffer(index,
+                                                  0,
+                                                  sample.crypto,
+                                                  sample.info.presentationTimeUs,
+                                                  sample.info.flags);
+                } else {
+                    mCodec.queueInputBuffer(index,
+                                            0,
+                                            len,
+                                            sample.info.presentationTimeUs,
+                                            sample.info.flags);
+                }
             }
         }
 
@@ -159,7 +172,10 @@ import java.util.Queue;
     }
 
     @Override
-    public synchronized boolean configure(FormatParam format, Surface surface, int flags) throws RemoteException {
+    public synchronized boolean configure(FormatParam format,
+                                          Surface surface,
+                                          int flags,
+                                          String drmStubId) throws RemoteException {
         if (mCallbacks == null) {
             Log.e(LOGTAG, "FAIL: callbacks must be set before calling configure()");
             return false;
@@ -182,7 +198,9 @@ import java.util.Queue;
         try {
             AsyncCodec codec = AsyncCodecFactory.create(codecName);
             codec.setCallbacks(new Callbacks(mCallbacks), null);
-            codec.configure(fmt, surface, flags);
+
+            MediaCrypto crypto = RemoteMediaDrmBridgeStub.getMediaCrypto(drmStubId);
+            codec.configure(fmt, surface, crypto, flags);
             mCodec = codec;
             mInputProcessor = new InputProcessor();
             if (DEBUG) Log.d(LOGTAG, codec.toString() + " created");

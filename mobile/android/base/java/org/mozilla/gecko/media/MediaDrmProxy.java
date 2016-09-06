@@ -7,6 +7,7 @@ package org.mozilla.gecko.media;
 
 import java.io.IOException;
 import java.lang.InterruptedException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -41,6 +42,9 @@ public final class MediaDrmProxy extends JNIObject {
     private boolean mDestroyed;
 
     private GeckoMediaDrm mImpl;
+    private String mDrmStubUUID;
+
+    public static ArrayList<MediaDrmProxy> mProxyList = new ArrayList<MediaDrmProxy>();
 
     @Override
     protected native void disposeNative();
@@ -180,34 +184,56 @@ public final class MediaDrmProxy extends JNIObject {
         Log.d("MediaDrmProxy", "Create MediaDrmProxy isRemote = " + isRemote);
 
         MediaDrmProxy proxy = null;
+        String drmStubId = UUID.randomUUID().toString();
         if (isRemote) {
-            // [TODO] : Pass the following uuid to corresponding AsyncCodec
-            String uuid = UUID.randomUUID().toString();
-            proxy = RemoteManager.getInstance().createMediaDrmBridge(keySystem, uuid);
+            proxy = RemoteManager.getInstance().createMediaDrmBridge(keySystem, drmStubId);
             if (proxy == null) {
                 return null;
             }
         } else {
-            proxy = createMediaDrmProxy(keySystem, null);
+            proxy = createMediaDrmProxy(keySystem, null, drmStubId);
         }
 
         proxy.setCallbacks(new GeckoMediaDrmCallbacks(proxy, callbacks));
         return proxy;
     }
 
-    // Called by remote manager.
-    public static MediaDrmProxy createMediaDrmProxy(String keySystem,
-                                                    IMediaDrmBridge remoteBridge) {
-        return new MediaDrmProxy(keySystem, remoteBridge);
+    private String getUUID() {
+        return mDrmStubUUID;
     }
 
-    MediaDrmProxy(String keySystem, IMediaDrmBridge remoteBridge) {
+    private MediaCrypto getMediaCryptoFromBridge() {
+        return mImpl != null ? mImpl.getMediaCrypto() : null;
+    }
+
+    // Called by natvie MediaDrmProxySupport.
+    @WrapForJNI
+    public static MediaCrypto getMediaCrypto(String uuid) {
+        for (int i = 0; i < mProxyList.size(); i++) {
+            if (mProxyList.get(i) != null &&
+                mProxyList.get(i).getUUID().equals(uuid)) {
+                return mProxyList.get(i).getMediaCryptoFromBridge();
+            }
+        }
+        return null;
+    }
+
+    // Called by remote manager.
+    public static MediaDrmProxy createMediaDrmProxy(String keySystem,
+                                                    IMediaDrmBridge remoteBridge,
+                                                    String uuid) {
+        return new MediaDrmProxy(keySystem, remoteBridge, uuid);
+    }
+
+    MediaDrmProxy(String keySystem, IMediaDrmBridge remoteBridge, String uuid) {
         if (remoteBridge != null) {
             log("MediaDrmProxy Create RemoteMediaDrmBridge");
             mImpl = new RemoteMediaDrmBridge(remoteBridge);
         } else {
             mImpl = new LocalMediaDrmBridge(keySystem);
         }
+        mDrmStubUUID = uuid;
+        mProxyList.add(this);
     }
     private void setCallbacks(GeckoMediaDrmCallbacks callbacks) {
         mImpl.setCallbacks(callbacks);

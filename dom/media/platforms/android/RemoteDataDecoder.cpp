@@ -226,7 +226,8 @@ public:
     JavaCallbacksSupport::AttachNative(mJavaCallbacks,
                                        mozilla::MakeUnique<CallbacksSupport>(this, mCallback));
 
-    mJavaDecoder = CodecProxy::Create(mFormat, mSurfaceTexture->JavaSurface(), mJavaCallbacks);
+    nsString stubId = NS_LITERAL_STRING("");
+    mJavaDecoder = CodecProxy::Create(mFormat, mSurfaceTexture->JavaSurface(), mJavaCallbacks, stubId);
     if (mJavaDecoder == nullptr) {
       return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
     }
@@ -321,7 +322,8 @@ public:
     JavaCallbacksSupport::AttachNative(mJavaCallbacks,
                                        mozilla::MakeUnique<CallbacksSupport>(this, mCallback));
 
-    mJavaDecoder = CodecProxy::Create(mFormat, nullptr, mJavaCallbacks);
+    nsString stubId = NS_LITERAL_STRING("");
+    mJavaDecoder = CodecProxy::Create(mFormat, nullptr, mJavaCallbacks, stubId);
     if (mJavaDecoder == nullptr) {
       return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
     }

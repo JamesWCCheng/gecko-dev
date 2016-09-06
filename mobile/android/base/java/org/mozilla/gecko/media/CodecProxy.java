@@ -31,6 +31,7 @@ public final class CodecProxy {
     private FormatParam mFormat;
     private Surface mOutputSurface;
     private CallbacksForwarder mCallbacks;
+    private String mRemoteDrmStubUUID;
 
     public interface Callbacks {
         void onInputExhausted();
@@ -91,24 +92,34 @@ public final class CodecProxy {
     }
 
     @WrapForJNI
-    public static CodecProxy create(MediaFormat format, Surface surface, Callbacks callbacks) {
-        return RemoteManager.getInstance().createCodec(format, surface, callbacks);
+    public static CodecProxy create(MediaFormat format,
+                                    Surface surface,
+                                    Callbacks callbacks,
+                                    String drmStubId) {
+        return RemoteManager.getInstance().createCodec(format, surface, callbacks, drmStubId);
     }
 
-    public static CodecProxy createCodecProxy(MediaFormat format, Surface surface, Callbacks callbacks) {
-        return new CodecProxy(format, surface, callbacks);
+    public static CodecProxy createCodecProxy(MediaFormat format,
+                                              Surface surface,
+                                              Callbacks callbacks,
+                                              String drmStubId) {
+        return new CodecProxy(format, surface, callbacks, drmStubId);
     }
 
-    private CodecProxy(MediaFormat format, Surface surface, Callbacks callbacks) {
+    private CodecProxy(MediaFormat format,
+                       Surface surface,
+                       Callbacks callbacks,
+                       String drmStubUUID) {
         mFormat = new FormatParam(format);
         mOutputSurface = surface;
         mCallbacks = new CallbacksForwarder(callbacks);
+        mRemoteDrmStubUUID = drmStubUUID;
     }
 
     boolean init(ICodec remote) {
         try {
             remote.setCallbacks(mCallbacks);
-            remote.configure(mFormat, mOutputSurface, 0);
+            remote.configure(mFormat, mOutputSurface, 0, mRemoteDrmStubUUID);
             remote.start();
         } catch (RemoteException e) {
             e.printStackTrace();
