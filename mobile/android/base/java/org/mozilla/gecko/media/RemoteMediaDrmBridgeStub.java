@@ -183,8 +183,10 @@ final class RemoteMediaDrmBridgeStub extends IMediaDrmBridge.Stub implements IBi
 
     @Override
     public synchronized void setCallbacks(IMediaDrmBridgeCallbacks callbacks) throws RemoteException {
+        assertBridge();
         mCallbacks = callbacks;
         callbacks.asBinder().linkToDeath(this, 0);
+        mBridge.setCallbacks(new Callbacks(mCallbacks));
     }
 
     // IBinder.DeathRecipient
