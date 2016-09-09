@@ -79,14 +79,16 @@ public final class Sample implements Parcelable {
         info.set(0, size, pts, flags);
 
         byte[] iv = in.createByteArray();
-        byte[] key = in.createByteArray();
-        int mode = in.readInt();
-        int[] numBytesOfClearData = in.createIntArray();
-        int[] numBytesOfEncryptedData = in.createIntArray();
-        int numSubSamples = in.readInt();
-        crypto = new CryptoInfo();
-        crypto.set(numSubSamples, numBytesOfClearData, numBytesOfEncryptedData,
-                   key, iv, mode);
+        if (iv != null) {
+          byte[] key = in.createByteArray();
+          int mode = in.readInt();
+          int[] numBytesOfClearData = in.createIntArray();
+          int[] numBytesOfEncryptedData = in.createIntArray();
+          int numSubSamples = in.readInt();
+          crypto = new CryptoInfo();
+          crypto.set(numSubSamples, numBytesOfClearData, numBytesOfEncryptedData,
+                     key, iv, mode);
+        }
     }
 
     @Override
@@ -94,12 +96,14 @@ public final class Sample implements Parcelable {
         dest.writeLong(info.presentationTimeUs);
         dest.writeInt(info.flags);
         dest.writeByteArray(byteArrayFromBuffer(bytes, info.offset, info.size));
-        dest.writeByteArray(crypto.iv);
-        dest.writeByteArray(crypto.key);
-        dest.writeInt(crypto.mode);
-        dest.writeIntArray(crypto.numBytesOfClearData);
-        dest.writeIntArray(crypto.numBytesOfEncryptedData);
-        dest.writeInt(crypto.numSubSamples);
+        if (crypto != null) {
+            dest.writeByteArray(crypto.iv);
+            dest.writeByteArray(crypto.key);
+            dest.writeInt(crypto.mode);
+            dest.writeIntArray(crypto.numBytesOfClearData);
+            dest.writeIntArray(crypto.numBytesOfEncryptedData);
+            dest.writeInt(crypto.numSubSamples);
+        }
     }
 
     public static byte[] byteArrayFromBuffer(ByteBuffer buffer, int offset, int size) {
