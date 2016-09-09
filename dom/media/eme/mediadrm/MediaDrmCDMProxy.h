@@ -177,7 +177,6 @@ private:
   nsAutoPtr<MediaDrmCDMCallbackProxy> mCallback;
   bool mShutdownCalled;
 
-  nsString mMediaDrmStubUUID;
 // =====================================================================
 // For MediaDrmProxySupport
 //  [TODO] Check if nsAutoPtr<InitData>&& aData is needed

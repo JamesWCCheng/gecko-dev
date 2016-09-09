@@ -2124,6 +2124,14 @@ auto MediaDrmProxy::GetMediaCrypto(mozilla::jni::String::Param a0) -> mozilla::j
     return mozilla::jni::Method<GetMediaCrypto_t>::Call(MediaDrmProxy::Context(), nullptr, a0);
 }
 
+constexpr char MediaDrmProxy::GetUUID_t::name[];
+constexpr char MediaDrmProxy::GetUUID_t::signature[];
+
+auto MediaDrmProxy::GetUUID() const -> mozilla::jni::String::LocalRef
+{
+    return mozilla::jni::Method<GetUUID_t>::Call(MediaDrmProxy::mCtx, nullptr);
+}
+
 constexpr char MediaDrmProxy::IsSchemeMIMESupported_t::name[];
 constexpr char MediaDrmProxy::IsSchemeMIMESupported_t::signature[];
 

@@ -352,7 +352,7 @@ MediaDrmCDMProxy::Capabilites()
 const nsString&
 MediaDrmCDMProxy::GetMediaDrmStubUUID() const
 {
-  return mMediaDrmStubUUID;
+  return mCDM->GetMediaDrmStubId();
 }
 
 void

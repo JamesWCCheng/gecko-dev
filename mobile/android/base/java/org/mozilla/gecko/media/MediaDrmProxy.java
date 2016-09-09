@@ -198,6 +198,7 @@ public final class MediaDrmProxy extends JNIObject {
         return proxy;
     }
 
+    @WrapForJNI
     private String getUUID() {
         return mDrmStubUUID;
     }

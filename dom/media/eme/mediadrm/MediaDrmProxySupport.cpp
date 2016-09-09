@@ -192,6 +192,9 @@ MediaDrmProxySupport::MediaDrmProxySupport(const nsAString& aKeySystem)
     MediaDrmProxy::Create(mKeySystem,
                           mJavaCallbacks,
                           MediaPrefs::PDMAndroidRemoteCodecEnabled());
+  MOZ_ASSERT(mBridgeProxy, "mBridgeProxy should not be null");
+  auto drmStubUUID = mBridgeProxy->GetUUID();
+  mMediaDrmStubUUID = drmStubUUID->ToString();
 }
 
 MediaDrmProxySupport::~MediaDrmProxySupport()
@@ -278,6 +281,12 @@ MediaDrmProxySupport::Shutdown()
   }
   mBridgeProxy->Destroy();
   mDestroyed = true;
+}
+
+const nsString&
+MediaDrmProxySupport::GetMediaDrmStubId()
+{
+  return mMediaDrmStubUUID;
 }
 
 } // namespace mozilla

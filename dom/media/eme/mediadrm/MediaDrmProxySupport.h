@@ -72,12 +72,14 @@ public:
    * Utility functions
    */
 
+  const nsString& GetMediaDrmStubId();
 private:
   const nsString mKeySystem;
   MediaDrmProxy::GlobalRef mBridgeProxy;
   MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::GlobalRef mJavaCallbacks;
   DecryptorProxyCallback* mCallback;
   bool mDestroyed;
+  nsString mMediaDrmStubUUID;
 
 };
 
