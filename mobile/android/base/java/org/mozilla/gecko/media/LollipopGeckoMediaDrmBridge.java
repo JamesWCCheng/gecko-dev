@@ -17,6 +17,7 @@ import java.util.ArrayDeque;
 
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.os.Looper;
 import android.media.MediaCrypto;
 import android.media.MediaCryptoException;
 import android.media.MediaDrm;
@@ -89,7 +90,12 @@ public class LollipopGeckoMediaDrmBridge implements GeckoMediaDrm {
         mSessionIds = new HashMap<ByteBuffer, String>();
         mSessionMIMETypes = new HashMap<ByteBuffer, String>();
         mPendingCreateSessionDataQueue = new ArrayDeque<PendingCreateSessionData>();
-        mHandler = new Handler();
+
+        Looper myLoop = Looper.myLooper();
+        if (myLoop == null) {
+            Looper.prepare();
+            mHandler = new Handler();
+        }
         mSchemeUUID = convertKeySystemToSchemeUUID(keySystem);
         mCryptoSessionId = null;
 
