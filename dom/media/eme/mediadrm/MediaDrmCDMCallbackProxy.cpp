@@ -48,7 +48,9 @@ void
 MediaDrmCDMCallbackProxy::SetSessionId(uint32_t aToken,
                                        const nsCString& aSessionId)
 {
-  MOZ_ASSERT(mProxy->IsOnOwnerThread());
+//  [TODO] Maybe dispatch this task to mProxy's owner thread, because it may be
+//         called from other thread (remote case)
+//  MOZ_ASSERT(mProxy->IsOnOwnerThread());
 
   nsCOMPtr<nsIRunnable> task(new SetSessionIdTask(mProxy,
                                                   aToken,
@@ -81,7 +83,9 @@ void
 MediaDrmCDMCallbackProxy::ResolveLoadSessionPromise(uint32_t aPromiseId,
                                                     bool aSuccess)
 {
-  MOZ_ASSERT(mProxy->IsOnOwnerThread());
+//  [TODO] Maybe dispatch this task to mProxy's owner thread, because it may be
+//         called from other thread (remote case)
+//  MOZ_ASSERT(mProxy->IsOnOwnerThread());
 
   nsCOMPtr<nsIRunnable> task(new LoadSessionTask(mProxy,
                                                  aPromiseId,
@@ -92,7 +96,9 @@ MediaDrmCDMCallbackProxy::ResolveLoadSessionPromise(uint32_t aPromiseId,
 void
 MediaDrmCDMCallbackProxy::ResolvePromise(uint32_t aPromiseId)
 {
-  MOZ_ASSERT(mProxy->IsOnOwnerThread());
+//  [TODO] Maybe dispatch this task to mProxy's owner thread, because it may be
+//         called from other thread (remote case)
+//  MOZ_ASSERT(mProxy->IsOnOwnerThread());
 
   // Note: CDMProxy proxies this from non-main threads to main thread.
   mProxy->ResolvePromise(aPromiseId);
@@ -128,7 +134,9 @@ MediaDrmCDMCallbackProxy::RejectPromise(uint32_t aPromiseId,
                                         nsresult aException,
                                         const nsCString& aMessage)
 {
-  MOZ_ASSERT(mProxy->IsOnOwnerThread());
+//  [TODO] Maybe dispatch this task to mProxy's owner thread, because it may be
+//         called from other thread (remote case)
+//  MOZ_ASSERT(mProxy->IsOnOwnerThread());
 
   nsCOMPtr<nsIRunnable> task;
   task = new RejectPromiseTask(mProxy,
@@ -168,7 +176,9 @@ MediaDrmCDMCallbackProxy::SessionMessage(const nsCString& aSessionId,
                                          dom::MediaKeyMessageType aMessageType,
                                          const nsTArray<uint8_t>& aMessage)
 {
-  MOZ_ASSERT(mProxy->IsOnOwnerThread());
+//  [TODO] Maybe dispatch this task to mProxy's owner thread, because it may be
+//         called from other thread (remote case)
+//  MOZ_ASSERT(mProxy->IsOnOwnerThread());
 
   nsCOMPtr<nsIRunnable> task;
   task = new SessionMessageTask(mProxy,
@@ -202,7 +212,9 @@ void
 MediaDrmCDMCallbackProxy::ExpirationChange(const nsCString& aSessionId,
                                            GMPTimestamp aExpiryTime)
 {
-  MOZ_ASSERT(mProxy->IsOnOwnerThread());
+//  [TODO] Maybe dispatch this task to mProxy's owner thread, because it may be
+//         called from other thread (remote case)
+//  MOZ_ASSERT(mProxy->IsOnOwnerThread());
 
   nsCOMPtr<nsIRunnable> task;
   task = new ExpirationChangeTask(mProxy,
@@ -214,7 +226,9 @@ MediaDrmCDMCallbackProxy::ExpirationChange(const nsCString& aSessionId,
 void
 MediaDrmCDMCallbackProxy::SessionClosed(const nsCString& aSessionId)
 {
-  MOZ_ASSERT(mProxy->IsOnOwnerThread());
+//  [TODO] Maybe dispatch this task to mProxy's owner thread, because it may be
+//         called from other thread (remote case)
+//  MOZ_ASSERT(mProxy->IsOnOwnerThread());
 
   bool keyStatusesChange = false;
   {
@@ -269,7 +283,9 @@ MediaDrmCDMCallbackProxy::SessionError(const nsCString& aSessionId,
                                        uint32_t aSystemCode,
                                        const nsCString& aMessage)
 {
-  MOZ_ASSERT(mProxy->IsOnOwnerThread());
+//  [TODO] Maybe dispatch this task to mProxy's owner thread, because it may be
+//         called from other thread (remote case)
+//  MOZ_ASSERT(mProxy->IsOnOwnerThread());
 
   nsCOMPtr<nsIRunnable> task;
   task = new SessionErrorTask(mProxy,
@@ -285,7 +301,9 @@ MediaDrmCDMCallbackProxy::KeyStatusChanged(const nsCString& aSessionId,
                                            const nsTArray<uint8_t>& aKeyId,
                                            dom::MediaKeyStatus aStatus)
 {
-  MOZ_ASSERT(mProxy->IsOnOwnerThread());
+//  [TODO] Maybe dispatch this task to mProxy's owner thread, because it may be
+//         called from other thread (remote case)
+//  MOZ_ASSERT(mProxy->IsOnOwnerThread());
 
   KeyStatusChangedInternal(aSessionId,
                            aKeyId,
@@ -296,7 +314,9 @@ void
 MediaDrmCDMCallbackProxy::ForgetKeyStatus(const nsCString& aSessionId,
                                           const nsTArray<uint8_t>& aKeyId)
 {
-  MOZ_ASSERT(mProxy->IsOnOwnerThread());
+//  [TODO] Maybe dispatch this task to mProxy's owner thread, because it may be
+//         called from other thread (remote case)
+//  MOZ_ASSERT(mProxy->IsOnOwnerThread());
 
   KeyStatusChangedInternal(aSessionId,
                            aKeyId,
@@ -340,7 +360,9 @@ MediaDrmCDMCallbackProxy::Decrypted(uint32_t aId,
                                     DecryptStatus aResult,
                                     const nsTArray<uint8_t>& aDecryptedData)
 {
-  MOZ_ASSERT(mProxy->IsOnOwnerThread());
+//  [TODO] Maybe dispatch this task to mProxy's owner thread, because it may be
+//         called from other thread (remote case)
+//  MOZ_ASSERT(mProxy->IsOnOwnerThread());
 
   mProxy->OnDecrypted(aId, aResult, aDecryptedData);
 }
