@@ -161,6 +161,7 @@ final class RemoteMediaDrmBridgeStub extends IMediaDrmBridge.Stub implements IBi
     @Override
     public void release() {
         log("release");
+        mStubList.remove(this);
         if (mBridge != null) {
             mBridge.release();
             mBridge = null;

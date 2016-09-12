@@ -314,6 +314,7 @@ public final class MediaDrmProxy extends JNIObject {
 
     private void release() {
         log("release");
+        mProxyList.remove(this);
         mImpl.release();
     }
 
