@@ -76,7 +76,8 @@ GetFeatureStatus(int32_t aFeature)
   return status == nsIGfxInfo::FEATURE_STATUS_OK;
 };
 
-CryptoInfo::LocalRef GetCryptoInfoFromSample(const MediaRawData* aSample)
+CryptoInfo::LocalRef
+GetCryptoInfoFromSample(const MediaRawData* aSample)
 {
   auto& cryptoObj = aSample->mCrypto;
   if (cryptoObj.mValid) {
@@ -125,7 +126,13 @@ CryptoInfo::LocalRef GetCryptoInfoFromSample(const MediaRawData* aSample)
                     mozilla::jni::ByteArray::Ref::From(keyId),
                     mozilla::jni::ByteArray::Ref::From(iv),
                     MediaCodec::CRYPTO_MODE_AES_CTR);
-    return cryptoInfo;
+
+    JNIEnv* const env = jni::GetEnvForThread();
+    env->DeleteLocalRef(numBytesOfPlainData);
+    env->DeleteLocalRef(numBytesOfEncryptedData);
+    env->DeleteLocalRef(iv);
+    env->DeleteLocalRef(keyId);
+    return jni::Object::LocalRef::Adopt(cryptoInfo.Env(), cryptoInfo.Forget());
   }
   return nullptr;
 }
