@@ -76,7 +76,7 @@ public:
 private:
   const nsString mKeySystem;
   MediaDrmProxy::GlobalRef mBridgeProxy;
-  MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::GlobalRef mJavaCallbacks;
+  MediaDrmProxy::NativeMediaDrmProxyCallbacks::GlobalRef mJavaCallbacks;
   DecryptorProxyCallback* mCallback;
   bool mDestroyed;
   nsString mMediaDrmStubUUID;

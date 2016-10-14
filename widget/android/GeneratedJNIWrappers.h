@@ -6199,7 +6199,7 @@ public:
 
     explicit MediaDrmProxy(const Context& ctx) : ObjectBase<MediaDrmProxy>(ctx) {}
 
-    class NativeCallbacksToMediaDrmProxySupport;
+    class NativeMediaDrmProxyCallbacks;
 
     struct CloseSession_t {
         typedef MediaDrmProxy Owner;
@@ -6228,11 +6228,10 @@ public:
         typedef MediaDrmProxy::Param SetterType;
         typedef mozilla::jni::Args<
                 mozilla::jni::String::Param,
-                mozilla::jni::Object::Param,
-                bool> Args;
+                mozilla::jni::Object::Param> Args;
         static constexpr char name[] = "create";
         static constexpr char signature[] =
-                "(Ljava/lang/String;Lorg/mozilla/gecko/media/MediaDrmProxy$Callbacks;Z)Lorg/mozilla/gecko/media/MediaDrmProxy;";
+                "(Ljava/lang/String;Lorg/mozilla/gecko/media/MediaDrmProxy$Callbacks;)Lorg/mozilla/gecko/media/MediaDrmProxy;";
         static const bool isStatic = true;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -6242,7 +6241,7 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    static auto Create(mozilla::jni::String::Param, mozilla::jni::Object::Param, bool) -> MediaDrmProxy::LocalRef;
+    static auto Create(mozilla::jni::String::Param, mozilla::jni::Object::Param) -> MediaDrmProxy::LocalRef;
 
     struct CreateSession_t {
         typedef MediaDrmProxy Owner;
@@ -6393,17 +6392,17 @@ public:
 
 };
 
-class MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport : public mozilla::jni::ObjectBase<NativeCallbacksToMediaDrmProxySupport>
+class MediaDrmProxy::NativeMediaDrmProxyCallbacks : public mozilla::jni::ObjectBase<NativeMediaDrmProxyCallbacks>
 {
 public:
     static const char name[];
 
-    explicit NativeCallbacksToMediaDrmProxySupport(const Context& ctx) : ObjectBase<NativeCallbacksToMediaDrmProxySupport>(ctx) {}
+    explicit NativeMediaDrmProxyCallbacks(const Context& ctx) : ObjectBase<NativeMediaDrmProxyCallbacks>(ctx) {}
 
     struct New_t {
-        typedef NativeCallbacksToMediaDrmProxySupport Owner;
-        typedef NativeCallbacksToMediaDrmProxySupport::LocalRef ReturnType;
-        typedef NativeCallbacksToMediaDrmProxySupport::Param SetterType;
+        typedef NativeMediaDrmProxyCallbacks Owner;
+        typedef NativeMediaDrmProxyCallbacks::LocalRef ReturnType;
+        typedef NativeMediaDrmProxyCallbacks::Param SetterType;
         typedef mozilla::jni::Args<> Args;
         static constexpr char name[] = "<init>";
         static constexpr char signature[] =
@@ -6417,10 +6416,10 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    static auto New() -> NativeCallbacksToMediaDrmProxySupport::LocalRef;
+    static auto New() -> NativeMediaDrmProxyCallbacks::LocalRef;
 
     struct DisposeNative_t {
-        typedef NativeCallbacksToMediaDrmProxySupport Owner;
+        typedef NativeMediaDrmProxyCallbacks Owner;
         typedef void ReturnType;
         typedef void SetterType;
         typedef mozilla::jni::Args<> Args;
@@ -6436,15 +6435,35 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    struct OnError_t {
-        typedef NativeCallbacksToMediaDrmProxySupport Owner;
+    struct OnRejectPromise_t {
+        typedef NativeMediaDrmProxyCallbacks Owner;
         typedef void ReturnType;
         typedef void SetterType;
         typedef mozilla::jni::Args<
+                int32_t,
                 mozilla::jni::String::Param> Args;
-        static constexpr char name[] = "onError";
+        static constexpr char name[] = "onRejectPromise";
         static constexpr char signature[] =
-                "(Ljava/lang/String;)V";
+                "(ILjava/lang/String;)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    struct OnSessionBatchedKeyChanged_t {
+        typedef NativeMediaDrmProxyCallbacks Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::ByteArray::Param,
+                mozilla::jni::ObjectArray::Param> Args;
+        static constexpr char name[] = "onSessionBatchedKeyChanged";
+        static constexpr char signature[] =
+                "([B[Lorg/mozilla/gecko/media/SessionKeyInfo;)V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -6455,7 +6474,7 @@ public:
     };
 
     struct OnSessionClosed_t {
-        typedef NativeCallbacksToMediaDrmProxySupport Owner;
+        typedef NativeMediaDrmProxyCallbacks Owner;
         typedef void ReturnType;
         typedef void SetterType;
         typedef mozilla::jni::Args<
@@ -6474,7 +6493,7 @@ public:
     };
 
     struct OnSessionCreated_t {
-        typedef NativeCallbacksToMediaDrmProxySupport Owner;
+        typedef NativeMediaDrmProxyCallbacks Owner;
         typedef void ReturnType;
         typedef void SetterType;
         typedef mozilla::jni::Args<
@@ -6495,35 +6514,16 @@ public:
     };
 
     struct OnSessionError_t {
-        typedef NativeCallbacksToMediaDrmProxySupport Owner;
+        typedef NativeMediaDrmProxyCallbacks Owner;
         typedef void ReturnType;
         typedef void SetterType;
         typedef mozilla::jni::Args<
                 int32_t,
-                mozilla::jni::ByteArray::Param> Args;
+                mozilla::jni::ByteArray::Param,
+                mozilla::jni::String::Param> Args;
         static constexpr char name[] = "onSessionError";
         static constexpr char signature[] =
-                "(I[B)V";
-        static const bool isStatic = false;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    struct OnSessionKeyChanged_t {
-        typedef NativeCallbacksToMediaDrmProxySupport Owner;
-        typedef void ReturnType;
-        typedef void SetterType;
-        typedef mozilla::jni::Args<
-                mozilla::jni::ByteArray::Param,
-                mozilla::jni::ByteArray::Param,
-                int32_t> Args;
-        static constexpr char name[] = "onSessionKeyChanged";
-        static constexpr char signature[] =
-                "([B[BI)V";
+                "(I[BLjava/lang/String;)V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -6534,7 +6534,7 @@ public:
     };
 
     struct OnSessionMessage_t {
-        typedef NativeCallbacksToMediaDrmProxySupport Owner;
+        typedef NativeMediaDrmProxyCallbacks Owner;
         typedef void ReturnType;
         typedef void SetterType;
         typedef mozilla::jni::Args<
@@ -6554,7 +6554,7 @@ public:
     };
 
     struct OnSessionUpdated_t {
-        typedef NativeCallbacksToMediaDrmProxySupport Owner;
+        typedef NativeMediaDrmProxyCallbacks Owner;
         typedef void ReturnType;
         typedef void SetterType;
         typedef mozilla::jni::Args<
@@ -6576,6 +6576,81 @@ public:
             mozilla::jni::CallingThread::ANY;
 
     template<class Impl> class Natives;
+};
+
+class SessionKeyInfo : public mozilla::jni::ObjectBase<SessionKeyInfo>
+{
+public:
+    static const char name[];
+
+    explicit SessionKeyInfo(const Context& ctx) : ObjectBase<SessionKeyInfo>(ctx) {}
+
+    struct New_t {
+        typedef SessionKeyInfo Owner;
+        typedef SessionKeyInfo::LocalRef ReturnType;
+        typedef SessionKeyInfo::Param SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::ByteArray::Param,
+                int32_t> Args;
+        static constexpr char name[] = "<init>";
+        static constexpr char signature[] =
+                "([BI)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    static auto New(mozilla::jni::ByteArray::Param, int32_t) -> SessionKeyInfo::LocalRef;
+
+    struct KeyId_t {
+        typedef SessionKeyInfo Owner;
+        typedef mozilla::jni::ByteArray::LocalRef ReturnType;
+        typedef mozilla::jni::ByteArray::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "keyId";
+        static constexpr char signature[] =
+                "[B";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto KeyId() const -> mozilla::jni::ByteArray::LocalRef;
+
+    auto KeyId(mozilla::jni::ByteArray::Param) const -> void;
+
+    struct Status_t {
+        typedef SessionKeyInfo Owner;
+        typedef int32_t ReturnType;
+        typedef int32_t SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "status";
+        static constexpr char signature[] =
+                "I";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto Status() const -> int32_t;
+
+    auto Status(int32_t) const -> void;
+
+    static const mozilla::jni::CallingThread callingThread =
+            mozilla::jni::CallingThread::ANY;
+
 };
 
 class Restrictions : public mozilla::jni::ObjectBase<Restrictions>

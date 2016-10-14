@@ -28,10 +28,10 @@ LogModule* GetMDRMNLog() {
 }
 
 class MediaDrmJavaCallbacksSupport
-  : public MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::Natives<MediaDrmJavaCallbacksSupport>
+  : public MediaDrmProxy::NativeMediaDrmProxyCallbacks::Natives<MediaDrmJavaCallbacksSupport>
 {
 public:
-  typedef MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::Natives<MediaDrmJavaCallbacksSupport> MediaDrmProxyNativeCallbacks;
+  typedef MediaDrmProxy::NativeMediaDrmProxyCallbacks::Natives<MediaDrmJavaCallbacksSupport> MediaDrmProxyNativeCallbacks;
   using MediaDrmProxyNativeCallbacks::DisposeNative;
   using MediaDrmProxyNativeCallbacks::AttachNative;
 
@@ -55,13 +55,14 @@ public:
                         int /*mozilla::dom::MediaKeyMessageType*/ aSessionMessageType,
                         jni::ByteArray::Param aRequest);
 
-  void OnSessionError(int aPromiseId, jni::ByteArray::Param aSessionId);
+  void OnSessionError(int aPromiseId,
+                      jni::ByteArray::Param aSessionId,
+                      jni::String::Param aMessage);
 
-  void OnSessionKeyChanged(jni::ByteArray::Param aSessionId,
-                           jni::ByteArray::Param aKeyId,
-                           int aStatusCode);
+  void OnSessionBatchedKeyChanged(jni::ByteArray::Param aSessionId,
+                                  jni::ObjectArray::Param aKeyInfos);
 
-  void OnError(jni::String::Param aMessage);
+  void OnRejectPromise(int aPromiseId, jni::String::Param aMessage);
 
 private:
   DecryptorProxyCallback* mDecryptorProxyCallback;
@@ -129,7 +130,8 @@ MediaDrmJavaCallbacksSupport::OnSessionMessage(jni::ByteArray::Param aSessionId,
 
 void
 MediaDrmJavaCallbacksSupport::OnSessionError(int aPromiseId,
-                                             jni::ByteArray::Param aSessionId)
+                                             jni::ByteArray::Param aSessionId,
+                                             jni::String::Param aMessage)
 {
   nsCString sessionId(reinterpret_cast<char*>(aSessionId->GetElements().Elements()),
                       aSessionId->Length());
@@ -155,25 +157,24 @@ MediaDrmKeyStatusToMediaKeyStatus(int aStatusCode)
   }
 }
 void
-MediaDrmJavaCallbacksSupport::OnSessionKeyChanged(jni::ByteArray::Param aSessionId,
-                                                  jni::ByteArray::Param aKeyId,
-                                                  int aStatusCode)
+MediaDrmJavaCallbacksSupport::OnSessionBatchedKeyChanged(jni::ByteArray::Param aSessionId,
+                                                         jni::ObjectArray::Param aKeyInfos)
 {
   nsCString sessionId(reinterpret_cast<char*>(aSessionId->GetElements().Elements()),
                       aSessionId->Length());
 
-  auto keyIdArray = aKeyId->GetElements();
-  nsTArray<uint8_t> keyId;
-  keyId.AppendElements(reinterpret_cast<uint8_t*>(keyIdArray.Elements()),
-                       keyIdArray.Length());
-
-  mDecryptorProxyCallback->KeyStatusChanged(sessionId,
-                                            keyId,
-                                            MediaDrmKeyStatusToMediaKeyStatus(aStatusCode));
+//  auto keyIdArray = aKeyId->GetElements();
+//  nsTArray<uint8_t> keyId;
+//  keyId.AppendElements(reinterpret_cast<uint8_t*>(keyIdArray.Elements()),
+//                       keyIdArray.Length());
+//
+//  mDecryptorProxyCallback->KeyStatusChanged(sessionId,
+//                                            keyId,
+//                                            MediaDrmKeyStatusToMediaKeyStatus(aStatusCode));
 }
 
 void
-MediaDrmJavaCallbacksSupport::OnError(jni::String::Param aMessage)
+MediaDrmJavaCallbacksSupport::OnRejectPromise(int aPromiseId, jni::String::Param aMessage)
 {
   MDRMN_LOG("OnError aMessage(%s) ", aMessage->ToCString().get());
   // [TODO] Need to callback or handle this.
@@ -185,13 +186,12 @@ MediaDrmProxySupport::MediaDrmProxySupport(const nsAString& aKeySystem)
 {
   // Register native methods.
   //[TODO] Check what's the init purpose.
-  mJavaCallbacks = MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::New();
+  mJavaCallbacks = MediaDrmProxy::NativeMediaDrmProxyCallbacks::New();
   // Follow the pref flag PDMAndroidRemoteCodecEnabled returned to determine
   // it is crossing process CDM or not.
   mBridgeProxy =
     MediaDrmProxy::Create(mKeySystem,
-                          mJavaCallbacks,
-                          MediaPrefs::PDMAndroidRemoteCodecEnabled());
+                          mJavaCallbacks);
   MOZ_ASSERT(mBridgeProxy, "mBridgeProxy should not be null");
   auto drmStubUUID = mBridgeProxy->GetUUID();
   mMediaDrmStubUUID = drmStubUUID->ToString();

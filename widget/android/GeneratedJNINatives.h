@@ -623,45 +623,45 @@ const JNINativeMethod CodecProxy::NativeCallbacks::Natives<Impl>::methods[] = {
 };
 
 template<class Impl>
-class MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::Natives : public mozilla::jni::NativeImpl<NativeCallbacksToMediaDrmProxySupport, Impl>
+class MediaDrmProxy::NativeMediaDrmProxyCallbacks::Natives : public mozilla::jni::NativeImpl<NativeMediaDrmProxyCallbacks, Impl>
 {
 public:
     static const JNINativeMethod methods[8];
 };
 
 template<class Impl>
-const JNINativeMethod MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::Natives<Impl>::methods[] = {
+const JNINativeMethod MediaDrmProxy::NativeMediaDrmProxyCallbacks::Natives<Impl>::methods[] = {
 
-    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::DisposeNative_t>(
-            mozilla::jni::NativeStub<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::DisposeNative_t, Impl>
+    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeMediaDrmProxyCallbacks::DisposeNative_t>(
+            mozilla::jni::NativeStub<MediaDrmProxy::NativeMediaDrmProxyCallbacks::DisposeNative_t, Impl>
             ::template Wrap<&Impl::DisposeNative>),
 
-    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnError_t>(
-            mozilla::jni::NativeStub<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnError_t, Impl>
-            ::template Wrap<&Impl::OnError>),
+    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnRejectPromise_t>(
+            mozilla::jni::NativeStub<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnRejectPromise_t, Impl>
+            ::template Wrap<&Impl::OnRejectPromise>),
 
-    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionClosed_t>(
-            mozilla::jni::NativeStub<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionClosed_t, Impl>
+    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionBatchedKeyChanged_t>(
+            mozilla::jni::NativeStub<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionBatchedKeyChanged_t, Impl>
+            ::template Wrap<&Impl::OnSessionBatchedKeyChanged>),
+
+    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionClosed_t>(
+            mozilla::jni::NativeStub<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionClosed_t, Impl>
             ::template Wrap<&Impl::OnSessionClosed>),
 
-    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionCreated_t>(
-            mozilla::jni::NativeStub<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionCreated_t, Impl>
+    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionCreated_t>(
+            mozilla::jni::NativeStub<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionCreated_t, Impl>
             ::template Wrap<&Impl::OnSessionCreated>),
 
-    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionError_t>(
-            mozilla::jni::NativeStub<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionError_t, Impl>
+    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionError_t>(
+            mozilla::jni::NativeStub<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionError_t, Impl>
             ::template Wrap<&Impl::OnSessionError>),
 
-    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionKeyChanged_t>(
-            mozilla::jni::NativeStub<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionKeyChanged_t, Impl>
-            ::template Wrap<&Impl::OnSessionKeyChanged>),
-
-    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionMessage_t>(
-            mozilla::jni::NativeStub<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionMessage_t, Impl>
+    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionMessage_t>(
+            mozilla::jni::NativeStub<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionMessage_t, Impl>
             ::template Wrap<&Impl::OnSessionMessage>),
 
-    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionUpdated_t>(
-            mozilla::jni::NativeStub<MediaDrmProxy::NativeCallbacksToMediaDrmProxySupport::OnSessionUpdated_t, Impl>
+    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionUpdated_t>(
+            mozilla::jni::NativeStub<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionUpdated_t, Impl>
             ::template Wrap<&Impl::OnSessionUpdated>)
 };
 

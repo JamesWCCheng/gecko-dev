@@ -17,9 +17,10 @@ public interface GeckoMediaDrm {
         void onSessionMessage(byte[] sessionId,
                               int sessionMessageType,
                               byte[] request);
-        void onSessionError(int promiseId, byte[] sessionId);
-        void onSessionKeyChanged(byte[] sessionId, byte[] keyId, int statusCode);
-        void onError(String message);
+        void onSessionError(int promiseId, byte[] sessionId, String message);
+        void onSessionBatchedKeyChanged(byte[] sessionId,
+                                        SessionKeyInfo[] keyInfos);
+        void onRejectPromise(int promiseId, String message);
     }
     void setCallbacks(Callbacks callbacks);
     void createSession(int createSessionToken,

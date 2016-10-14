@@ -199,8 +199,8 @@ import java.util.Queue;
             AsyncCodec codec = AsyncCodecFactory.create(codecName);
             codec.setCallbacks(new Callbacks(mCallbacks), null);
 
-            MediaCrypto crypto = RemoteMediaDrmBridgeStub.getMediaCrypto(drmStubId);
-            codec.configure(fmt, surface, crypto, flags);
+//            MediaCrypto crypto = RemoteMediaDrmBridgeStub.getMediaCrypto(drmStubId);
+            codec.configure(fmt, surface, null, flags);
             mCodec = codec;
             mInputProcessor = new InputProcessor();
             if (DEBUG) Log.d(LOGTAG, codec.toString() + " created");

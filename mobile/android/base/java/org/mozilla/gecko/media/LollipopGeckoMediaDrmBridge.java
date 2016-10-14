@@ -209,6 +209,15 @@ public class LollipopGeckoMediaDrmBridge implements GeckoMediaDrm {
 
         try {
             final byte [] keySetId = mDrm.provideKeyResponse(session.array(), response);
+            if (keySetId == null) {
+                log("keySetId is null. gg");
+            } else {
+                log("keySetId size >>>> : " + keySetId.length);
+                for (int j=0; j < keySetId.length; j++) {
+                    log(" = " + keySetId[j]);
+                }
+            }
+            
             HashMap<String, String> infoMap = mDrm.queryKeyStatus(session.array());
             for (String strKey : infoMap.keySet()) {
                 String strValue = infoMap.get(strKey);

@@ -119,6 +119,11 @@ final class RemoteMediaDrmBridgeStub extends IMediaDrmBridge.Stub implements IBi
         }
 
         @Override
+        public void onSessionBatchedKeyChanged(byte[] sessionId,
+                                               SessionKeyInfo[] keyInfos) {
+        }
+
+        @Override
         public void onError(String message) {
             log("onError");
             try {
@@ -172,9 +177,9 @@ final class RemoteMediaDrmBridgeStub extends IMediaDrmBridge.Stub implements IBi
 
     RemoteMediaDrmBridgeStub(String keySystem, String uuid) {
         if (M > SDK_INT && SDK_INT >= LOLLIPOP) {
-            mBridge = new LollipopGeckoMediaDrmBridge(keySystem);
+            mBridge = new GeckoMediaDrmBridgeV21(keySystem);
         } else if (SDK_INT >= M) {
-            mBridge = new MashmallowGeckoMediaDrmBridge(keySystem);
+            mBridge = new GeckoMediaDrmBridgeV23(keySystem);
         } else {
             throw new IllegalStateException(LOGTAG + "Bridge cannot be created correctly !!");
         }

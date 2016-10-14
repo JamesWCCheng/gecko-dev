@@ -284,6 +284,8 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
 
   nsresult rv;
   MediaCrypto::LocalRef crypto = MediaDrmProxy::GetMediaCrypto(mDrmStubId);
+  LOG("MediaCodecDataDecoder::InitDecoder .... drmstub(%s)", NS_ConvertUTF16toUTF8(mDrmStubId).get());
+  printf_stderr("MCDD::InitDecoder .... drmstub(%s)", NS_ConvertUTF16toUTF8(mDrmStubId).get());
   NS_ENSURE_SUCCESS(rv = mDecoder->Configure(mFormat, aSurface, crypto, 0), rv);
   NS_ENSURE_SUCCESS(rv = mDecoder->Start(), rv);
 
