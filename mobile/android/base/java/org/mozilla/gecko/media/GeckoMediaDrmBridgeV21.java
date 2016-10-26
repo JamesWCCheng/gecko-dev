@@ -29,7 +29,7 @@ public class GeckoMediaDrmBridgeV21 implements GeckoMediaDrm {
     private static final String LOGTAG = "GeckoMediaDrmBridgeV21";
     private static final String INVALID_SESSION_ID = "Invalid";
     private static final String WIDEVINE_KEY_SYSTEM = "com.widevine.alpha";
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final UUID WIDEVINE_SCHEME_UUID =
         new UUID(0xedef8ba979d64aceL, 0xa3c827dcd51d21edL);
     // MediaDrm.KeyStatus information listener is supported on M+, adding a
@@ -78,7 +78,7 @@ public class GeckoMediaDrmBridgeV21 implements GeckoMediaDrm {
       }
 
     private static void assertTrue(boolean condition) {
-      if (!condition) {
+      if (DEBUG && !condition) {
         throw new AssertionError("Expected condition to be true");
       }
     }
@@ -192,8 +192,7 @@ public class GeckoMediaDrmBridgeV21 implements GeckoMediaDrm {
 
         ByteBuffer session = getSession(sessionId);
         if (!sessionExists(session)) {
-            if (DEBUG) Log.d(LOGTAG, "Invalid session during updateSession.");
-            onSessionError(promiseId, session.array(), "Invalid session during updateSession.");
+            onRejectPromise(promiseId, "Invalid session during updateSession.");
             return;
         }
 
@@ -210,21 +209,24 @@ public class GeckoMediaDrmBridgeV21 implements GeckoMediaDrm {
             keyInfos[0] = new SessionKeyInfo(DUMMY_KEY_ID,
                                              MediaDrm.KeyStatus.STATUS_USABLE);
             onSessionBatchedKeyChanged(session.array(), keyInfos);
+            if (DEBUG) Log.d(LOGTAG, "Key successfully added for session " + sessionId);
+            onSessionUpdated(promiseId, session.array());
+            return;
         } catch (android.media.NotProvisionedException e) {
             if (DEBUG) Log.d(LOGTAG, "Failed to provide key response:" + e.getMessage());
-            onSessionError(promiseId, session.array(), "Got NotProvisionedException during updateSession.");
-            release();
-            return;
+            onSessionError(session.array(), "Got NotProvisionedException.");
+            onRejectPromise(promiseId, "Not provisioned during updateSession.");
         } catch (android.media.DeniedByServerException e) {
             if (DEBUG) Log.d(LOGTAG, "Failed to provide key response:" + e.getMessage());
-            onSessionError(promiseId, session.array(), "Got DeniedByServerException during updateSession.");
-            release();
-            return;
+            onSessionError(session.array(), "Got DeniedByServerException.");
+            onRejectPromise(promiseId, "Denied by server during updateSession.");
         } catch (java.lang.IllegalStateException e) {
             if (DEBUG) Log.d(LOGTAG, "Exception when calling provideKeyResponse():" + e.getMessage());
+            onSessionError(session.array(), "Got IllegalStateException.");
+            onRejectPromise(promiseId, "Rejected during updateSession.");
         }
-        if (DEBUG) Log.d(LOGTAG, "Key successfully added for session " + sessionId);
-        onSessionUpdated(promiseId, session.array());
+        release();
+        return;
     }
 
     @Override
@@ -236,11 +238,7 @@ public class GeckoMediaDrmBridgeV21 implements GeckoMediaDrm {
         }
 
         ByteBuffer session = removeSession(sessionId);
-        try {
-            mDrm.closeSession(session.array());
-        } catch (Exception e) {
-            Log.e(LOGTAG, "Got exceptions while closing sessionId = " + sessionId, e);
-        }
+        mDrm.closeSession(session.array());
         onSessionClosed(promiseId, session.array());
     }
 
@@ -313,9 +311,9 @@ public class GeckoMediaDrmBridgeV21 implements GeckoMediaDrm {
         mCallbacks.onSessionMessage(sessionId, sessionMessageType, request);
     }
 
-    protected void onSessionError(int promiseId, byte[] sessionId, String message) {
+    protected void onSessionError(byte[] sessionId, String message) {
         assertTrue(mCallbacks != null);
-        mCallbacks.onSessionError(promiseId, sessionId, message);
+        mCallbacks.onSessionError(sessionId, message);
     }
 
     protected void  onSessionBatchedKeyChanged(byte[] sessionId,
@@ -549,7 +547,7 @@ public class GeckoMediaDrmBridgeV21 implements GeckoMediaDrm {
 
     private void resumePendingOperations() {
         if (mHandlerThread == null) {
-            mHandlerThread = new HandlerThread("HandlerThread");
+            mHandlerThread = new HandlerThread("PendingSessionOpsThread");
             mHandlerThread.start();
         }
         if (mHandler == null) {

@@ -17,9 +17,10 @@ public interface GeckoMediaDrm {
         void onSessionMessage(byte[] sessionId,
                               int sessionMessageType,
                               byte[] request);
-        void onSessionError(int promiseId, byte[] sessionId, String message);
+        void onSessionError(byte[] sessionId, String message);
         void onSessionBatchedKeyChanged(byte[] sessionId,
                                         SessionKeyInfo[] keyInfos);
+        // All failure cases should go through this function.
         void onRejectPromise(int promiseId, String message);
     }
     void setCallbacks(Callbacks callbacks);

@@ -157,9 +157,9 @@ public final class MediaDrmProxy extends JNIObject {
         }
 
         @Override
-        public void onSessionError(int promiseId, byte[] sessionId, String message) {
+        public void onSessionError(byte[] sessionId, String message) {
             if (!mProxy.isDestroyed()) {
-                mNativeCallbacks.onSessionError(promiseId, sessionId, message);
+                mNativeCallbacks.onSessionError(0, sessionId, message);
             }
         }
 

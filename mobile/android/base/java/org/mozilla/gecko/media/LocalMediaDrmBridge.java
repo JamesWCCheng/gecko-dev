@@ -10,7 +10,7 @@ import android.util.Log;
 
 final class LocalMediaDrmBridge implements GeckoMediaDrm {
     private static final String LOGTAG = "GeckoLocalMediaDrmBridge";
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private GeckoMediaDrm mBridge = null;
     private CallbacksForwarder mCallbacksFwd;
 
@@ -57,11 +57,10 @@ final class LocalMediaDrmBridge implements GeckoMediaDrm {
         }
 
         @Override
-        public void onSessionError(int promiseId,
-                                   byte[] sessionId,
+        public void onSessionError(byte[] sessionId,
                                    String message) {
             assertTrue(mProxyCallbacks != null);
-            mProxyCallbacks.onSessionError(promiseId, sessionId, message);
+            mProxyCallbacks.onSessionError(sessionId, message);
         }
 
         @Override
@@ -80,7 +79,7 @@ final class LocalMediaDrmBridge implements GeckoMediaDrm {
     } // CallbacksForwarder
 
     private static void assertTrue(boolean condition) {
-        if (!condition) {
+        if (DEBUG && !condition) {
           throw new AssertionError("Expected condition to be true");
         }
       }
