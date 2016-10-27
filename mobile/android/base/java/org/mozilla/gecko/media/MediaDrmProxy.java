@@ -198,16 +198,34 @@ public final class MediaDrmProxy extends JNIObject {
 
     @WrapForJNI
     public static MediaDrmProxy create(String keySystem,
-                                       Callbacks nativeCallbacks) {
+                                       Callbacks nativeCallbacks,
+                                       boolean isRemote) {
         String drmStubId = UUID.randomUUID().toString();
-        MediaDrmProxy proxy = new MediaDrmProxy(keySystem, nativeCallbacks, drmStubId);
+        MediaDrmProxy proxy = null;
+        if (isRemote) {
+            IMediaDrmBridge iBridge =
+                RemoteManager.getInstance().createRemoteMediaDrmBridge(keySystem, drmStubId);
+            proxy = new MediaDrmProxy(keySystem,
+                                      nativeCallbacks,
+                                      iBridge,
+                                      drmStubId);
+        } else {
+            proxy = new MediaDrmProxy(keySystem,
+                                      nativeCallbacks,
+                                      null,
+                                      drmStubId);
+        }
         return proxy;
     }
 
-    MediaDrmProxy(String keySystem, Callbacks nativeCallbacks, String uuid) {
+    MediaDrmProxy(String keySystem, Callbacks nativeCallbacks, IMediaDrmBridge remoteBridge, String uuid) {
         log("Constructing MediaDrmProxy ... ");
         try {
-            mImpl = new LocalMediaDrmBridge(keySystem);
+            if (remoteBridge != null) {
+                mImpl = new RemoteMediaDrmBridge(remoteBridge);
+            } else {
+                mImpl = new LocalMediaDrmBridge(keySystem);
+            }
             mImpl.setCallbacks(new MediaDrmProxyCallbacks(this, nativeCallbacks));
             mDrmStubUUID = uuid;
             mProxyList.add(this);

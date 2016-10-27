@@ -5,6 +5,7 @@
 package org.mozilla.gecko.media;
 
 // Non-default types used in interface.
+import org.mozilla.gecko.media.SessionKeyInfo;
 
 interface IMediaDrmBridgeCallbacks {
 
@@ -21,11 +22,10 @@ interface IMediaDrmBridgeCallbacks {
                                  int sessionMessageType,
                                  in byte[] request);
 
-    oneway void onSessionError(int promiseId, in byte[] sessionId);
+    oneway void onSessionError(in byte[] sessionId, String message);
 
-    oneway void onSessionKeyChanged(in byte[] sessionId,
-                                    in byte[] keyId,
-                                    int statusCode);
+    oneway void onSessionBatchedKeyChanged(in byte[] sessionId,
+                                           in SessionKeyInfo[] keyInfos);
 
-    oneway void onError(String message);
+    oneway void onRejectPromise(int promiseId, String message);
 }

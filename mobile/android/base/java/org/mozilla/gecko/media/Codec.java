@@ -175,7 +175,7 @@ import java.util.Queue;
     public synchronized boolean configure(FormatParam format,
                                           Surface surface,
                                           int flags,
-                                          String drmStubId) throws RemoteException {
+                                          String stubUUID) throws RemoteException {
         if (mCallbacks == null) {
             Log.e(LOGTAG, "FAIL: callbacks must be set before calling configure()");
             return false;
@@ -199,8 +199,10 @@ import java.util.Queue;
             AsyncCodec codec = AsyncCodecFactory.create(codecName);
             codec.setCallbacks(new Callbacks(mCallbacks), null);
 
-//            MediaCrypto crypto = RemoteMediaDrmBridgeStub.getMediaCrypto(drmStubId);
-            codec.configure(fmt, surface, null, flags);
+            MediaCrypto crypto = RemoteMediaDrmBridgeStub.getMediaCrypto(stubUUID);
+            boolean hasCrypto = crypto != null;
+            if (DEBUG) Log.d(LOGTAG, "configure .... hascrypto=" + hasCrypto);
+            codec.configure(fmt, surface, crypto, flags);
             mCodec = codec;
             mInputProcessor = new InputProcessor();
             if (DEBUG) Log.d(LOGTAG, codec.toString() + " created");

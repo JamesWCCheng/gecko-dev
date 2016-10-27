@@ -2095,9 +2095,9 @@ auto MediaDrmProxy::CloseSession(int32_t a0, mozilla::jni::String::Param a1) con
 constexpr char MediaDrmProxy::Create_t::name[];
 constexpr char MediaDrmProxy::Create_t::signature[];
 
-auto MediaDrmProxy::Create(mozilla::jni::String::Param a0, mozilla::jni::Object::Param a1) -> MediaDrmProxy::LocalRef
+auto MediaDrmProxy::Create(mozilla::jni::String::Param a0, mozilla::jni::Object::Param a1, bool a2) -> MediaDrmProxy::LocalRef
 {
-    return mozilla::jni::Method<Create_t>::Call(MediaDrmProxy::Context(), nullptr, a0, a1);
+    return mozilla::jni::Method<Create_t>::Call(MediaDrmProxy::Context(), nullptr, a0, a1, a2);
 }
 
 constexpr char MediaDrmProxy::CreateSession_t::name[];
@@ -2197,9 +2197,41 @@ const char SessionKeyInfo::name[] =
 constexpr char SessionKeyInfo::New_t::name[];
 constexpr char SessionKeyInfo::New_t::signature[];
 
+auto SessionKeyInfo::New(mozilla::jni::Object::Param a0) -> SessionKeyInfo::LocalRef
+{
+    return mozilla::jni::Constructor<New_t>::Call(SessionKeyInfo::Context(), nullptr, a0);
+}
+
+constexpr char SessionKeyInfo::New3_t::name[];
+constexpr char SessionKeyInfo::New3_t::signature[];
+
 auto SessionKeyInfo::New(mozilla::jni::ByteArray::Param a0, int32_t a1) -> SessionKeyInfo::LocalRef
 {
-    return mozilla::jni::Constructor<New_t>::Call(SessionKeyInfo::Context(), nullptr, a0, a1);
+    return mozilla::jni::Constructor<New3_t>::Call(SessionKeyInfo::Context(), nullptr, a0, a1);
+}
+
+constexpr char SessionKeyInfo::DescribeContents_t::name[];
+constexpr char SessionKeyInfo::DescribeContents_t::signature[];
+
+auto SessionKeyInfo::DescribeContents() const -> int32_t
+{
+    return mozilla::jni::Method<DescribeContents_t>::Call(SessionKeyInfo::mCtx, nullptr);
+}
+
+constexpr char SessionKeyInfo::WriteToParcel_t::name[];
+constexpr char SessionKeyInfo::WriteToParcel_t::signature[];
+
+auto SessionKeyInfo::WriteToParcel(mozilla::jni::Object::Param a0, int32_t a1) const -> void
+{
+    return mozilla::jni::Method<WriteToParcel_t>::Call(SessionKeyInfo::mCtx, nullptr, a0, a1);
+}
+
+constexpr char SessionKeyInfo::CREATOR_t::name[];
+constexpr char SessionKeyInfo::CREATOR_t::signature[];
+
+auto SessionKeyInfo::CREATOR() -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Field<CREATOR_t>::Get(SessionKeyInfo::Context(), nullptr);
 }
 
 constexpr char SessionKeyInfo::KeyId_t::name[];

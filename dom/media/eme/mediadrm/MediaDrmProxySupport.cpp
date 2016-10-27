@@ -191,7 +191,8 @@ MediaDrmProxySupport::MediaDrmProxySupport(const nsAString& aKeySystem)
   // it is crossing process CDM or not.
   mBridgeProxy =
     MediaDrmProxy::Create(mKeySystem,
-                          mJavaCallbacks);
+                          mJavaCallbacks,
+                          MediaPrefs::PDMAndroidRemoteCodecEnabled());
   MOZ_ASSERT(mBridgeProxy, "mBridgeProxy should not be null");
   auto drmStubUUID = mBridgeProxy->GetUUID();
   mMediaDrmStubUUID = drmStubUUID->ToString();

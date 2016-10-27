@@ -140,23 +140,20 @@ public final class RemoteManager implements IBinder.DeathRecipient {
         }
     }
 
-    public synchronized MediaDrmProxy createMediaDrmBridge(String keySystem, String uuid) {
+    public synchronized IMediaDrmBridge createRemoteMediaDrmBridge(String keySystem,
+                                                                   String stubUUID) {
         if (mRemote == null) {
             if (DEBUG) Log.d(LOGTAG, "createMediaDrmBridge failed due to not initialize");
             return null;
         }
-        return null;
-//        try {
-////            IMediaDrmBridge remoteBridge = mRemote.createMediaDrmBridge(keySystem, uuid);
-////            MediaDrmProxy proxy = MediaDrmProxy.createMediaDrmProxy(keySystem,
-////                                                                    remoteBridge,
-////                                                                    uuid);
-//            return null;
-////            return proxy;
-//        } catch (RemoteException e) {
-//            e.printStackTrace();
-//            return null;
-//        }
+        try {
+            IMediaDrmBridge remoteBridge =
+                mRemote.createRemoteMediaDrmBridge(keySystem, stubUUID);
+            return remoteBridge;
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override

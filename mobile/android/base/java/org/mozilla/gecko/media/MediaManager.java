@@ -18,10 +18,10 @@ public final class MediaManager extends Service {
         }
 
         @Override
-        public IMediaDrmBridge createMediaDrmBridge(String keySystem, String uuid)
+        public IMediaDrmBridge createRemoteMediaDrmBridge(String keySystem,
+                                                          String stubUUID)
             throws RemoteException {
-            return null;
-            //return new RemoteMediaDrmBridgeStub(keySystem, uuid);
+            return new RemoteMediaDrmBridgeStub(keySystem, stubUUID);
         }
     };
 

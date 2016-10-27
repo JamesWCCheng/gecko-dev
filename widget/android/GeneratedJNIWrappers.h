@@ -6228,10 +6228,11 @@ public:
         typedef MediaDrmProxy::Param SetterType;
         typedef mozilla::jni::Args<
                 mozilla::jni::String::Param,
-                mozilla::jni::Object::Param> Args;
+                mozilla::jni::Object::Param,
+                bool> Args;
         static constexpr char name[] = "create";
         static constexpr char signature[] =
-                "(Ljava/lang/String;Lorg/mozilla/gecko/media/MediaDrmProxy$Callbacks;)Lorg/mozilla/gecko/media/MediaDrmProxy;";
+                "(Ljava/lang/String;Lorg/mozilla/gecko/media/MediaDrmProxy$Callbacks;Z)Lorg/mozilla/gecko/media/MediaDrmProxy;";
         static const bool isStatic = true;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -6241,7 +6242,7 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    static auto Create(mozilla::jni::String::Param, mozilla::jni::Object::Param) -> MediaDrmProxy::LocalRef;
+    static auto Create(mozilla::jni::String::Param, mozilla::jni::Object::Param, bool) -> MediaDrmProxy::LocalRef;
 
     struct CreateSession_t {
         typedef MediaDrmProxy Owner;
@@ -6590,6 +6591,26 @@ public:
         typedef SessionKeyInfo::LocalRef ReturnType;
         typedef SessionKeyInfo::Param SetterType;
         typedef mozilla::jni::Args<
+                mozilla::jni::Object::Param> Args;
+        static constexpr char name[] = "<init>";
+        static constexpr char signature[] =
+                "(Landroid/os/Parcel;)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    static auto New(mozilla::jni::Object::Param) -> SessionKeyInfo::LocalRef;
+
+    struct New3_t {
+        typedef SessionKeyInfo Owner;
+        typedef SessionKeyInfo::LocalRef ReturnType;
+        typedef SessionKeyInfo::Param SetterType;
+        typedef mozilla::jni::Args<
                 mozilla::jni::ByteArray::Param,
                 int32_t> Args;
         static constexpr char name[] = "<init>";
@@ -6605,6 +6626,65 @@ public:
     };
 
     static auto New(mozilla::jni::ByteArray::Param, int32_t) -> SessionKeyInfo::LocalRef;
+
+    struct DescribeContents_t {
+        typedef SessionKeyInfo Owner;
+        typedef int32_t ReturnType;
+        typedef int32_t SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "describeContents";
+        static constexpr char signature[] =
+                "()I";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto DescribeContents() const -> int32_t;
+
+    struct WriteToParcel_t {
+        typedef SessionKeyInfo Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::Object::Param,
+                int32_t> Args;
+        static constexpr char name[] = "writeToParcel";
+        static constexpr char signature[] =
+                "(Landroid/os/Parcel;I)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto WriteToParcel(mozilla::jni::Object::Param, int32_t) const -> void;
+
+    struct CREATOR_t {
+        typedef SessionKeyInfo Owner;
+        typedef mozilla::jni::Object::LocalRef ReturnType;
+        typedef mozilla::jni::Object::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "CREATOR";
+        static constexpr char signature[] =
+                "Landroid/os/Parcelable$Creator;";
+        static const bool isStatic = true;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    static auto CREATOR() -> mozilla::jni::Object::LocalRef;
 
     struct KeyId_t {
         typedef SessionKeyInfo Owner;

@@ -5,27 +5,21 @@
 package org.mozilla.gecko.media;
 
 import android.media.MediaCrypto;
-import android.os.IBinder;
-import android.os.DeadObjectException;
-import android.os.RemoteException;
-import org.mozilla.gecko.mozglue.JNIObject;
-import org.mozilla.gecko.annotation.RobocopTarget;
-import org.mozilla.gecko.annotation.WrapForJNI;
-import org.mozilla.gecko.EventDispatcher;
-import org.mozilla.gecko.GeckoAppShell;
 import android.util.Log;
 
 final class RemoteMediaDrmBridge implements GeckoMediaDrm {
-    private static final String LOGTAG = "\033[1;41mRemoteMediaDrmBridge\033[m";
+    private static final String LOGTAG = "GeckoRemoteMediaDrmBridge";
     private static final boolean DEBUG = false;
-    private CallbacksForwarder mCallbacks;
+    private CallbacksForwarder mCallbacksFwd;
     private IMediaDrmBridge mRemote;
 
+    // Forward callbacks from remote implementations, i.e. GeckoMediaDrmBridgeV{21,23}),
+    // to MediaDrmProxy.
     private static class CallbacksForwarder extends IMediaDrmBridgeCallbacks.Stub {
-        // MediaDrmProxy callback handle.
-        private final GeckoMediaDrm.Callbacks mCallbacks;
+        private final GeckoMediaDrm.Callbacks mProxyCallbacks;
         CallbacksForwarder(Callbacks callbacks) {
-            mCallbacks = callbacks;
+            assertTrue(callbacks != null);
+            mProxyCallbacks = callbacks;
         }
 
         @Override
@@ -33,7 +27,8 @@ final class RemoteMediaDrmBridge implements GeckoMediaDrm {
                                      int promiseId,
                                      byte[] sessionId,
                                      byte[] request) {
-            mCallbacks.onSessionCreated(createSessionToken,
+            assertTrue(mProxyCallbacks != null);
+            mProxyCallbacks.onSessionCreated(createSessionToken,
                                         promiseId,
                                         sessionId,
                                         request);
@@ -41,59 +36,66 @@ final class RemoteMediaDrmBridge implements GeckoMediaDrm {
 
         @Override
         public void onSessionUpdated(int promiseId, byte[] sessionId) {
-            mCallbacks.onSessionUpdated(promiseId, sessionId);
+            assertTrue(mProxyCallbacks != null);
+            mProxyCallbacks.onSessionUpdated(promiseId, sessionId);
         }
 
         @Override
         public void onSessionClosed(int promiseId, byte[] sessionId) {
-            mCallbacks.onSessionClosed(promiseId, sessionId);
+            assertTrue(mProxyCallbacks != null);
+            mProxyCallbacks.onSessionClosed(promiseId, sessionId);
         }
 
         @Override
         public void onSessionMessage(byte[] sessionId,
                                      int sessionMessageType,
                                      byte[] request) {
-            mCallbacks.onSessionMessage(sessionId, sessionMessageType, request);
+            assertTrue(mProxyCallbacks != null);
+            mProxyCallbacks.onSessionMessage(sessionId, sessionMessageType, request);
         }
 
         @Override
-        public void onSessionError(int promiseId, byte[] sessionId) {
-            mCallbacks.onSessionError(promiseId, sessionId);
+        public void onSessionError(byte[] sessionId, String message) {
+            assertTrue(mProxyCallbacks != null);
+            mProxyCallbacks.onSessionError(sessionId, message);
         }
 
         @Override
-        public void onSessionKeyChanged(byte[] sessionId,
-                                        byte[] keyId,
-                                        int statusCode) {
-            mCallbacks.onSessionKeyChanged(sessionId, keyId, statusCode);
+        public void onSessionBatchedKeyChanged(byte[] sessionId,
+                                               SessionKeyInfo[] keyInfos) {
+            assertTrue(mProxyCallbacks != null);
+            mProxyCallbacks.onSessionBatchedKeyChanged(sessionId, keyInfos);
         }
 
         @Override
-        public void onError(String message) {
-            mCallbacks.onError(message);
+        public void onRejectPromise(int promiseId, String message) {
+            assertTrue(mProxyCallbacks != null);
+            mProxyCallbacks.onRejectPromise(promiseId, message);
         }
     } // CallbacksForwarder
 
-    public RemoteMediaDrmBridge(IMediaDrmBridge remoteBridge){
+    private static void assertTrue(boolean condition) {
+        if (DEBUG && !condition) {
+            throw new AssertionError("Expected condition to be true");
+        }
+    }
+
+    public RemoteMediaDrmBridge(IMediaDrmBridge remoteBridge) {
+        assertTrue(remoteBridge != null);
         mRemote = remoteBridge;
     }
+
     @Override
     public synchronized void setCallbacks(Callbacks callbacks) {
-        log("setCallbacks");
-        mCallbacks = new CallbacksForwarder(callbacks);
-        if (mRemote == null) {
-            Log.e(LOGTAG, "cannot send setCallbacks to an ended drm bridge");
-            mCallbacks.onError("cannot send setCallbacks to an ended drm bridge");
-            return;
-        }
+        if (DEBUG) Log.d(LOGTAG, "setCallbacks()");
+        assertTrue(callbacks != null);
+        assertTrue(mRemote != null);
+
+        mCallbacksFwd = new CallbacksForwarder(callbacks);
         try {
-            mRemote.setCallbacks(mCallbacks);
-        } catch (DeadObjectException e) {;
-            log("fail to setCallbacks");
-            reportError(e);
-        } catch (RemoteException e) {
-            log("fail to setCallbacks");
-            reportError(e);
+            mRemote.setCallbacks(mCallbacksFwd);
+        } catch (Exception e) {;
+            Log.e(LOGTAG, "Got exception during setCallbacks", e);
         }
     }
 
@@ -102,98 +104,57 @@ final class RemoteMediaDrmBridge implements GeckoMediaDrm {
                                            int promiseId,
                                            String initDataType,
                                            byte[] initData) {
-        log("createSession");
-        if (mRemote == null) {
-            Log.e(LOGTAG, "cannot send createSession to an ended drm bridge");
-            mCallbacks.onError("cannot send createSession to an ended drm bridge");
-            return;
-        }
+        if (DEBUG) Log.d(LOGTAG, "createSession()");
+
         try {
             mRemote.createSession(createSessionToken, promiseId, initDataType, initData);
-        } catch (DeadObjectException e) {;
-            log("fail to createSession");
-            reportError(e);
-        } catch (RemoteException e) {
-            log("fail to createSession");
-            reportError(e);
+        } catch (Exception e) {;
+            Log.e(LOGTAG, "Got exception while creating remote session.");
+            mCallbacksFwd.onRejectPromise(promiseId, "Failed to create session.");
         }
     }
 
     @Override
     public synchronized void updateSession(int promiseId, String sessionId, byte[] response) {
-        log("updateSession");
-        if (mRemote == null) {
-            Log.e(LOGTAG, "cannot send updateSession to an ended drm bridge");
-            mCallbacks.onError("cannot send updateSession to an ended drm bridge");
-            return;
-        }
+        if (DEBUG) Log.d(LOGTAG, "updateSession()");
+
         try {
             mRemote.updateSession(promiseId, sessionId, response);
-        } catch (DeadObjectException e) {
-            log("fail to updateSession");
-            reportError(e);
-        } catch (RemoteException e) {
-            log("fail to updateSession");
-            reportError(e);
+        } catch (Exception e) {
+            Log.e(LOGTAG, "Got exception while updating remote session.");
+            mCallbacksFwd.onRejectPromise(promiseId, "Failed to update session.");
         }
     }
 
     @Override
     public synchronized void closeSession(int promiseId, String sessionId) {
-        log("closeSession");
-        if (mRemote == null) {
-            Log.e(LOGTAG, "cannot send closeSession to an ended drm bridge");
-            mCallbacks.onError("cannot send closeSession to an ended drm bridge");
-            return;
-        }
+        if (DEBUG) Log.d(LOGTAG, "closeSession()");
+
         try {
             mRemote.closeSession(promiseId, sessionId);
-        } catch (DeadObjectException e) {
-            log("fail to closeSession");
-            reportError(e);
-        } catch (RemoteException e) {
-            log("fail to closeSession");
-            reportError(e);
+        } catch (Exception e) {
+            Log.e(LOGTAG, "Got exception while closing remote session.");
+            mCallbacksFwd.onRejectPromise(promiseId, "Failed to close session.");
         }
     }
 
     @Override
     public synchronized void release() {
-        log("release");
-        if (mRemote == null) {
-            Log.e(LOGTAG, "cannot send release to an ended drm bridge");
-            mCallbacks.onError("cannot send release to an ended drm bridge");
-            return;
-        }
+        if (DEBUG) Log.d(LOGTAG, "release()");
+
         try {
             mRemote.release();
-            // [TODO] Check the lifecycle if it is ok to set null.
-            mRemote = null;
-        } catch (DeadObjectException e) {
-            log("fail to release");
-            reportError(e);
-        } catch (RemoteException e) {
-            log("fail to release");
-            reportError(e);
+        } catch (Exception e) {
+            Log.e(LOGTAG, "Got exception while releasing RemoteDrmBridge.");
         }
+        mRemote = null;
+        mCallbacksFwd = null;
     }
 
     @Override
     public MediaCrypto getMediaCrypto() {
-        log("getMediaCrypto");
+        if (DEBUG) Log.d(LOGTAG, "getMediaCrypto(), should not enter here!");
+        assertTrue(false);
         return null;
     }
-
-    private void reportError(Exception e) {
-        if (e != null) {
-            e.printStackTrace();
-        }
-        mCallbacks.onError(e.getMessage());
-    }
-
-    private void log(String msg) {
-        if (DEBUG) {
-          Log.d(LOGTAG, "[" + this + "][" + msg + "]");
-        }
-    }
-} // class RemoteMediaDrmBridge
+}
