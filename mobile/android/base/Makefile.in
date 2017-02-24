@@ -151,6 +151,7 @@ java_bundled_libs := $(subst $(NULL) ,:,$(strip $(java_bundled_libs)))
 
 GECKOVIEW_JARS = \
   constants.jar \
+  exoplayer2.jar \
   gecko-R.jar \
   gecko-mozglue.jar \
   gecko-util.jar \
