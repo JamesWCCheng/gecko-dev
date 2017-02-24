@@ -96,7 +96,7 @@ public final class C {
    * @see MediaCodec#CRYPTO_MODE_AES_CBC
    */
   @SuppressWarnings("InlinedApi")
-  public static final int CRYPTO_MODE_AES_CBC = MediaCodec.CRYPTO_MODE_AES_CBC;
+  public static final int CRYPTO_MODE_AES_CBC = 0x2;
 
   /**
    * Represents an unset {@link android.media.AudioTrack} session identifier. Equal to
