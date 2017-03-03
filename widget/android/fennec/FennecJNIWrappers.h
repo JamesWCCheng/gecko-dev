@@ -934,6 +934,80 @@ public:
     template<class Impl> class Natives;
 };
 
+class GeckoHlsSampleGetter : public mozilla::jni::ObjectBase<GeckoHlsSampleGetter>
+{
+public:
+    static const char name[];
+
+    explicit GeckoHlsSampleGetter(const Context& ctx) : ObjectBase<GeckoHlsSampleGetter>(ctx) {}
+
+    struct Destroy_t {
+        typedef GeckoHlsSampleGetter Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "destroy";
+        static constexpr char signature[] =
+                "()V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto Destroy() const -> void;
+
+    struct GetSample_t {
+        typedef GeckoHlsSampleGetter Owner;
+        typedef mozilla::jni::Object::LocalRef ReturnType;
+        typedef mozilla::jni::Object::Param SetterType;
+        typedef mozilla::jni::Args<
+                int32_t> Args;
+        static constexpr char name[] = "getSample";
+        static constexpr char signature[] =
+                "(I)Lorg/mozilla/gecko/media/Sample;";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto GetSample(int32_t) const -> mozilla::jni::Object::LocalRef;
+
+    struct IsSystemSupported_t {
+        typedef GeckoHlsSampleGetter Owner;
+        typedef bool ReturnType;
+        typedef bool SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "isSystemSupported";
+        static constexpr char signature[] =
+                "()Z";
+        static const bool isStatic = true;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    static auto IsSystemSupported() -> bool;
+
+    static const char16_t AAC[];
+
+    static const char16_t AVC[];
+
+    static const mozilla::jni::CallingThread callingThread =
+            mozilla::jni::CallingThread::ANY;
+
+};
+
 class MediaDrmProxy : public mozilla::jni::ObjectBase<MediaDrmProxy>
 {
 public:

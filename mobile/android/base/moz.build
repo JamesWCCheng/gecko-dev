@@ -600,6 +600,7 @@ gbjar.sources += ['java/org/mozilla/gecko/' + x for x in [
     'media/Codec.java',
     'media/CodecProxy.java',
     'media/FormatParam.java',
+    'media/GeckoHlsSampleGetter.java',
     'media/GeckoMediaDrm.java',
     'media/GeckoMediaDrmBridgeV21.java',
     'media/GeckoMediaDrmBridgeV23.java',

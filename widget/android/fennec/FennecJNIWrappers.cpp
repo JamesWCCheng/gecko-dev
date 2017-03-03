@@ -268,6 +268,37 @@ constexpr char CodecProxy::NativeCallbacks::OnOutput_t::signature[];
 constexpr char CodecProxy::NativeCallbacks::OnOutputFormatChanged_t::name[];
 constexpr char CodecProxy::NativeCallbacks::OnOutputFormatChanged_t::signature[];
 
+const char GeckoHlsSampleGetter::name[] =
+        "org/mozilla/gecko/media/GeckoHlsSampleGetter";
+
+constexpr char GeckoHlsSampleGetter::Destroy_t::name[];
+constexpr char GeckoHlsSampleGetter::Destroy_t::signature[];
+
+auto GeckoHlsSampleGetter::Destroy() const -> void
+{
+    return mozilla::jni::Method<Destroy_t>::Call(GeckoHlsSampleGetter::mCtx, nullptr);
+}
+
+constexpr char GeckoHlsSampleGetter::GetSample_t::name[];
+constexpr char GeckoHlsSampleGetter::GetSample_t::signature[];
+
+auto GeckoHlsSampleGetter::GetSample(int32_t a0) const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetSample_t>::Call(GeckoHlsSampleGetter::mCtx, nullptr, a0);
+}
+
+constexpr char GeckoHlsSampleGetter::IsSystemSupported_t::name[];
+constexpr char GeckoHlsSampleGetter::IsSystemSupported_t::signature[];
+
+auto GeckoHlsSampleGetter::IsSystemSupported() -> bool
+{
+    return mozilla::jni::Method<IsSystemSupported_t>::Call(GeckoHlsSampleGetter::Context(), nullptr);
+}
+
+const char16_t GeckoHlsSampleGetter::AAC[] = u"audio/mp4a-latm";
+
+const char16_t GeckoHlsSampleGetter::AVC[] = u"video/avc";
+
 const char MediaDrmProxy::name[] =
         "org/mozilla/gecko/media/MediaDrmProxy";
 
