@@ -1,4 +1,4 @@
-package org.mozilla.remotedecoder;
+package org.mozilla.gecko.media;
 
 import android.annotation.TargetApi;
 import android.content.Context;

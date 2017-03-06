@@ -1,7 +1,6 @@
-package org.mozilla.remotedecoder;
+package org.mozilla.gecko.media;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.SurfaceTexture;
 import android.net.Uri;
 import android.os.Handler;
@@ -244,7 +243,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         }
     }
 
-    public GeckoHlsPlayer(Context va, Intent intent) {
+    public GeckoHlsPlayer(Context va) {
         componentListener = new ComponentListener();
         mainHandler = new Handler();
 
@@ -264,11 +263,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         eventLogger = new EventLogger(trackSelector);
         player.addListener(eventLogger);
 
-        intent.setData(Uri.parse(HLS_URL));
-        intent.putExtra(EXTENSION_EXTRA, extension);
-
-        Uri[] uris = new Uri[]{intent.getData()};
-        String[] extensions = new String[]{intent.getStringExtra(EXTENSION_EXTRA)};
+        Uri[] uris = new Uri[]{Uri.parse(HLS_URL)};
+        String[] extensions = new String[]{extension};
         userAgent = Util.getUserAgent(va, "RemoteDecoder");
         mediaDataSourceFactory = buildDataSourceFactory(va, null);
 

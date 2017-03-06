@@ -9,12 +9,14 @@ import java.util.ArrayList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.mozilla.gecko.mozglue.JNIObject;
 import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.mozglue.JNIObject;
 
-import android.util.Log;
+import android.content.Context;
 import android.os.Build;
+import android.util.Log;
 
 public final class GeckoHlsSampleGetter {
     private static final String LOGTAG = "GeckoHlsSampleGetter";
@@ -29,7 +31,7 @@ public final class GeckoHlsSampleGetter {
     private static final String AVC = "video/avc";
 
     private Queue<Sample> samples = new ConcurrentLinkedQueue<>();
-
+    private GeckoHlsPlayer player = null;
     // A flag to avoid using the native object that has been destroyed.
     private boolean mDestroyed;
 
@@ -46,7 +48,8 @@ public final class GeckoHlsSampleGetter {
     GeckoHlsSampleGetter() {
         if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsSampleGetter");
         try {
-
+            Context ctx = GeckoAppShell.getApplicationContext();
+            player = new GeckoHlsPlayer(ctx);
         } catch (Exception e) {
             Log.e(LOGTAG, "Constructing GeckoHlsSampleGetter ... error", e);
         }

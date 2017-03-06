@@ -1,4 +1,4 @@
-package org.mozilla.remotedecoder;
+package org.mozilla.gecko.media;
 
 import android.media.MediaCodec;
 import android.media.MediaCrypto;
@@ -38,9 +38,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedList;
-/**
- * Created by kilikkuo on 2/8/17.
- */
 
 public class GeckoHlsAudioRender extends BaseRenderer implements MediaClock, AudioTrack.Listener {
     private static final boolean DEMUX_ONLY = false;
