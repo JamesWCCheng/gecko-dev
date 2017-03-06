@@ -896,6 +896,7 @@ if max_sdk_version >= 11:
 
 gbjar.extra_jars += [
     OBJDIR + '/../javaaddons/javaaddons-1.0.jar',
+    'exoplayer2.jar',
     'gecko-R.jar',
     'gecko-mozglue.jar',
     'gecko-thirdparty.jar',
