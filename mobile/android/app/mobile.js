@@ -630,6 +630,8 @@ pref("media.mediadrm-widevinecdm.visible", true);
 pref("media.eme.enabled", true);
 #endif
 
+pref("media.hls.enabled", true);
+
 // optimize images memory usage
 pref("image.downscale-during-decode.enabled", true);
 
