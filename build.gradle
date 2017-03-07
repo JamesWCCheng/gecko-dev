@@ -30,7 +30,6 @@ buildscript {
         maven {
             url "file://${gradle.mozconfig.topsrcdir}/mobile/android/gradle/m2repo"
         }
-        jcenter()
     }
 
     dependencies {
