@@ -30,13 +30,14 @@ import com.google.android.exoplayer2.video.VideoRendererEventListener;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 
-public class GeckoHlsVideoRender extends BaseRenderer {
-    private static final String TAG = "GeckoHlsVideoRender";
+public class GeckoHlsVideoRenderer extends BaseRenderer {
+    private static final String TAG = "GeckoHlsVideoRenderer";
     private boolean useCodecToDecodeRender;
     private boolean initialized;
     private ByteBuffer inputBuffer;
     private int QUEUED_INPUT_SAMPLE_SIZE = 10;
 
+    @SuppressWarnings("serial")
     public static class DecoderInitializationException extends Exception {
         private static final int CUSTOM_ERROR_CODE_BASE = -50000;
         private static final int NO_SUITABLE_DECODER_ERROR = CUSTOM_ERROR_CODE_BASE + 1;
@@ -153,8 +154,8 @@ public class GeckoHlsVideoRender extends BaseRenderer {
     private boolean renderedFirstFrame;
     private long joiningDeadlineMs;
 
-    public GeckoHlsVideoRender(Context context, MediaCodecSelector mediaCodecSelector,
-                               Handler eventHandler, VideoRendererEventListener eventListener) {
+    public GeckoHlsVideoRenderer(Context context, MediaCodecSelector mediaCodecSelector,
+                                 Handler eventHandler, VideoRendererEventListener eventListener) {
         super(C.TRACK_TYPE_VIDEO);
         initialized = false;
 
@@ -222,7 +223,7 @@ public class GeckoHlsVideoRender extends BaseRenderer {
 
         MediaCodecInfo decoderInfo = null;
         try {
-            decoderInfo = mediaCodecSelector.getDecoderInfo(format.sampleMimeType, false, false);
+            decoderInfo = mediaCodecSelector.getDecoderInfo(format.sampleMimeType, false);
         } catch (MediaCodecUtil.DecoderQueryException e) {
             throwDecoderInitError(new DecoderInitializationException(format, e,
                     false, DecoderInitializationException.DECODER_QUERY_ERROR));
@@ -672,7 +673,7 @@ public class GeckoHlsVideoRender extends BaseRenderer {
             return FORMAT_UNSUPPORTED_TYPE;
         }
 
-        MediaCodecInfo decoderInfo = mediaCodecSelector.getDecoderInfo(mimeType, false, false);
+        MediaCodecInfo decoderInfo = mediaCodecSelector.getDecoderInfo(mimeType, false);
         if (decoderInfo == null) {
             return FORMAT_UNSUPPORTED_SUBTYPE;
         }
@@ -680,12 +681,8 @@ public class GeckoHlsVideoRender extends BaseRenderer {
         boolean decoderCapable = decoderInfo.isCodecSupported(format.codecs);
         if (decoderCapable && format.width > 0 && format.height > 0) {
             if (Util.SDK_INT >= 21) {
-                if (format.frameRate > 0) {
-                    decoderCapable = decoderInfo.isVideoSizeAndRateSupportedV21(format.width, format.height,
-                            format.frameRate);
-                } else {
-                    decoderCapable = decoderInfo.isVideoSizeSupportedV21(format.width, format.height);
-                }
+                decoderCapable = decoderInfo.isVideoSizeAndRateSupportedV21(format.width, format.height,
+                        format.frameRate);
             } else {
                 decoderCapable = format.width * format.height <= MediaCodecUtil.maxH264DecodableFrameSize();
                 if (!decoderCapable) {

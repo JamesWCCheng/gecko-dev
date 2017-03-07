@@ -1,14 +1,11 @@
 package org.mozilla.gecko.media;
 
 import android.content.Context;
-import android.graphics.SurfaceTexture;
 import android.net.Uri;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Surface;
-import android.view.SurfaceHolder;
-import android.view.TextureView;
 
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -26,8 +23,6 @@ import com.google.android.exoplayer2.metadata.MetadataRenderer;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
-import com.google.android.exoplayer2.text.Cue;
-import com.google.android.exoplayer2.text.TextRenderer;
 import com.google.android.exoplayer2.trackselection.AdaptiveVideoTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -41,7 +36,6 @@ import com.google.android.exoplayer2.util.Util;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
@@ -65,9 +59,13 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     private final ComponentListener componentListener;
 
+    private long duration;
+    private long bufferedPosition;
+    private Format audioFormat;
+    private Format videoFormat;
+
     public final class ComponentListener implements VideoRendererEventListener,
-            AudioRendererEventListener, TextRenderer.Output, MetadataRenderer.Output,
-            SurfaceHolder.Callback, TextureView.SurfaceTextureListener {
+            AudioRendererEventListener, MetadataRenderer.Output {
 
         // VideoRendererEventListener implementation
 
@@ -83,7 +81,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
         @Override
         public void onVideoInputFormatChanged(Format format) {
-//            videoFormat = format;
+            videoFormat = format;
+            Log.d(TAG, "onVideoInputFormatChanged [" + videoFormat + "]");
         }
 
         @Override
@@ -108,7 +107,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
         @Override
         public void onVideoDisabled(DecoderCounters counters) {
-//            videoFormat = null;
+            videoFormat = null;
 //            videoDecoderCounters = null;
         }
 
@@ -131,7 +130,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
         @Override
         public void onAudioInputFormatChanged(Format format) {
-//            audioFormat = format;
+            audioFormat = format;
+            Log.d(TAG, "onAudioInputFormatChanged [" + audioFormat + "]");
         }
 
         @Override
@@ -141,69 +141,20 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
         @Override
         public void onAudioDisabled(DecoderCounters counters) {
-//            audioFormat = null;
+            audioFormat = null;
 //            audioDecoderCounters = null;
 //            audioSessionId = AudioTrack.SESSION_ID_NOT_SET;
-        }
-
-        // TextRenderer.Output implementation
-
-        @Override
-        public void onCues(List<Cue> cues) {
-//            if (textOutput != null) {
-//                textOutput.onCues(cues);
-//            }
         }
 
         // MetadataRenderer.Output implementation
 
         @Override
         public void onMetadata(Metadata metadata) {
+            Log.d(TAG, "onMetadata [" + metadata + "]");
 //            if (metadataOutput != null) {
 //                metadataOutput.onMetadata(metadata);
 //            }
         }
-
-        // SurfaceHolder.Callback implementation
-
-        @Override
-        public void surfaceCreated(SurfaceHolder holder) {
-//            setVideoSurfaceInternal(holder.getSurface(), false);
-        }
-
-        @Override
-        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-            // Do nothing.
-        }
-
-        @Override
-        public void surfaceDestroyed(SurfaceHolder holder) {
-//            setVideoSurfaceInternal(null, false);
-        }
-
-        // TextureView.SurfaceTextureListener implementation
-
-        @Override
-        public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
-//            setVideoSurfaceInternal(new Surface(surfaceTexture), true);
-        }
-
-        @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int width, int height) {
-            // Do nothing.
-        }
-
-        @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
-//            setVideoSurfaceInternal(null, true);
-            return true;
-        }
-
-        @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
-            // Do nothing.
-        }
-
     }
 
     public DataSource.Factory buildDataSourceFactory(Context va, DefaultBandwidthMeter bandwidthMeter) {
@@ -238,7 +189,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
             }
         }
 
-        if (surface != null) {
+        if (surface != null && count != 0) {
             player.blockingSendMessages(messages);
         }
     }
@@ -253,8 +204,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
 
         ArrayList<Renderer> renderersList = new ArrayList<>();
-        renderersList.add(new GeckoHlsVideoRender(va, MediaCodecSelector.DEFAULT, mainHandler, componentListener));
-        renderersList.add(new GeckoHlsAudioRender(MediaCodecSelector.DEFAULT, mainHandler, componentListener, (AudioCapabilities)null));
+        renderersList.add(new GeckoHlsVideoRenderer(va, MediaCodecSelector.DEFAULT, mainHandler, componentListener));
+        renderersList.add(new GeckoHlsAudioRenderer(MediaCodecSelector.DEFAULT, mainHandler, componentListener, (AudioCapabilities)null));
         renderers = renderersList.toArray(new Renderer[renderersList.size()]);
 
         player = ExoPlayerFactory.newInstance(renderers, trackSelector);
@@ -275,15 +226,18 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     @Override
     public void onLoadingChanged(boolean isLoading) {
-        Log.d(TAG, "loading [" + isLoading + "]");
+        Log.d(TAG, "loading [" + isLoading + "] ===>");
+        long duration = player.getDuration();
+        Log.d(TAG, "loading [" + isLoading + "] <=== dura : " + duration);
     }
 
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int state) {
-//        Log.d(TAG, "state [" + getSessionTimeString() + ", " + playWhenReady + ", "
-//                + getStateString(state) + "]");
+        Log.d(TAG, "state [" + playWhenReady + ", "
+                + getStateString(state) + "]");
         if (state == ExoPlayer.STATE_READY) {
             player.setPlayWhenReady(true);
+            duration = player.getDuration();
         }
     }
 
@@ -299,11 +253,45 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     @Override
     public void onTracksChanged(TrackGroupArray ignored, TrackSelectionArray trackSelections) {
+        Log.e(TAG, "onTracksChanged : TGA[" + ignored + "], TSA[" + trackSelections + "]");
+//        for (trackGroup : ignored) {
+//            for ()
+//            if (trackGroup.)
+//        }
     }
 
     @Override
     public void onTimelineChanged(Timeline timeline, Object manifest) {
         isTimelineStatic = !timeline.isEmpty()
                 && !timeline.getWindow(timeline.getWindowCount() - 1, window).isDynamic;
+    }
+
+    private static String getStateString(int state) {
+        switch (state) {
+            case ExoPlayer.STATE_BUFFERING:
+                return "B";
+            case ExoPlayer.STATE_ENDED:
+                return "E";
+            case ExoPlayer.STATE_IDLE:
+                return "I";
+            case ExoPlayer.STATE_READY:
+                return "R";
+            default:
+                return "?";
+        }
+    }
+
+    public long getDuration() {
+        if (player != null) {
+            return player.getDuration();
+        }
+        return 0;
+    }
+
+    public long getBufferedPosition() {
+        if (player != null) {
+            return player.getBufferedPosition();
+        }
+        return 0;
     }
 }
