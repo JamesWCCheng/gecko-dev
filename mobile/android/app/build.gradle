@@ -38,7 +38,6 @@ android {
 
     dexOptions {
         javaMaxHeapSize "2g"
-        jumboMode = true
     }
 
     lintOptions {
@@ -233,8 +232,6 @@ dependencies {
         compile "com.google.android.gms:play-services-gcm:${mozconfig.substs.ANDROID_GOOGLE_PLAY_SERVICES_VERSION}"
         compile "com.google.android.gms:play-services-measurement:${mozconfig.substs.ANDROID_GOOGLE_PLAY_SERVICES_VERSION}"
     }
-
-    compile 'com.google.android.exoplayer:exoplayer:r2.1.1'
 
     // Include LeakCanary in most gradle based builds. LeakCanary adds about 5k methods, so we disable
     // it for the (non-proguarded, non-multidex) localOld builds to allow space for other libraries.
