@@ -44,22 +44,14 @@
 #include "FlacDecoder.h"
 #include "FlacDemuxer.h"
 
+#include "HLSDecoder.h"
+#include "./hls/HLSUtils.h"
+
 #include "nsPluginHost.h"
 #include "MediaPrefs.h"
 
 namespace mozilla
 {
-
-static bool
-IsHttpLiveStreamingType(const MediaContainerType& aType)
-{
-  return // For m3u8.
-         // https://tools.ietf.org/html/draft-pantos-http-live-streaming-19#section-10
-         aType.Type() == MEDIAMIMETYPE("application/vnd.apple.mpegurl")
-         // Some sites serve these as the informal m3u type.
-         || aType.Type() == MEDIAMIMETYPE("application/x-mpegurl")
-         || aType.Type() == MEDIAMIMETYPE("audio/x-mpegurl");
-}
 
 #ifdef MOZ_ANDROID_OMX
 static bool
@@ -154,6 +146,15 @@ CanHandleCodecsType(const MediaContainerType& aType,
     EnsureAndroidMediaPluginHost()->FindDecoder(aType, &supportedCodecs);
   }
 #endif
+  if (HLSDecoder::IsSupportedType(mimeType)) {
+    if (HLSDecoder::IsSupportedType(aType)) {
+      HLS_DEBUG_NON_MEMBER("DecoderTraits::", "mimeType = %s", mimeType.OriginalString().Data());
+      return CANPLAY_YES;
+    }
+    HLS_DEBUG_NON_MEMBER("DecoderTraits::", "mimeType = %s", mimeType.OriginalString().Data());
+    return CANPLAY_NO;
+  }
+
   if (supportedCodecs.IsEmpty()) {
     return CANPLAY_MAYBE;
   }
@@ -172,8 +173,10 @@ CanHandleMediaType(const MediaContainerType& aType,
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (IsHttpLiveStreamingType(aType)) {
+  if (HLSDecoder::IsSupportedType(aType)) {
     Telemetry::Accumulate(Telemetry::MEDIA_HLS_CANPLAY_REQUESTED, true);
+    HLS_DEBUG_NON_MEMBER("DecoderTraits::", "aType = %s", aType.OriginalString().Data());
+    return CANPLAY_MAYBE;
   }
 
   if (aType.ExtendedType().HaveCodecs()) {
@@ -323,9 +326,12 @@ InstantiateDecoder(const MediaContainerType& aType,
   }
 #endif
 
-  if (IsHttpLiveStreamingType(aType)) {
-    // We don't have an HLS decoder.
+  if (HLSDecoder::IsSupportedType(aType)) {
+    // TODO: remove telemetry.
+    HLS_DEBUG_NON_MEMBER("DecoderTraits::", "aType = %s", aType.OriginalString().Data());
     Telemetry::Accumulate(Telemetry::MEDIA_HLS_DECODER_SUCCESS, false);
+    decoder = new HLSDecoder(aOwner);
+    return decoder.forget();
   }
 
   return nullptr;
