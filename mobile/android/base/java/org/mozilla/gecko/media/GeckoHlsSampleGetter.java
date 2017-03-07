@@ -33,7 +33,7 @@ public final class GeckoHlsSampleGetter {
     private static final String AVC = "video/avc";
 
     private Queue<Sample> samples = new ConcurrentLinkedQueue<>();
-//    private GeckoHlsPlayer player = null;
+    private GeckoHlsPlayer player = null;
     // A flag to avoid using the native object that has been destroyed.
     private boolean mDestroyed;
 
@@ -67,7 +67,7 @@ public final class GeckoHlsSampleGetter {
         if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsSampleGetter");
         try {
             Context ctx = GeckoAppShell.getApplicationContext();
-//            player = new GeckoHlsPlayer(ctx);
+            player = new GeckoHlsPlayer(ctx);
         } catch (Exception e) {
             Log.e(LOGTAG, "Constructing GeckoHlsSampleGetter ... error", e);
         }

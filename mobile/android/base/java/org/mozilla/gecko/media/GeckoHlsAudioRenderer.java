@@ -39,9 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedList;
 
-public class GeckoHlsAudioRender extends BaseRenderer implements MediaClock, AudioTrack.Listener {
+public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
     private static final boolean DEMUX_ONLY = false;
-    private static final String TAG = "GeckoHlsAudioRender";
+    private static final String TAG = "GeckoHlsAudioRenderer";
     private LinkedList<DecoderInputBuffer> demuxedSampleBuffer = new LinkedList<>();
     private static final int QUEUED_DEMUXED_INPUT_BUFFER_SIZE = 10;
     private boolean initialized = false;
@@ -105,23 +105,22 @@ public class GeckoHlsAudioRender extends BaseRenderer implements MediaClock, Aud
     private static final int REINITIALIZATION_STATE_SIGNAL_END_OF_STREAM = 1;
     private static final int REINITIALIZATION_STATE_WAIT_END_OF_STREAM = 2;
 
-    public GeckoHlsAudioRender(MediaCodecSelector mediaCodecSelector,
-                               Handler eventHandler,
-                               AudioRendererEventListener eventListener,
-                               AudioCapabilities audioCapabilities) {
+    public GeckoHlsAudioRenderer(MediaCodecSelector mediaCodecSelector,
+                                 Handler eventHandler,
+                                 AudioRendererEventListener eventListener,
+                                 AudioCapabilities audioCapabilities) {
         super(C.TRACK_TYPE_AUDIO);
         Assertions.checkState(Util.SDK_INT >= 16);
-        this.mediaCodecSelector = (MediaCodecSelector) Assertions.checkNotNull(mediaCodecSelector);
+        this.mediaCodecSelector = Assertions.checkNotNull(mediaCodecSelector);
 //        this.drmSessionManager = drmSessionManager;
 //        this.playClearSamplesWithoutKeys = playClearSamplesWithoutKeys;
         this.buffer = new DecoderInputBuffer(0);
         this.formatHolder = new FormatHolder();
-        this.decodeOnlyPresentationTimestamps = new ArrayList();
+        this.decodeOnlyPresentationTimestamps = new ArrayList<Long>();
         this.outputBufferInfo = new MediaCodec.BufferInfo();
         this.codecReconfigurationState = 0;
         this.codecReinitializationState = 0;
-        this.audioSessionId = 0;
-        this.audioTrack = new AudioTrack(audioCapabilities, this);
+        this.audioTrack = new AudioTrack(audioCapabilities, new AudioTrackListener());
         this.eventDispatcher = new AudioRendererEventListener.EventDispatcher(eventHandler, eventListener);
     }
 
@@ -141,7 +140,7 @@ public class GeckoHlsAudioRender extends BaseRenderer implements MediaClock, Aud
         } else if (this.allowPassthrough(mimeType) && mediaCodecSelector.getPassthroughDecoderInfo() != null) {
             return 7;
         } else {
-            MediaCodecInfo decoderInfo = mediaCodecSelector.getDecoderInfo(mimeType, false, false);
+            MediaCodecInfo decoderInfo = mediaCodecSelector.getDecoderInfo(mimeType, false);
             if (decoderInfo == null) {
                 return 1;
             } else {
@@ -162,7 +161,7 @@ public class GeckoHlsAudioRender extends BaseRenderer implements MediaClock, Aud
         }
 
         this.passthroughEnabled = false;
-        return mediaCodecSelector.getDecoderInfo(format.sampleMimeType, requiresSecureDecoder, false);
+        return mediaCodecSelector.getDecoderInfo(format.sampleMimeType, requiresSecureDecoder);
     }
 
     protected boolean allowPassthrough(String mimeType) {
@@ -242,6 +241,16 @@ public class GeckoHlsAudioRender extends BaseRenderer implements MediaClock, Aud
     }
 
     protected void onAudioSessionId(int audioSessionId) {
+        // Do nothing.
+    }
+
+    protected void onAudioTrackPositionDiscontinuity() {
+        // Do nothing.
+    }
+
+    protected void onAudioTrackUnderrun(int bufferSize, long bufferSizeMs,
+                                        long elapsedSinceLastFeedMs) {
+        // Do nothing.
     }
 
     protected void onEnabled(boolean joining) throws ExoPlaybackException {
@@ -275,8 +284,6 @@ public class GeckoHlsAudioRender extends BaseRenderer implements MediaClock, Aud
     }
 
     protected void onDisabled() {
-        this.audioSessionId = 0;
-
         try {
             if (!DEMUX_ONLY) {
                 this.audioTrack.release();
@@ -348,47 +355,19 @@ public class GeckoHlsAudioRender extends BaseRenderer implements MediaClock, Aud
             this.audioTrack.handleDiscontinuity();
             return true;
         } else {
-            if(!this.audioTrack.isInitialized()) {
-                try {
-                    if(this.audioSessionId == 0) {
-                        this.audioSessionId = this.audioTrack.initialize(0);
-                        this.eventDispatcher.audioSessionId(this.audioSessionId);
-                        this.onAudioSessionId(this.audioSessionId);
-                    } else {
-                        this.audioTrack.initialize(this.audioSessionId);
-                    }
-                } catch (AudioTrack.InitializationException var15) {
-                    throw ExoPlaybackException.createForRenderer(var15, this.getIndex());
-                }
-
-                if(this.getState() == 2) {
-                    this.audioTrack.play();
-                }
-            }
-
-            int handleBufferResult;
             try {
-                handleBufferResult = this.audioTrack.handleBuffer(this.outputBuffers[bufferIndex], bufferPresentationTimeUs);
-            } catch (AudioTrack.WriteException var14) {
+                if (this.audioTrack.handleBuffer(this.outputBuffers[bufferIndex], bufferPresentationTimeUs)) {
+                    codec.releaseOutputBuffer(bufferIndex, false);
+                    ++this.decoderCounters.renderedOutputBufferCount;
+                    if (demuxedSampleBuffer.size() > 0) {
+                        demuxedSampleBuffer.removeFirst();
+                    }
+                    return true;
+                }
+            } catch (AudioTrack.InitializationException | AudioTrack.WriteException var14) {
                 throw ExoPlaybackException.createForRenderer(var14, this.getIndex());
             }
-
-
-            if((handleBufferResult & 1) != 0) {
-                this.handleAudioTrackDiscontinuity();
-                this.allowPositionDiscontinuity = true;
-            }
-
-            if((handleBufferResult & 2) != 0) {
-                if (demuxedSampleBuffer.size() > 0) {
-                    demuxedSampleBuffer.removeFirst();
-                }
-                codec.releaseOutputBuffer(bufferIndex, false);
-                ++this.decoderCounters.renderedOutputBufferCount;
-                return true;
-            } else {
-                return false;
-            }
+            return false;
         }
     }
 
@@ -396,9 +375,6 @@ public class GeckoHlsAudioRender extends BaseRenderer implements MediaClock, Aud
         if (!DEMUX_ONLY) {
             this.audioTrack.handleEndOfStream();
         }
-    }
-
-    protected void handleAudioTrackDiscontinuity() {
     }
 
     public void handleMessage(int messageType, Object message) throws ExoPlaybackException {
@@ -411,9 +387,7 @@ public class GeckoHlsAudioRender extends BaseRenderer implements MediaClock, Aud
                 break;
             case 4:
                 int streamType = ((Integer)message).intValue();
-                if(this.audioTrack.setStreamType(streamType)) {
-                    this.audioSessionId = 0;
-                }
+                this.audioTrack.setStreamType(streamType);
                 break;
             default:
                 super.handleMessage(messageType, message);
@@ -471,7 +445,7 @@ public class GeckoHlsAudioRender extends BaseRenderer implements MediaClock, Aud
                     return;
                 }
 
-                mediaCrypto = ((FrameworkMediaCrypto)this.drmSession.getMediaCrypto()).getWrappedMediaCrypto();
+                mediaCrypto = this.drmSession.getMediaCrypto().getWrappedMediaCrypto();
                 drmSessionRequiresSecureDecoder = this.drmSession.requiresSecureDecoderComponent(mimeType);
             }
 
@@ -639,7 +613,7 @@ public class GeckoHlsAudioRender extends BaseRenderer implements MediaClock, Aud
         int size = this.decodeOnlyPresentationTimestamps.size();
 
         for(int i = 0; i < size; ++i) {
-            if(((Long)this.decodeOnlyPresentationTimestamps.get(i)).longValue() == presentationTimeUs) {
+            if(this.decodeOnlyPresentationTimestamps.get(i).longValue() == presentationTimeUs) {
                 this.decodeOnlyPresentationTimestamps.remove(i);
                 return true;
             }
@@ -933,11 +907,27 @@ public class GeckoHlsAudioRender extends BaseRenderer implements MediaClock, Aud
         return 0L;
     }
 
-    //
-    // Implement MediaClock
-    @Override
-    public void onUnderrun(int bufferSize, long bufferSizeMs, long elapsedSinceLastFeedMs) {
-        this.eventDispatcher.audioTrackUnderrun(bufferSize, bufferSizeMs, elapsedSinceLastFeedMs);
+    private final class AudioTrackListener implements AudioTrack.Listener {
+
+        @Override
+        public void onAudioSessionId(int audioSessionId) {
+            eventDispatcher.audioSessionId(audioSessionId);
+            GeckoHlsAudioRenderer.this.onAudioSessionId(audioSessionId);
+        }
+
+        @Override
+        public void onPositionDiscontinuity() {
+            onAudioTrackPositionDiscontinuity();
+            // We are out of sync so allow currentPositionUs to jump backwards.
+            GeckoHlsAudioRenderer.this.allowPositionDiscontinuity = true;
+        }
+
+        @Override
+        public void onUnderrun(int bufferSize, long bufferSizeMs, long elapsedSinceLastFeedMs) {
+            eventDispatcher.audioTrackUnderrun(bufferSize, bufferSizeMs, elapsedSinceLastFeedMs);
+            onAudioTrackUnderrun(bufferSize, bufferSizeMs, elapsedSinceLastFeedMs);
+        }
+
     }
 }
 
