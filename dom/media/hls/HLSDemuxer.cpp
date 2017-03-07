@@ -10,7 +10,6 @@
 
 #include "HLSDemuxer.h"
 #include "nsPrintfCString.h"
-#include "OpusDecoder.h"
 
 namespace mozilla {
 
@@ -25,6 +24,7 @@ HLSDemuxer::HLSDemuxer(AbstractThread* aAbstractMainThread)
   , mMonitor("HLSDemuxer")
 {
   MOZ_ASSERT(NS_IsMainThread());
+  mHlsSampleGetter = GeckoHlsSampleGetter::Create();
 }
 
 // Due to inaccuracies in determining buffer end
@@ -110,9 +110,7 @@ HLSTrackDemuxer::HLSTrackDemuxer(HLSDemuxer* aParent, TrackInfo::TrackType aType
   , mType(aType)
   , mMonitor("HLSTrackDemuxer")
   , mReset(true)
-  , mPreRoll(TimeUnit::FromMicroseconds(
-    OpusDataDecoder::IsOpus(mParent->GetTrackInfo(mType)->mMimeType) ? 80000
-                                                                     : 0))
+  , mPreRoll(TimeUnit::FromMicroseconds(0))
 {
 }
 

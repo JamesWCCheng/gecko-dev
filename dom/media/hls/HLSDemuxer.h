@@ -7,12 +7,16 @@
 #if !defined(HLSDemuxer_h_)
 #define HLSDemuxer_h_
 
+#include "AutoTaskQueue.h"
+#include "FennecJNIWrappers.h"
+#include "MediaDataDemuxer.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/Monitor.h"
-#include "AutoTaskQueue.h"
 
-#include "MediaDataDemuxer.h"
+#include "VideoUtils.h"
+
+using namespace mozilla::java;
 
 namespace mozilla {
 
@@ -58,6 +62,8 @@ private:
   // Monitor to protect members below across multiple threads.
   mutable Monitor mMonitor;
   MediaInfo mInfo;
+
+  java::GeckoHlsSampleGetter::GlobalRef mHlsSampleGetter;
 };
 
 class HLSTrackDemuxer : public MediaTrackDemuxer
