@@ -271,20 +271,28 @@ constexpr char CodecProxy::NativeCallbacks::OnOutputFormatChanged_t::signature[]
 const char GeckoHlsSampleGetter::name[] =
         "org/mozilla/gecko/media/GeckoHlsSampleGetter";
 
-constexpr char GeckoHlsSampleGetter::GetTrackType_t::name[];
-constexpr char GeckoHlsSampleGetter::GetTrackType_t::signature[];
+constexpr char GeckoHlsSampleGetter::GetAudioInfo_t::name[];
+constexpr char GeckoHlsSampleGetter::GetAudioInfo_t::signature[];
 
-auto GeckoHlsSampleGetter::GetTrackType(int32_t a0) -> bool
+auto GeckoHlsSampleGetter::GetAudioInfo(int32_t a0) const -> mozilla::jni::Object::LocalRef
 {
-    return mozilla::jni::Method<GetTrackType_t>::Call(GeckoHlsSampleGetter::Context(), nullptr, a0);
+    return mozilla::jni::Method<GetAudioInfo_t>::Call(GeckoHlsSampleGetter::mCtx, nullptr, a0);
 }
 
-constexpr char GeckoHlsSampleGetter::HasTrackType_t::name[];
-constexpr char GeckoHlsSampleGetter::HasTrackType_t::signature[];
+constexpr char GeckoHlsSampleGetter::GetNumberOfTracks_t::name[];
+constexpr char GeckoHlsSampleGetter::GetNumberOfTracks_t::signature[];
 
-auto GeckoHlsSampleGetter::HasTrackType(int32_t a0) -> bool
+auto GeckoHlsSampleGetter::GetNumberOfTracks(int32_t a0) -> int32_t
 {
-    return mozilla::jni::Method<HasTrackType_t>::Call(GeckoHlsSampleGetter::Context(), nullptr, a0);
+    return mozilla::jni::Method<GetNumberOfTracks_t>::Call(GeckoHlsSampleGetter::Context(), nullptr, a0);
+}
+
+constexpr char GeckoHlsSampleGetter::GetVideoInfo_t::name[];
+constexpr char GeckoHlsSampleGetter::GetVideoInfo_t::signature[];
+
+auto GeckoHlsSampleGetter::GetVideoInfo(int32_t a0) const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetVideoInfo_t>::Call(GeckoHlsSampleGetter::mCtx, nullptr, a0);
 }
 
 constexpr char GeckoHlsSampleGetter::Create_t::name[];

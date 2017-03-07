@@ -941,15 +941,35 @@ public:
 
     explicit GeckoHlsSampleGetter(const Context& ctx) : ObjectBase<GeckoHlsSampleGetter>(ctx) {}
 
-    struct GetTrackType_t {
+    struct GetAudioInfo_t {
         typedef GeckoHlsSampleGetter Owner;
-        typedef bool ReturnType;
-        typedef bool SetterType;
+        typedef mozilla::jni::Object::LocalRef ReturnType;
+        typedef mozilla::jni::Object::Param SetterType;
         typedef mozilla::jni::Args<
                 int32_t> Args;
-        static constexpr char name[] = "GetTrackType";
+        static constexpr char name[] = "GetAudioInfo";
         static constexpr char signature[] =
-                "(I)Z";
+                "(I)Lorg/mozilla/gecko/media/HlsAudioInfo;";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto GetAudioInfo(int32_t) const -> mozilla::jni::Object::LocalRef;
+
+    struct GetNumberOfTracks_t {
+        typedef GeckoHlsSampleGetter Owner;
+        typedef int32_t ReturnType;
+        typedef int32_t SetterType;
+        typedef mozilla::jni::Args<
+                int32_t> Args;
+        static constexpr char name[] = "GetNumberOfTracks";
+        static constexpr char signature[] =
+                "(I)I";
         static const bool isStatic = true;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -959,18 +979,18 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    static auto GetTrackType(int32_t) -> bool;
+    static auto GetNumberOfTracks(int32_t) -> int32_t;
 
-    struct HasTrackType_t {
+    struct GetVideoInfo_t {
         typedef GeckoHlsSampleGetter Owner;
-        typedef bool ReturnType;
-        typedef bool SetterType;
+        typedef mozilla::jni::Object::LocalRef ReturnType;
+        typedef mozilla::jni::Object::Param SetterType;
         typedef mozilla::jni::Args<
                 int32_t> Args;
-        static constexpr char name[] = "HasTrackType";
+        static constexpr char name[] = "GetVideoInfo";
         static constexpr char signature[] =
-                "(I)Z";
-        static const bool isStatic = true;
+                "(I)Lorg/mozilla/gecko/media/HlsVideoInfo;";
+        static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
         static const mozilla::jni::CallingThread callingThread =
@@ -979,7 +999,7 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    static auto HasTrackType(int32_t) -> bool;
+    auto GetVideoInfo(int32_t) const -> mozilla::jni::Object::LocalRef;
 
     struct Create_t {
         typedef GeckoHlsSampleGetter Owner;

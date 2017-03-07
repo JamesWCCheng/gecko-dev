@@ -52,14 +52,14 @@ public final class GeckoHlsSampleGetter {
     @WrapForJNI
     public HlsAudioInfo GetAudioInfo(int trackNumber) {
         if (DEBUG) Log.d(LOGTAG, "[HasTrackType]");
-        aInfo = new HlsAudioInfo();
+        HlsAudioInfo aInfo = new HlsAudioInfo();
         return aInfo;
     }
 
     @WrapForJNI
     public HlsVideoInfo GetVideoInfo(int trackNumber) {
         if (DEBUG) Log.d(LOGTAG, "[HasTrackType]");
-        vInfo = new HlsVideoInfo();
+        HlsVideoInfo vInfo = new HlsVideoInfo();
         return vInfo;
     }
 
