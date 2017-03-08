@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package org.mozilla.gecko.media;
 
 import android.content.Context;
@@ -21,6 +25,7 @@ import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.metadata.Metadata;
 import com.google.android.exoplayer2.metadata.MetadataRenderer;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.trackselection.AdaptiveVideoTrackSelection;
@@ -59,10 +64,20 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     private final ComponentListener componentListener;
 
+    private boolean trackGroupUpdated = false;
     private long duration;
     private long bufferedPosition;
     private Format audioFormat;
     private Format videoFormat;
+    private int numVideoTracks = 0;
+    private int numAudioTracks = 0;
+
+    public enum Track_Type {
+        TRACK_UNDEFINED,
+        TRACK_AUDIO,
+        TRACK_VIDEO,
+        TRACK_TEXT,
+    }
 
     public final class ComponentListener implements VideoRendererEventListener,
             AudioRendererEventListener, MetadataRenderer.Output {
@@ -82,7 +97,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         @Override
         public void onVideoInputFormatChanged(Format format) {
             videoFormat = format;
-            Log.d(TAG, "onVideoInputFormatChanged [" + videoFormat + "]");
+            Log.d( TAG, "onVideoInputFormatChanged [" + videoFormat + "]");
         }
 
         @Override
@@ -248,16 +263,31 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     @Override
     public void onPlayerError(ExoPlaybackException e) {
-//        Log.e(TAG, "playerFailed [" + getSessionTimeString() + "]", e);
+        Log.e(TAG, "playerFailed" , e);
     }
 
     @Override
     public void onTracksChanged(TrackGroupArray ignored, TrackSelectionArray trackSelections) {
         Log.e(TAG, "onTracksChanged : TGA[" + ignored + "], TSA[" + trackSelections + "]");
-//        for (trackGroup : ignored) {
-//            for ()
-//            if (trackGroup.)
-//        }
+        // TODO : need to synchronized with getNumberTracks()
+        if (trackGroupUpdated) {
+            numVideoTracks = 0;
+            numAudioTracks = 0;
+        }
+        for (int j = 0; j < ignored.length; j++) {
+            TrackGroup tg = ignored.get(j);
+            for (int i = 0; i < tg.length; i++) {
+                Format fmt = tg.getFormat(i);
+                if (fmt.sampleMimeType != null) {
+                    if (fmt.sampleMimeType.startsWith(new String("video"))) {
+                        numVideoTracks++;
+                    } else if (fmt.sampleMimeType.startsWith(new String("audio"))) {
+                        numAudioTracks++;
+                    }
+                }
+            }
+        }
+        trackGroupUpdated = true;
     }
 
     @Override
@@ -281,6 +311,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         }
     }
 
+    // API for GeckoHlsSampleGetter ===============================
     public long getDuration() {
         if (player != null) {
             return player.getDuration();
@@ -293,5 +324,29 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
             return player.getBufferedPosition();
         }
         return 0;
+    }
+
+    public int getNumberTracks(Track_Type trackType) {
+        assert trackGroupUpdated;
+        if (trackType == Track_Type.TRACK_VIDEO) {
+            return numVideoTracks;
+        } else if (trackType == Track_Type.TRACK_AUDIO) {
+            return numAudioTracks;
+        }
+        return 0;
+    }
+
+    public Format getVideoTrackFormat() {
+        return videoFormat;
+    }
+
+    public Format getAudioTrackFormat() {
+        return audioFormat;
+    }
+
+    public void seek(long positionMs) {
+        if (player != null) {
+            player.seekTo(positionMs);
+        }
     }
 }
