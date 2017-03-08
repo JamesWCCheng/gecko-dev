@@ -45,7 +45,7 @@
 #include "FlacDemuxer.h"
 
 #include "HLSDecoder.h"
-#include "./hls/HLSUtils.h"
+#include "HLSUtils.h"
 
 #include "nsPluginHost.h"
 #include "MediaPrefs.h"
