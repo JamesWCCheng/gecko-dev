@@ -19,8 +19,9 @@ typedef TrackInfo::TrackType TrackType;
 using media::TimeUnit;
 using media::TimeIntervals;
 
-HLSDemuxer::HLSDemuxer(AbstractThread* aAbstractMainThread)
-  : mTaskQueue(new AutoTaskQueue(GetMediaThreadPool(MediaThreadType::PLAYBACK),
+HLSDemuxer::HLSDemuxer(MediaResource* aResource, AbstractThread* aAbstractMainThread)
+  : mResource(aResource)
+  , mTaskQueue(new AutoTaskQueue(GetMediaThreadPool(MediaThreadType::PLAYBACK),
                                  aAbstractMainThread,
                                  /* aSupportsTailDispatch = */ false))
   , mMonitor("HLSDemuxer")

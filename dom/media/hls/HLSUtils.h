@@ -8,6 +8,7 @@
 #define HLSUtils_h_
 
 #include "mozilla/Logging.h"
+#include "MediaContainerType.h"
 // Logger
 
 inline
@@ -19,7 +20,9 @@ mozilla::LogModule* GetHLSLog()
 
 // TODO: Uncolor
 #define HLS_DEBUG(TAG, format, ...) MOZ_LOG(GetHLSLog(), mozilla::LogLevel::Debug, ("\033[0;32;31m " TAG "(%p)::%s: " format " \033[m", this, __func__, ##__VA_ARGS__))
-#define HLS_DEBUG_NON_MEMBER(TAG, format, ...) MOZ_LOG(GetHLSLog(), mozilla::LogLevel::Debug, ("\033[0;32;31m " TAG "%s: " format " \033[m", __func__, ##__VA_ARGS__))
+#define HLS_DEBUG_NON_MEMBER(TAG, format, ...) MOZ_LOG(GetHLSLog(), mozilla::LogLevel::Debug, ("\033[0;32;31m " TAG " %s: " format " \033[m", __func__, ##__VA_ARGS__))
 //
-
+namespace mozilla {
+bool IsHttpLiveStreamingType(const mozilla::MediaContainerType& aType);
+}
 #endif // HLSUtils_h_

@@ -21,7 +21,7 @@ HLSDecoder::CreateStateMachine()
   //TODO: check hls demuxer constructor's parameter
   mReader =
     new MediaFormatReader(this,
-                          new HLSDemuxer(AbstractMainThread()),
+                          new HLSDemuxer(GetResource(), AbstractMainThread()),
                           GetVideoFrameContainer());
 
   return new MediaDecoderStateMachine(this, mReader);
@@ -49,17 +49,9 @@ HLSDecoder::IsSupportedType(const MediaContainerType& aContainerType)
 {
   // TODO: Copy from DecoderTraits
   HLS_DEBUG_NON_MEMBER("HLSDecoder", "HLSDecoder::aContainerType = %s", aContainerType.OriginalString().Data());
-  HLS_DEBUG_NON_MEMBER("HLSDecoder", "HLSDecoder::IsSupportedType = %d",
-      (aContainerType.Type() == MEDIAMIMETYPE("application/vnd.apple.mpegurl")
-      || aContainerType.Type() == MEDIAMIMETYPE("application/x-mpegurl")
-      || aContainerType.Type() == MEDIAMIMETYPE("audio/x-mpegurl")));
+  HLS_DEBUG_NON_MEMBER("HLSDecoder", "HLSDecoder::IsSupportedType = %d", IsHttpLiveStreamingType(aContainerType));
   return IsEnabled()
-         &&  // For m3u8.
-             // https://tools.ietf.org/html/draft-pantos-http-live-streaming-19#section-10
-             (aContainerType.Type() == MEDIAMIMETYPE("application/vnd.apple.mpegurl")
-             // Some sites serve these as the informal m3u type.
-             || aContainerType.Type() == MEDIAMIMETYPE("application/x-mpegurl")
-             || aContainerType.Type() == MEDIAMIMETYPE("audio/x-mpegurl"));
+         && IsHttpLiveStreamingType(aContainerType);
 }
 
 } // namespace mozilla

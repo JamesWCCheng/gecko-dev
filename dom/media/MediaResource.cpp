@@ -32,6 +32,9 @@
 #include "nsProxyRelease.h"
 #include "nsIContentPolicy.h"
 
+#include "HLSUtils.h"
+#include "HLSResource.h"
+
 using mozilla::media::TimeUnit;
 
 #undef LOG
@@ -1516,8 +1519,16 @@ MediaResource::Create(MediaResourceCallback* aCallback, nsIChannel* aChannel)
     return nullptr;
   }
 
-  nsCOMPtr<nsIFileChannel> fc = do_QueryInterface(aChannel);
+  HLS_DEBUG_NON_MEMBER("MediaResource", "contentTypeString = %s , containerType = %s", contentTypeString.get(), containerType.value().OriginalString().Data());
+
+
   RefPtr<MediaResource> resource;
+  if (IsHttpLiveStreamingType(containerType.value())) {
+    // TODO: fix me with a principal.
+    resource = new HLSResource(aCallback, aChannel, uri, *containerType, nullptr);
+    return resource.forget();
+  }
+  nsCOMPtr<nsIFileChannel> fc = do_QueryInterface(aChannel);
   if (fc || IsBlobURI(uri)) {
     resource = new FileMediaResource(aCallback, aChannel, uri, *containerType);
   } else {

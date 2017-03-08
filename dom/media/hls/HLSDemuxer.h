@@ -27,7 +27,7 @@ class HLSTrackDemuxer;
 class HLSDemuxer : public MediaDataDemuxer
 {
 public:
-  explicit HLSDemuxer(AbstractThread* aAbstractMainThread);
+  explicit HLSDemuxer(MediaResource* aResource, AbstractThread* aAbstractMainThread);
 
   RefPtr<InitPromise> Init() override;
 
@@ -51,6 +51,7 @@ public:
 
 private:
   ~HLSDemuxer();
+  RefPtr<MediaResource> mResource;
   friend class HLSTrackDemuxer;
   TrackInfo* GetTrackInfo(TrackInfo::TrackType);
 
