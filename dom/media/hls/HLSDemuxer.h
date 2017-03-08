@@ -63,7 +63,7 @@ private:
   mutable Monitor mMonitor;
   MediaInfo mInfo;
 
-  java::GeckoHlsSampleGetter::GlobalRef mHlsSampleGetter;
+  java::GeckoHlsDemuxerWrapper::GlobalRef mHlsDemuxerWrapper;
 };
 
 class HLSTrackDemuxer : public MediaTrackDemuxer

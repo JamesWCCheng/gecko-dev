@@ -11,6 +11,8 @@
 #include "HLSDemuxer.h"
 #include "nsPrintfCString.h"
 
+using namespace mozilla::java;
+
 namespace mozilla {
 
 typedef TrackInfo::TrackType TrackType;
@@ -24,7 +26,7 @@ HLSDemuxer::HLSDemuxer(AbstractThread* aAbstractMainThread)
   , mMonitor("HLSDemuxer")
 {
   MOZ_ASSERT(NS_IsMainThread());
-  mHlsSampleGetter = GeckoHlsSampleGetter::Create();
+  mHlsDemuxerWrapper = GeckoHlsDemuxerWrapper::Create();
 }
 
 // Due to inaccuracies in determining buffer end
@@ -60,7 +62,14 @@ HLSDemuxer::HasTrackType(TrackType aType) const
 uint32_t
 HLSDemuxer::GetNumberTracks(TrackType aType) const
 {
-  return HasTrackType(aType) ? 1u : 0;
+  switch (aType) {
+    case TrackType::kAudioTrack:
+      return mHlsDemuxerWrapper->GetNumberOfTracks(1);
+    case TrackType::kVideoTrack:
+      return mHlsDemuxerWrapper->GetNumberOfTracks(2);
+    default:
+      return 0;
+  }
 }
 
 already_AddRefed<MediaTrackDemuxer>
@@ -91,10 +100,14 @@ HLSDemuxer::GetTrackInfo(TrackType aTrack)
 {
   MonitorAutoLock mon(mMonitor);
   switch (aTrack) {
-    case TrackType::kAudioTrack:
+    case TrackType::kAudioTrack: {
+      jni::Object::LocalRef hlsAInfoObj = mHlsDemuxerWrapper->GetAudioInfo(0);
       return &mInfo.mAudio;
-    case TrackType::kVideoTrack:
+    }
+    case TrackType::kVideoTrack: {
+      jni::Object::LocalRef hlsVInfoObj = mHlsDemuxerWrapper->GetVideoInfo(0);
       return &mInfo.mVideo;
+    }
     default:
       return nullptr;
   }
