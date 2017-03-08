@@ -14,18 +14,32 @@ import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.mozglue.JNIObject;
 
+import com.google.android.exoplayer2.Format;
+
 import android.content.Context;
 import android.os.Build;
 import android.util.Log;
 
-public final class GeckoHlsSampleGetter {
-    private static final String LOGTAG = "GeckoHlsSampleGetter";
+public final class GeckoHlsDemuxerWrapper {
+    private static final String LOGTAG = "GeckoHlsDemuxerWrapper";
     private static final boolean DEBUG = false;
 
+    // NOTE : These TRACK definition should be synced with Gecko.
     private static final int TRACK_UNDEFINED = 0;
     private static final int TRACK_AUDIO = 1;
     private static final int TRACK_VIDEO = 2;
     private static final int TRACK_TEXT = 3;
+
+    private GeckoHlsPlayer.Track_Type getPlayerTrackType(int trackType) {
+        if (trackType == 1) {
+            return GeckoHlsPlayer.Track_Type.TRACK_AUDIO;
+        } else if (trackType == 2) {
+            return GeckoHlsPlayer.Track_Type.TRACK_VIDEO;
+        } else if (trackType == 3) {
+            return GeckoHlsPlayer.Track_Type.TRACK_TEXT;
+        }
+        return GeckoHlsPlayer.Track_Type.TRACK_UNDEFINED;
+    }
 
     @WrapForJNI
     private static final String AAC = "audio/mp4a-latm";
@@ -38,38 +52,57 @@ public final class GeckoHlsSampleGetter {
     private boolean mDestroyed;
 
     @WrapForJNI(calledFrom = "gecko")
-    public static GeckoHlsSampleGetter create() {
-        GeckoHlsSampleGetter getter = new GeckoHlsSampleGetter();
-        return getter;
+    public static GeckoHlsDemuxerWrapper create() {
+        GeckoHlsDemuxerWrapper wrapper = new GeckoHlsDemuxerWrapper();
+        return wrapper;
     }
 
     @WrapForJNI
-    public static int GetNumberOfTracks(int trackType) {
+    public int GetNumberOfTracks(int trackType) {
         if (DEBUG) Log.d(LOGTAG, "[GetNumberOfTracks]");
+        if (player != null) {
+            return player.getNumberTracks(getPlayerTrackType(trackType));
+        }
         return 0;
     }
 
     @WrapForJNI
     public HlsAudioInfo GetAudioInfo(int trackNumber) {
-        if (DEBUG) Log.d(LOGTAG, "[HasTrackType]");
+        assert player != null;
+        if (DEBUG) Log.d(LOGTAG, "[GetAudioInfo]");
+        Format fmt = player.getAudioTrackFormat();
         HlsAudioInfo aInfo = new HlsAudioInfo();
+        if (player != null) {
+            aInfo.rate = fmt.sampleRate;
+            aInfo.channels = fmt.channelCount;
+        }
         return aInfo;
     }
 
     @WrapForJNI
     public HlsVideoInfo GetVideoInfo(int trackNumber) {
-        if (DEBUG) Log.d(LOGTAG, "[HasTrackType]");
+        assert player != null;
+        if (DEBUG) Log.d(LOGTAG, "[GetVideoInfo]");
+        Format fmt = player.getVideoTrackFormat();
         HlsVideoInfo vInfo = new HlsVideoInfo();
+        if (fmt != null) {
+            vInfo.displayX = fmt.width;
+            vInfo.displayY = fmt.height;
+            vInfo.pictureX = fmt.width;
+            vInfo.pictureY = fmt.height;
+            vInfo.stereoMode = fmt.stereoMode;
+            vInfo.rotation = fmt.rotationDegrees;
+        }
         return vInfo;
     }
 
-    GeckoHlsSampleGetter() {
-        if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsSampleGetter");
+    GeckoHlsDemuxerWrapper() {
+        if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper");
         try {
             Context ctx = GeckoAppShell.getApplicationContext();
             player = new GeckoHlsPlayer(ctx);
         } catch (Exception e) {
-            Log.e(LOGTAG, "Constructing GeckoHlsSampleGetter ... error", e);
+            Log.e(LOGTAG, "Constructing GeckoHlsDemuxerWrapper ... error", e);
         }
     }
 
@@ -95,5 +128,9 @@ public final class GeckoHlsSampleGetter {
 
     private void release() {
         if (DEBUG) Log.d(LOGTAG, "release");
+        if (player != null) {
+            player.release();
+            player = null;
+        }
     }
 }

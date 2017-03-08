@@ -911,15 +911,15 @@ public:
     template<class Impl> class Natives;
 };
 
-class GeckoHlsSampleGetter : public mozilla::jni::ObjectBase<GeckoHlsSampleGetter>
+class GeckoHlsDemuxerWrapper : public mozilla::jni::ObjectBase<GeckoHlsDemuxerWrapper>
 {
 public:
     static const char name[];
 
-    explicit GeckoHlsSampleGetter(const Context& ctx) : ObjectBase<GeckoHlsSampleGetter>(ctx) {}
+    explicit GeckoHlsDemuxerWrapper(const Context& ctx) : ObjectBase<GeckoHlsDemuxerWrapper>(ctx) {}
 
     struct GetAudioInfo_t {
-        typedef GeckoHlsSampleGetter Owner;
+        typedef GeckoHlsDemuxerWrapper Owner;
         typedef mozilla::jni::Object::LocalRef ReturnType;
         typedef mozilla::jni::Object::Param SetterType;
         typedef mozilla::jni::Args<
@@ -939,7 +939,7 @@ public:
     auto GetAudioInfo(int32_t) const -> mozilla::jni::Object::LocalRef;
 
     struct GetNumberOfTracks_t {
-        typedef GeckoHlsSampleGetter Owner;
+        typedef GeckoHlsDemuxerWrapper Owner;
         typedef int32_t ReturnType;
         typedef int32_t SetterType;
         typedef mozilla::jni::Args<
@@ -947,7 +947,7 @@ public:
         static constexpr char name[] = "GetNumberOfTracks";
         static constexpr char signature[] =
                 "(I)I";
-        static const bool isStatic = true;
+        static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
         static const mozilla::jni::CallingThread callingThread =
@@ -956,10 +956,10 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    static auto GetNumberOfTracks(int32_t) -> int32_t;
+    auto GetNumberOfTracks(int32_t) const -> int32_t;
 
     struct GetVideoInfo_t {
-        typedef GeckoHlsSampleGetter Owner;
+        typedef GeckoHlsDemuxerWrapper Owner;
         typedef mozilla::jni::Object::LocalRef ReturnType;
         typedef mozilla::jni::Object::Param SetterType;
         typedef mozilla::jni::Args<
@@ -979,13 +979,13 @@ public:
     auto GetVideoInfo(int32_t) const -> mozilla::jni::Object::LocalRef;
 
     struct Create_t {
-        typedef GeckoHlsSampleGetter Owner;
-        typedef GeckoHlsSampleGetter::LocalRef ReturnType;
-        typedef GeckoHlsSampleGetter::Param SetterType;
+        typedef GeckoHlsDemuxerWrapper Owner;
+        typedef GeckoHlsDemuxerWrapper::LocalRef ReturnType;
+        typedef GeckoHlsDemuxerWrapper::Param SetterType;
         typedef mozilla::jni::Args<> Args;
         static constexpr char name[] = "create";
         static constexpr char signature[] =
-                "()Lorg/mozilla/gecko/media/GeckoHlsSampleGetter;";
+                "()Lorg/mozilla/gecko/media/GeckoHlsDemuxerWrapper;";
         static const bool isStatic = true;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -995,10 +995,10 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    static auto Create() -> GeckoHlsSampleGetter::LocalRef;
+    static auto Create() -> GeckoHlsDemuxerWrapper::LocalRef;
 
     struct Destroy_t {
-        typedef GeckoHlsSampleGetter Owner;
+        typedef GeckoHlsDemuxerWrapper Owner;
         typedef void ReturnType;
         typedef void SetterType;
         typedef mozilla::jni::Args<> Args;
@@ -1017,7 +1017,7 @@ public:
     auto Destroy() const -> void;
 
     struct GetSample_t {
-        typedef GeckoHlsSampleGetter Owner;
+        typedef GeckoHlsDemuxerWrapper Owner;
         typedef mozilla::jni::Object::LocalRef ReturnType;
         typedef mozilla::jni::Object::Param SetterType;
         typedef mozilla::jni::Args<

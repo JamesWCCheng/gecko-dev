@@ -241,9 +241,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     @Override
     public void onLoadingChanged(boolean isLoading) {
-        Log.d(TAG, "loading [" + isLoading + "] ===>");
-        long duration = player.getDuration();
-        Log.d(TAG, "loading [" + isLoading + "] <=== dura : " + duration);
+        Log.d(TAG, "loading [" + isLoading + "]");
     }
 
     @Override
@@ -313,6 +311,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     // API for GeckoHlsSampleGetter ===============================
     public long getDuration() {
+        Log.d(TAG, "getDuration");
         if (player != null) {
             return player.getDuration();
         }
@@ -320,6 +319,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     }
 
     public long getBufferedPosition() {
+        Log.d(TAG, "getBufferedPosition");
         if (player != null) {
             return player.getBufferedPosition();
         }
@@ -327,6 +327,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     }
 
     public int getNumberTracks(Track_Type trackType) {
+        Log.d(TAG, "getNumberTracks");
         assert trackGroupUpdated;
         if (trackType == Track_Type.TRACK_VIDEO) {
             return numVideoTracks;
@@ -337,16 +338,30 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     }
 
     public Format getVideoTrackFormat() {
+        Log.d(TAG, "getVideoTrackFormat");
         return videoFormat;
     }
 
     public Format getAudioTrackFormat() {
+        Log.d(TAG, "getAudioTrackFormat");
         return audioFormat;
     }
 
     public void seek(long positionMs) {
+        Log.d(TAG, "seeking  : " + positionMs);
         if (player != null) {
             player.seekTo(positionMs);
+        }
+    }
+
+    public void release() {
+        Log.d(TAG, "releasing  ...");
+        if (player != null) {
+            player.removeListener(eventLogger);
+            player.removeListener(this);
+            player.stop();
+            player.release();
+            player = null;
         }
     }
 }
