@@ -941,6 +941,8 @@ public:
 
     explicit GeckoHlsDemuxerWrapper(const Context& ctx) : ObjectBase<GeckoHlsDemuxerWrapper>(ctx) {}
 
+    class HlsDemuxerCallbacks;
+
     struct GetAudioInfo_t {
         typedef GeckoHlsDemuxerWrapper Owner;
         typedef mozilla::jni::Object::LocalRef ReturnType;
@@ -1006,10 +1008,11 @@ public:
         typedef GeckoHlsDemuxerWrapper::LocalRef ReturnType;
         typedef GeckoHlsDemuxerWrapper::Param SetterType;
         typedef mozilla::jni::Args<
-                mozilla::jni::String::Param> Args;
+                mozilla::jni::String::Param,
+                mozilla::jni::Object::Param> Args;
         static constexpr char name[] = "create";
         static constexpr char signature[] =
-                "(Ljava/lang/String;)Lorg/mozilla/gecko/media/GeckoHlsDemuxerWrapper;";
+                "(Ljava/lang/String;Lorg/mozilla/gecko/media/GeckoHlsDemuxerWrapper$Callbacks;)Lorg/mozilla/gecko/media/GeckoHlsDemuxerWrapper;";
         static const bool isStatic = true;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -1019,7 +1022,7 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    static auto Create(mozilla::jni::String::Param) -> GeckoHlsDemuxerWrapper::LocalRef;
+    static auto Create(mozilla::jni::String::Param, mozilla::jni::Object::Param) -> GeckoHlsDemuxerWrapper::LocalRef;
 
     struct Destroy_t {
         typedef GeckoHlsDemuxerWrapper Owner;
@@ -1069,12 +1072,99 @@ public:
 
 };
 
+class GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks : public mozilla::jni::ObjectBase<HlsDemuxerCallbacks>
+{
+public:
+    static const char name[];
+
+    explicit HlsDemuxerCallbacks(const Context& ctx) : ObjectBase<HlsDemuxerCallbacks>(ctx) {}
+
+    struct New_t {
+        typedef HlsDemuxerCallbacks Owner;
+        typedef HlsDemuxerCallbacks::LocalRef ReturnType;
+        typedef HlsDemuxerCallbacks::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "<init>";
+        static constexpr char signature[] =
+                "()V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::GECKO;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    static auto New() -> HlsDemuxerCallbacks::LocalRef;
+
+    struct OnAudioFormatChanged_t {
+        typedef HlsDemuxerCallbacks Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::Object::Param> Args;
+        static constexpr char name[] = "onAudioFormatChanged";
+        static constexpr char signature[] =
+                "(Lorg/mozilla/gecko/media/HlsAudioInfo;)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::GECKO;
+    };
+
+    struct OnVideoFormatChanged_t {
+        typedef HlsDemuxerCallbacks Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::Object::Param> Args;
+        static constexpr char name[] = "onVideoFormatChanged";
+        static constexpr char signature[] =
+                "(Lorg/mozilla/gecko/media/HlsVideoInfo;)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::GECKO;
+    };
+
+    static const mozilla::jni::CallingThread callingThread =
+            mozilla::jni::CallingThread::ANY;
+
+    template<class Impl> class Natives;
+};
+
 class HlsAudioInfo : public mozilla::jni::ObjectBase<HlsAudioInfo>
 {
 public:
     static const char name[];
 
     explicit HlsAudioInfo(const Context& ctx) : ObjectBase<HlsAudioInfo>(ctx) {}
+
+    struct New_t {
+        typedef HlsAudioInfo Owner;
+        typedef HlsAudioInfo::LocalRef ReturnType;
+        typedef HlsAudioInfo::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "<init>";
+        static constexpr char signature[] =
+                "()V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    static auto New() -> HlsAudioInfo::LocalRef;
 
     struct BitDepth_t {
         typedef HlsAudioInfo Owner;
@@ -1213,6 +1303,25 @@ public:
     static const char name[];
 
     explicit HlsVideoInfo(const Context& ctx) : ObjectBase<HlsVideoInfo>(ctx) {}
+
+    struct New_t {
+        typedef HlsVideoInfo Owner;
+        typedef HlsVideoInfo::LocalRef ReturnType;
+        typedef HlsVideoInfo::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "<init>";
+        static constexpr char signature[] =
+                "()V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    static auto New() -> HlsVideoInfo::LocalRef;
 
     struct CodecSpecificData_t {
         typedef HlsVideoInfo Owner;

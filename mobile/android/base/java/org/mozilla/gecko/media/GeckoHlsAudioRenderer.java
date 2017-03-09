@@ -45,6 +45,7 @@ import java.util.LinkedList;
 
 public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
     private static boolean DEMUX_ONLY;
+    private static boolean DEBUG = false;
     private static final String TAG = "GeckoHlsAudioRenderer";
     private LinkedList<DecoderInputBuffer> demuxedSampleBuffer = new LinkedList<>();
     private static final int QUEUED_DEMUXED_INPUT_BUFFER_SIZE = 10;
@@ -462,7 +463,7 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
                 if(decoderInfo1 == null && drmSessionRequiresSecureDecoder) {
                     decoderInfo1 = this.getDecoderInfo(this.mediaCodecSelector, this.format, false);
                     if(decoderInfo1 != null) {
-                        Log.w("MediaCodecRenderer", "Drm session requires secure decoder for " + mimeType + ", but " + "no secure decoder available. Trying to proceed with " + decoderInfo1.name + ".");
+                        if (DEBUG) Log.w("MediaCodecRenderer", "Drm session requires secure decoder for " + mimeType + ", but " + "no secure decoder available. Trying to proceed with " + decoderInfo1.name + ".");
                     }
                 }
             } catch (MediaCodecUtil.DecoderQueryException var11) {
@@ -629,7 +630,7 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
     }
 
     private boolean drainQueuedDemuxedSamples(long positionUs, long elapsedRealtimeUs) throws ExoPlaybackException {
-        Log.d(TAG, "                       drainOutputBuffer ===> positionUs : " + positionUs + ", elapsedRT : " + elapsedRealtimeUs);
+        if (DEBUG) Log.d(TAG, "                       drainOutputBuffer ===> positionUs : " + positionUs + ", elapsedRT : " + elapsedRealtimeUs);
         int queueSize = demuxedSampleBuffer.size();
         if (queueSize > 0) {
             // We've dequeued a buffer.
@@ -651,7 +652,7 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
         }
 
         if (processOutputBuffer(positionUs, elapsedRealtimeUs, -1, outputBufferInfo.presentationTimeUs)) {
-            Log.d(TAG, "                       remove outputbuffer ===> timeUs : " + outputBufferInfo.presentationTimeUs);
+            if (DEBUG) Log.d(TAG, "                       remove outputbuffer ===> timeUs : " + outputBufferInfo.presentationTimeUs);
             return true;
         }
         return false;
@@ -816,7 +817,7 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
             bufferForRead.flip();
 
             if (this.getTrackType() == C.TRACK_TYPE_AUDIO) {
-                Log.d(TAG, "feedDemuxedSampleQueue: bufferTimeUs : " + bufferForRead.timeUs + ", queueSize = " + demuxedSampleBuffer.size());
+                if (DEBUG) Log.d(TAG, "feedDemuxedSampleQueue: bufferTimeUs : " + bufferForRead.timeUs + ", queueSize = " + demuxedSampleBuffer.size());
             }
             byte[] realData = new byte[bufferForRead.data.limit()];
             bufferForRead.data.get(realData, 0, bufferForRead.data.limit());
@@ -832,7 +833,7 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
     }
 
     public void render(long positionUs, long elapsedRealtimeUs) throws ExoPlaybackException {
-        Log.d(TAG, this + ": positionUs = " + positionUs + ", elapsedRealtimeUs = "+ elapsedRealtimeUs);
+        if (DEBUG) Log.d(TAG, this + ": positionUs = " + positionUs + ", elapsedRealtimeUs = "+ elapsedRealtimeUs);
         if(!this.outputStreamEnded) {
             if(this.format == null) {
                 this.readFormat();

@@ -298,9 +298,9 @@ auto GeckoHlsDemuxerWrapper::GetVideoInfo(int32_t a0) const -> mozilla::jni::Obj
 constexpr char GeckoHlsDemuxerWrapper::Create_t::name[];
 constexpr char GeckoHlsDemuxerWrapper::Create_t::signature[];
 
-auto GeckoHlsDemuxerWrapper::Create(mozilla::jni::String::Param a0) -> GeckoHlsDemuxerWrapper::LocalRef
+auto GeckoHlsDemuxerWrapper::Create(mozilla::jni::String::Param a0, mozilla::jni::Object::Param a1) -> GeckoHlsDemuxerWrapper::LocalRef
 {
-    return mozilla::jni::Method<Create_t>::Call(GeckoHlsDemuxerWrapper::Context(), nullptr, a0);
+    return mozilla::jni::Method<Create_t>::Call(GeckoHlsDemuxerWrapper::Context(), nullptr, a0, a1);
 }
 
 constexpr char GeckoHlsDemuxerWrapper::Destroy_t::name[];
@@ -323,8 +323,33 @@ const char16_t GeckoHlsDemuxerWrapper::AAC[] = u"audio/mp4a-latm";
 
 const char16_t GeckoHlsDemuxerWrapper::AVC[] = u"video/avc";
 
+const char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::name[] =
+        "org/mozilla/gecko/media/GeckoHlsDemuxerWrapper$HlsDemuxerCallbacks";
+
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New() -> HlsDemuxerCallbacks::LocalRef
+{
+    return mozilla::jni::Constructor<New_t>::Call(HlsDemuxerCallbacks::Context(), nullptr);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnAudioFormatChanged_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnAudioFormatChanged_t::signature[];
+
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t::signature[];
+
 const char HlsAudioInfo::name[] =
         "org/mozilla/gecko/media/HlsAudioInfo";
+
+constexpr char HlsAudioInfo::New_t::name[];
+constexpr char HlsAudioInfo::New_t::signature[];
+
+auto HlsAudioInfo::New() -> HlsAudioInfo::LocalRef
+{
+    return mozilla::jni::Constructor<New_t>::Call(HlsAudioInfo::Context(), nullptr);
+}
 
 constexpr char HlsAudioInfo::BitDepth_t::name[];
 constexpr char HlsAudioInfo::BitDepth_t::signature[];
@@ -406,6 +431,14 @@ auto HlsAudioInfo::Rate(int32_t a0) const -> void
 
 const char HlsVideoInfo::name[] =
         "org/mozilla/gecko/media/HlsVideoInfo";
+
+constexpr char HlsVideoInfo::New_t::name[];
+constexpr char HlsVideoInfo::New_t::signature[];
+
+auto HlsVideoInfo::New() -> HlsVideoInfo::LocalRef
+{
+    return mozilla::jni::Constructor<New_t>::Call(HlsVideoInfo::Context(), nullptr);
+}
 
 constexpr char HlsVideoInfo::CodecSpecificData_t::name[];
 constexpr char HlsVideoInfo::CodecSpecificData_t::signature[];

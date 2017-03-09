@@ -53,7 +53,7 @@ public:
   bool IsSuspendedByCache() override { UNIMPLEMENTED(); return false; }
   bool IsSuspended() override { UNIMPLEMENTED(); return false; }
   nsresult ReadFromCache(char* aBuffer, int64_t aOffset, uint32_t aCount) override { UNIMPLEMENTED(); return NS_ERROR_FAILURE; }
-  nsresult Open(nsIStreamListener** aStreamListener) override { UNIMPLEMENTED(); return NS_ERROR_FAILURE; }
+  nsresult Open(nsIStreamListener** aStreamListener) override { UNIMPLEMENTED(); return NS_OK; }
 
   already_AddRefed<nsIPrincipal> GetCurrentPrincipal() override
   {

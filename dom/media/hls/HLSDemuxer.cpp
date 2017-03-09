@@ -8,8 +8,11 @@
 #include <limits>
 #include <stdint.h>
 
+#include "FennecJNINatives.h"
 #include "HLSDemuxer.h"
+#include "HLSUtils.h"
 #include "nsPrintfCString.h"
+#include "mozilla/Unused.h"
 
 using namespace mozilla::java;
 
@@ -19,16 +22,84 @@ typedef TrackInfo::TrackType TrackType;
 using media::TimeUnit;
 using media::TimeIntervals;
 
+class HlsDemuxerCallbacksSupport
+  : public GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::Natives<HlsDemuxerCallbacksSupport>
+{
+public:
+  typedef GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::Natives<HlsDemuxerCallbacksSupport> NativeCallbacks;
+  using NativeCallbacks::DisposeNative;
+  using NativeCallbacks::AttachNative;
+
+  HlsDemuxerCallbacksSupport(HLSDemuxer* aDemuxer) {
+    MOZ_ASSERT(aDemuxer);
+    mDemuxer = aDemuxer;
+  }
+
+  void OnAudioFormatChanged(jni::Object::Param aParam) {
+    MOZ_ASSERT(mDemuxer);
+    mDemuxer->onAudioFormatChanged();
+    mDemuxer->onCheckInitDone();
+  }
+
+  void OnVideoFormatChanged(jni::Object::Param aParam) {
+    MOZ_ASSERT(mDemuxer);
+    mDemuxer->onVideoFormatChanged();
+    mDemuxer->onCheckInitDone();
+  }
+private:
+  HLSDemuxer* mDemuxer;
+};
+
 HLSDemuxer::HLSDemuxer(MediaResource* aResource, AbstractThread* aAbstractMainThread)
   : mResource(aResource)
   , mTaskQueue(new AutoTaskQueue(GetMediaThreadPool(MediaThreadType::PLAYBACK),
                                  aAbstractMainThread,
                                  /* aSupportsTailDispatch = */ false))
   , mMonitor("HLSDemuxer")
+  , mAudioInfoUpdated(false)
+  , mVideoInfoUpdated(false)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  nsCString mHlsURI(mResource->GetContentURL());
-  mHlsDemuxerWrapper = GeckoHlsDemuxerWrapper::Create(NS_ConvertUTF8toUTF16(mHlsURI));
+  nsCString hlsURI;
+  Unused << mResource->URI()->GetSpec(hlsURI);
+  HLS_DEBUG("HLSDemuxer", "Ctor(%s)", hlsURI.get());
+  HlsDemuxerCallbacksSupport::Init();
+  mJavaCallbacks = GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New();
+  MOZ_ASSERT(mJavaCallbacks);
+
+  HlsDemuxerCallbacksSupport::AttachNative(mJavaCallbacks,
+                                           mozilla::MakeUnique<HlsDemuxerCallbacksSupport>(this));
+
+  mHlsDemuxerWrapper = GeckoHlsDemuxerWrapper::Create(NS_ConvertUTF8toUTF16(hlsURI), mJavaCallbacks);
+}
+
+void
+HLSDemuxer::onAudioFormatChanged()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  HLS_DEBUG("HLSDemuxer", "onAudioFormatChanged");
+  mAudioInfoUpdated = true;
+}
+
+void
+HLSDemuxer::onVideoFormatChanged()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  HLS_DEBUG("HLSDemuxer", "onVideoFormatChanged");
+  mVideoInfoUpdated = true;
+}
+
+void
+HLSDemuxer::onCheckInitDone()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  HLS_DEBUG("HLSDemuxer", "onCheckInitDone");
+  if (mInitPromise.IsEmpty()) {
+    return;
+  }
+  if (mAudioInfoUpdated && mVideoInfoUpdated) {
+    mInitPromise.ResolveIfExists(NS_OK, __func__);
+  }
 }
 
 // Due to inaccuracies in determining buffer end
@@ -38,19 +109,25 @@ const TimeUnit HLSDemuxer::EOS_FUZZ = media::TimeUnit::FromMicroseconds(500000);
 RefPtr<HLSDemuxer::InitPromise>
 HLSDemuxer::Init()
 {
+  HLS_DEBUG("HLSDemuxer", "Init()");
   RefPtr<HLSDemuxer> self = this;
-  return InitPromise::CreateAndResolve(NS_OK, __func__);
+  return InvokeAsync(GetTaskQueue(), __func__,
+    [self](){
+      RefPtr<InitPromise> p = self->mInitPromise.Ensure(__func__);
+      return p;
+    });
 }
 
 void HLSDemuxer::NotifyDataArrived()
 {
+  HLS_DEBUG("HLSDemuxer", "NotifyDataArrived()");
 }
 
 bool
 HLSDemuxer::HasTrackType(TrackType aType) const
 {
   MonitorAutoLock mon(mMonitor);
-
+  HLS_DEBUG("HLSDemuxer", "HasTrackType(%d)", aType);
   switch (aType) {
     case TrackType::kAudioTrack:
       return mInfo.HasAudio();
@@ -64,6 +141,7 @@ HLSDemuxer::HasTrackType(TrackType aType) const
 uint32_t
 HLSDemuxer::GetNumberTracks(TrackType aType) const
 {
+  HLS_DEBUG("HLSDemuxer", "GetNumberTracks(%d)", aType);
   switch (aType) {
     case TrackType::kAudioTrack:
       return mHlsDemuxerWrapper->GetNumberOfTracks(1);
@@ -77,6 +155,7 @@ HLSDemuxer::GetNumberTracks(TrackType aType) const
 already_AddRefed<MediaTrackDemuxer>
 HLSDemuxer::GetTrackDemuxer(TrackType aType, uint32_t aTrackNumber)
 {
+  HLS_DEBUG("HLSDemuxer", "GetTrackDemuxer(%d)", aType);
   RefPtr<HLSTrackDemuxer> e = new HLSTrackDemuxer(this, aType);
   mDemuxers.AppendElement(e);
   return e.forget();
@@ -117,6 +196,8 @@ HLSDemuxer::GetTrackInfo(TrackType aTrack)
 
 HLSDemuxer::~HLSDemuxer()
 {
+  HLS_DEBUG("HLSDemuxer", "~HLSDemuxer()");
+  HlsDemuxerCallbacksSupport::DisposeNative(mJavaCallbacks);
   mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
 }
 

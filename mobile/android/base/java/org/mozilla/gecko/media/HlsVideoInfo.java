@@ -29,6 +29,7 @@ public final class HlsVideoInfo {
     @WrapForJNI
     public int stereoMode = 0;
 
+    @WrapForJNI
     public HlsVideoInfo() {
     }
 }
