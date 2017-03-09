@@ -36,7 +36,7 @@ import java.util.LinkedList;
 
 public class GeckoHlsVideoRenderer extends BaseRenderer {
     private static final String TAG = "GeckoHlsVideoRenderer";
-    private boolean useCodecToDecodeRender;
+    private boolean passToCodec;
     private boolean initialized;
     private ByteBuffer inputBuffer;
     private int QUEUED_INPUT_SAMPLE_SIZE = 10;
@@ -159,7 +159,8 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
     private long joiningDeadlineMs;
 
     public GeckoHlsVideoRenderer(Context context, MediaCodecSelector mediaCodecSelector,
-                                 Handler eventHandler, VideoRendererEventListener eventListener) {
+                                 Handler eventHandler, VideoRendererEventListener eventListener,
+                                 boolean passToCodec) {
         super(C.TRACK_TYPE_VIDEO);
         initialized = false;
 
@@ -177,7 +178,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         joiningDeadlineMs = C.TIME_UNSET;
 
         // NOTE : Modify this to change behavior.
-        useCodecToDecodeRender = true;
+        this.passToCodec = passToCodec;
     }
 
     public void handleMessage(int messageType, Object message) throws ExoPlaybackException {
@@ -246,7 +247,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         try {
             long codecInitializingTimestamp = SystemClock.elapsedRealtime();
             codecMaxValues = getCodecMaxValues(format, streamFormats);
-            if (useCodecToDecodeRender) {
+            if (passToCodec) {
                 codec = MediaCodec.createByCodecName(codecName);
                 MediaFormat mediaFormat = getMediaFormat(format, codecMaxValues, false);
                 MediaCrypto mediaCrypto = null;
@@ -294,7 +295,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
             codecReinitializationState = REINITIALIZATION_STATE_NONE;
             inputBuffer = null;
             initialized = false;
-            if (useCodecToDecodeRender) {
+            if (passToCodec) {
                 try {
                     this.codec.stop();
                 } finally {
@@ -320,13 +321,13 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         maybeInitRenderer();
         if (initialized) {
             TraceUtil.beginSection("drainAndFeed");
-            if (useCodecToDecodeRender) {
+            if (passToCodec) {
                 while (drainOutputBuffer(positionUs, elapsedRealtimeUs)) {}
             } else {
                 while (drainQueuedSamples(positionUs, elapsedRealtimeUs)) {}
             }
             while (feedSampleQueue()) {}
-            if (useCodecToDecodeRender) {
+            if (passToCodec) {
                 while (feedInputBuffer()) {}
             }
             TraceUtil.endSection();
@@ -359,7 +360,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         } else {
             // We can flush and re-use the existing decoder.
             codecReceivedBuffers = false;
-            if (useCodecToDecodeRender) {
+            if (passToCodec) {
                 codec.flush();
             }
         }
@@ -529,7 +530,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
     }
 
     public boolean isReady1() {
-        boolean hasOutput = useCodecToDecodeRender ? this.outputIndex >= 0 : queuedInputSamples.size() > 0;
+        boolean hasOutput = passToCodec ? this.outputIndex >= 0 : queuedInputSamples.size() > 0;
         return format != null && (isSourceReady() || hasOutput
                 || (codecHotswapDeadlineMs != C.TIME_UNSET
                 && SystemClock.elapsedRealtime() < codecHotswapDeadlineMs));
@@ -618,7 +619,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
 
     private void dropOutputBuffer(int bufferIndex) {
         TraceUtil.beginSection("dropVideoBuffer");
-        if (codec != null && useCodecToDecodeRender && bufferIndex >= 0) {
+        if (codec != null && passToCodec && bufferIndex >= 0) {
             codec.releaseOutputBuffer(bufferIndex, false);
         } else {
             queuedInputSamples.removeFirst();
@@ -849,26 +850,26 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
     }
 
     private void renderOutputBuffer(int bufferIndex) {
-        if (useCodecToDecodeRender && bufferIndex >= 0 && codec != null) {
+        if (passToCodec && bufferIndex >= 0 && codec != null) {
             codec.releaseOutputBuffer(bufferIndex, true);
         }
         if (!renderedFirstFrame) {
             renderedFirstFrame = true;
         }
-        if (!useCodecToDecodeRender && queuedInputSamples.size() > 0) {
+        if (!passToCodec && queuedInputSamples.size() > 0) {
             queuedInputSamples.removeFirst();
         }
     }
 
     @TargetApi(21)
     private void renderOutputBufferV21(int bufferIndex, long releaseTimeNs) {
-        if (useCodecToDecodeRender && codec != null && bufferIndex >= 0) {
+        if (passToCodec && codec != null && bufferIndex >= 0) {
             codec.releaseOutputBuffer(bufferIndex, releaseTimeNs);
         }
         if (!renderedFirstFrame) {
             renderedFirstFrame = true;
         }
-        if (!useCodecToDecodeRender && queuedInputSamples.size() > 0) {
+        if (!passToCodec && queuedInputSamples.size() > 0) {
             queuedInputSamples.removeFirst();
         }
     }

@@ -45,7 +45,6 @@ import java.util.ArrayList;
 public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     private static final String TAG = "GeckoHlsPlayer";
-    private static final String HLS_URL = "https://devimages.apple.com.edgekey.net/streaming/examples/bipbop_4x3/gear1/prog_index.m3u8";
     private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
     private DataSource.Factory mediaDataSourceFactory;
     private Timeline.Window window;
@@ -64,6 +63,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     private final ComponentListener componentListener;
 
+    private boolean inPlayerRender = false;
     private boolean trackGroupUpdated = false;
     private long duration;
     private long bufferedPosition;
@@ -194,6 +194,10 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     }
 
     public void setSurface(Surface surface) {
+        if (!inPlayerRender) {
+            return;
+        }
+
         player.prepare(mediaSource);
 
         ExoPlayer.ExoPlayerMessage[] messages = new ExoPlayer.ExoPlayerMessage[1];
@@ -209,7 +213,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         }
     }
 
-    public GeckoHlsPlayer(Context va) {
+    public GeckoHlsPlayer(Context va, String url) {
         componentListener = new ComponentListener();
         mainHandler = new Handler();
 
@@ -219,8 +223,16 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
 
         ArrayList<Renderer> renderersList = new ArrayList<>();
-        renderersList.add(new GeckoHlsVideoRenderer(va, MediaCodecSelector.DEFAULT, mainHandler, componentListener));
-        renderersList.add(new GeckoHlsAudioRenderer(MediaCodecSelector.DEFAULT, mainHandler, componentListener, (AudioCapabilities)null));
+        renderersList.add(new GeckoHlsVideoRenderer(va,
+                                                    MediaCodecSelector.DEFAULT,
+                                                    mainHandler,
+                                                    componentListener,
+                                                    inPlayerRender));
+        renderersList.add(new GeckoHlsAudioRenderer(MediaCodecSelector.DEFAULT,
+                                                    mainHandler,
+                                                    componentListener,
+                                                    (AudioCapabilities)null,
+                                                    inPlayerRender));
         renderers = renderersList.toArray(new Renderer[renderersList.size()]);
 
         player = ExoPlayerFactory.newInstance(renderers, trackSelector);
@@ -229,7 +241,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         eventLogger = new EventLogger(trackSelector);
         player.addListener(eventLogger);
 
-        Uri[] uris = new Uri[]{Uri.parse(HLS_URL)};
+        Uri[] uris = new Uri[]{Uri.parse(url)};
         String[] extensions = new String[]{extension};
         userAgent = Util.getUserAgent(va, "RemoteDecoder");
         mediaDataSourceFactory = buildDataSourceFactory(va, null);
@@ -237,6 +249,10 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         MediaSource[] mediaSources = new MediaSource[1];
         mediaSources[0] = buildMediaSource(uris[0], extensions[0]);
         mediaSource = mediaSources[0];
+
+        if (!inPlayerRender) {
+            player.prepare(mediaSource);
+        }
     }
 
     @Override

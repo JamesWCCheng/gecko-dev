@@ -27,7 +27,8 @@ HLSDemuxer::HLSDemuxer(MediaResource* aResource, AbstractThread* aAbstractMainTh
   , mMonitor("HLSDemuxer")
 {
   MOZ_ASSERT(NS_IsMainThread());
-  mHlsDemuxerWrapper = GeckoHlsDemuxerWrapper::Create();
+  nsCString mHlsURI(mResource->GetContentURL());
+  mHlsDemuxerWrapper = GeckoHlsDemuxerWrapper::Create(NS_ConvertUTF8toUTF16(mHlsURI));
 }
 
 // Due to inaccuracies in determining buffer end
