@@ -22,13 +22,47 @@ import android.util.Log;
 
 public final class GeckoHlsDemuxerWrapper {
     private static final String LOGTAG = "GeckoHlsDemuxerWrapper";
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     // NOTE : These TRACK definition should be synced with Gecko.
     private static final int TRACK_UNDEFINED = 0;
     private static final int TRACK_AUDIO = 1;
     private static final int TRACK_VIDEO = 2;
     private static final int TRACK_TEXT = 3;
+
+    @WrapForJNI
+    private static final String AAC = "audio/mp4a-latm";
+    @WrapForJNI
+    private static final String AVC = "video/avc";
+
+    private Queue<Sample> samples = new ConcurrentLinkedQueue<>();
+    private GeckoHlsPlayer player = null;
+    // A flag to avoid using the native object that has been destroyed.
+    private boolean mDestroyed;
+//    private Callbacks nativeDemuxerCallback;
+
+    public interface Callbacks {
+        void onAudioFormatChanged(HlsAudioInfo audioInfo);
+        void onVideoFormatChanged(HlsVideoInfo videoInfo);
+    }
+
+    public static class HlsDemuxerCallbacks extends JNIObject implements Callbacks {
+        @WrapForJNI(calledFrom = "gecko")
+        HlsDemuxerCallbacks() {}
+
+        @Override
+        @WrapForJNI(dispatchTo = "gecko")
+        public native void onAudioFormatChanged(HlsAudioInfo audioInfo);
+
+        @Override
+        @WrapForJNI(dispatchTo = "gecko")
+        public native void onVideoFormatChanged(HlsVideoInfo videoInfo);
+
+        @Override // JNIObject
+        protected void disposeNative() {
+            throw new UnsupportedOperationException();
+        }
+    } // HlsDemuxerCallbacks
 
     private GeckoHlsPlayer.Track_Type getPlayerTrackType(int trackType) {
         if (trackType == 1) {
@@ -41,29 +75,17 @@ public final class GeckoHlsDemuxerWrapper {
         return GeckoHlsPlayer.Track_Type.TRACK_UNDEFINED;
     }
 
-    @WrapForJNI
-    private static final String AAC = "audio/mp4a-latm";
-    @WrapForJNI
-    private static final String AVC = "video/avc";
-
-    private Queue<Sample> samples = new ConcurrentLinkedQueue<>();
-    private GeckoHlsPlayer player = null;
-    // A flag to avoid using the native object that has been destroyed.
-    private boolean mDestroyed;
-
     @WrapForJNI(calledFrom = "gecko")
-    public static GeckoHlsDemuxerWrapper create(String url) {
-        GeckoHlsDemuxerWrapper wrapper = new GeckoHlsDemuxerWrapper(url);
+    public static GeckoHlsDemuxerWrapper create(String url, Callbacks callback) {
+        GeckoHlsDemuxerWrapper wrapper = new GeckoHlsDemuxerWrapper(url, callback);
         return wrapper;
     }
 
     @WrapForJNI
     public int GetNumberOfTracks(int trackType) {
-        if (DEBUG) Log.d(LOGTAG, "[GetNumberOfTracks]");
-        if (player != null) {
-            return player.getNumberTracks(getPlayerTrackType(trackType));
-        }
-        return 0;
+        int tracks = player != null ? player.getNumberTracks(getPlayerTrackType(trackType)) : 0;
+        if (DEBUG) Log.d(LOGTAG, "[GetNumberOfTracks] type : " + trackType + ", num = " + tracks);
+        return tracks;
     }
 
     @WrapForJNI
@@ -96,11 +118,11 @@ public final class GeckoHlsDemuxerWrapper {
         return vInfo;
     }
 
-    GeckoHlsDemuxerWrapper(String url) {
-        if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper");
+    GeckoHlsDemuxerWrapper(String url, Callbacks callback) {
+        if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper : " + url + ", callback : " + callback);
         try {
             Context ctx = GeckoAppShell.getApplicationContext();
-            player = new GeckoHlsPlayer(ctx, url);
+            player = new GeckoHlsPlayer(ctx, url, callback);
         } catch (Exception e) {
             Log.e(LOGTAG, "Constructing GeckoHlsDemuxerWrapper ... error", e);
         }

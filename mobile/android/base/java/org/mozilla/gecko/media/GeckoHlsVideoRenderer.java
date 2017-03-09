@@ -36,6 +36,7 @@ import java.util.LinkedList;
 
 public class GeckoHlsVideoRenderer extends BaseRenderer {
     private static final String TAG = "GeckoHlsVideoRenderer";
+    private static boolean DEBUG = false;
     private boolean passToCodec;
     private boolean initialized;
     private ByteBuffer inputBuffer;
@@ -311,7 +312,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
 
     @Override
     public void render(long positionUs, long elapsedRealtimeUs) throws ExoPlaybackException {
-        Log.d(TAG, this + ": positionUs = " + positionUs + ", elapsedRealtimeUs = "+ elapsedRealtimeUs);
+        if (DEBUG) Log.d(TAG, this + ": positionUs = " + positionUs + ", elapsedRealtimeUs = "+ elapsedRealtimeUs);
         if (outputStreamEnded) {
             return;
         }
@@ -456,7 +457,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
             bufferForRead.flip();
 
             if (this.getTrackType() == C.TRACK_TYPE_VIDEO) {
-                Log.d(TAG, "feedSampleQueue: bufferTimeUs : " + bufferForRead.timeUs + ", queueSize = " + queuedInputSamples.size());
+                if (DEBUG) Log.d(TAG, "feedSampleQueue: bufferTimeUs : " + bufferForRead.timeUs + ", queueSize = " + queuedInputSamples.size());
             }
             byte[] realData = new byte[bufferForRead.data.limit()];
             bufferForRead.data.get(realData, 0, bufferForRead.data.limit());
@@ -537,7 +538,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
     }
 
     private boolean drainQueuedSamples(long positionUs, long elapsedRealtimeUs) throws ExoPlaybackException {
-        Log.d(TAG, "                       drainOutputBuffer ===> positionUs : " + positionUs + ", elapsedRT : " + elapsedRealtimeUs);
+        if (DEBUG) Log.d(TAG, "                       drainOutputBuffer ===> positionUs : " + positionUs + ", elapsedRT : " + elapsedRealtimeUs);
         int queueSize = queuedInputSamples.size();
         if (queueSize > 0) {
             // We've dequeued a buffer.
@@ -559,7 +560,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         }
 
         if (processOutputBuffer(positionUs, elapsedRealtimeUs, -1, outputBufferInfo.presentationTimeUs)) {
-            Log.d(TAG, "                       remove outputbuffer ===> timeUs : " + outputBufferInfo.presentationTimeUs);
+            if (DEBUG) Log.d(TAG, "                       remove outputbuffer ===> timeUs : " + outputBufferInfo.presentationTimeUs);
             return true;
         }
         return false;
@@ -569,7 +570,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
     private boolean drainOutputBuffer(long positionUs, long elapsedRealtimeUs)
             throws ExoPlaybackException {
 
-        Log.d(TAG, "                       drainOutputBuffer ===> positionUs : " + positionUs + ", elapsedRT : " + elapsedRealtimeUs);
+        if (DEBUG) Log.d(TAG, "                       drainOutputBuffer ===> positionUs : " + positionUs + ", elapsedRT : " + elapsedRealtimeUs);
         if(this.outputIndex < 0) {
             this.outputIndex = this.codec.dequeueOutputBuffer(this.outputBufferInfo, 0);
             if(this.outputIndex < 0) {
@@ -609,7 +610,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         }
 
         if (processOutputBuffer(positionUs, elapsedRealtimeUs, this.outputIndex, outputBufferInfo.presentationTimeUs)) {
-            Log.d(TAG, "                       remove outputbuffer ===> timeUs : " + outputBufferInfo.presentationTimeUs);
+            if (DEBUG) Log.d(TAG, "                       remove outputbuffer ===> timeUs : " + outputBufferInfo.presentationTimeUs);
             this.outputIndex = -1;
             return true;
         } else {
@@ -691,7 +692,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
             } else {
                 decoderCapable = format.width * format.height <= MediaCodecUtil.maxH264DecodableFrameSize();
                 if (!decoderCapable) {
-                    Log.d(TAG, "FalseCheck [legacyFrameSize, " + format.width + "x" + format.height + "] ["
+                    if (DEBUG) Log.d(TAG, "FalseCheck [legacyFrameSize, " + format.width + "x" + format.height + "] ["
                             + Util.DEVICE_DEBUG_INFO + "]");
                 }
             }

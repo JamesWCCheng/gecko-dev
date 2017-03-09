@@ -49,6 +49,11 @@ public:
   // Gap allowed between frames.
   static const media::TimeUnit EOS_FUZZ;
 
+  AutoTaskQueue* GetTaskQueue() { return mTaskQueue; }
+  void onAudioFormatChanged();
+  void onVideoFormatChanged();
+  void onCheckInitDone();
+
 private:
   ~HLSDemuxer();
   RefPtr<MediaResource> mResource;
@@ -64,7 +69,10 @@ private:
   mutable Monitor mMonitor;
   MediaInfo mInfo;
 
+  java::GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::GlobalRef mJavaCallbacks;
   java::GeckoHlsDemuxerWrapper::GlobalRef mHlsDemuxerWrapper;
+  bool mAudioInfoUpdated;
+  bool mVideoInfoUpdated;
 };
 
 class HLSTrackDemuxer : public MediaTrackDemuxer

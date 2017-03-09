@@ -25,6 +25,7 @@ public final class HlsAudioInfo {
     @WrapForJNI
     public int profile = 0;
 
+    @WrapForJNI
     public HlsAudioInfo() {
     }
 }
