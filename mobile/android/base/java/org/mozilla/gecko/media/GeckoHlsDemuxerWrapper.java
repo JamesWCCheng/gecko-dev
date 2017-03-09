@@ -52,8 +52,8 @@ public final class GeckoHlsDemuxerWrapper {
     private boolean mDestroyed;
 
     @WrapForJNI(calledFrom = "gecko")
-    public static GeckoHlsDemuxerWrapper create() {
-        GeckoHlsDemuxerWrapper wrapper = new GeckoHlsDemuxerWrapper();
+    public static GeckoHlsDemuxerWrapper create(String url) {
+        GeckoHlsDemuxerWrapper wrapper = new GeckoHlsDemuxerWrapper(url);
         return wrapper;
     }
 
@@ -96,11 +96,11 @@ public final class GeckoHlsDemuxerWrapper {
         return vInfo;
     }
 
-    GeckoHlsDemuxerWrapper() {
+    GeckoHlsDemuxerWrapper(String url) {
         if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper");
         try {
             Context ctx = GeckoAppShell.getApplicationContext();
-            player = new GeckoHlsPlayer(ctx);
+            player = new GeckoHlsPlayer(ctx, url);
         } catch (Exception e) {
             Log.e(LOGTAG, "Constructing GeckoHlsDemuxerWrapper ... error", e);
         }

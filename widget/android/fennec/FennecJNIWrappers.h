@@ -1005,10 +1005,11 @@ public:
         typedef GeckoHlsDemuxerWrapper Owner;
         typedef GeckoHlsDemuxerWrapper::LocalRef ReturnType;
         typedef GeckoHlsDemuxerWrapper::Param SetterType;
-        typedef mozilla::jni::Args<> Args;
+        typedef mozilla::jni::Args<
+                mozilla::jni::String::Param> Args;
         static constexpr char name[] = "create";
         static constexpr char signature[] =
-                "()Lorg/mozilla/gecko/media/GeckoHlsDemuxerWrapper;";
+                "(Ljava/lang/String;)Lorg/mozilla/gecko/media/GeckoHlsDemuxerWrapper;";
         static const bool isStatic = true;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -1018,7 +1019,7 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    static auto Create() -> GeckoHlsDemuxerWrapper::LocalRef;
+    static auto Create(mozilla::jni::String::Param) -> GeckoHlsDemuxerWrapper::LocalRef;
 
     struct Destroy_t {
         typedef GeckoHlsDemuxerWrapper Owner;

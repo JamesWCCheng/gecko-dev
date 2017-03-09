@@ -298,9 +298,9 @@ auto GeckoHlsDemuxerWrapper::GetVideoInfo(int32_t a0) const -> mozilla::jni::Obj
 constexpr char GeckoHlsDemuxerWrapper::Create_t::name[];
 constexpr char GeckoHlsDemuxerWrapper::Create_t::signature[];
 
-auto GeckoHlsDemuxerWrapper::Create() -> GeckoHlsDemuxerWrapper::LocalRef
+auto GeckoHlsDemuxerWrapper::Create(mozilla::jni::String::Param a0) -> GeckoHlsDemuxerWrapper::LocalRef
 {
-    return mozilla::jni::Method<Create_t>::Call(GeckoHlsDemuxerWrapper::Context(), nullptr);
+    return mozilla::jni::Method<Create_t>::Call(GeckoHlsDemuxerWrapper::Context(), nullptr, a0);
 }
 
 constexpr char GeckoHlsDemuxerWrapper::Destroy_t::name[];

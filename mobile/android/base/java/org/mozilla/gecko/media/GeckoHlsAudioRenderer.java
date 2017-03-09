@@ -44,7 +44,7 @@ import java.util.List;
 import java.util.LinkedList;
 
 public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
-    private static final boolean DEMUX_ONLY = false;
+    private static boolean DEMUX_ONLY;
     private static final String TAG = "GeckoHlsAudioRenderer";
     private LinkedList<DecoderInputBuffer> demuxedSampleBuffer = new LinkedList<>();
     private static final int QUEUED_DEMUXED_INPUT_BUFFER_SIZE = 10;
@@ -112,7 +112,8 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
     public GeckoHlsAudioRenderer(MediaCodecSelector mediaCodecSelector,
                                  Handler eventHandler,
                                  AudioRendererEventListener eventListener,
-                                 AudioCapabilities audioCapabilities) {
+                                 AudioCapabilities audioCapabilities,
+                                 boolean passToCodec) {
         super(C.TRACK_TYPE_AUDIO);
         Assertions.checkState(Util.SDK_INT >= 16);
         this.mediaCodecSelector = Assertions.checkNotNull(mediaCodecSelector);
@@ -126,6 +127,7 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
         this.codecReinitializationState = 0;
         this.audioTrack = new AudioTrack(audioCapabilities, new AudioTrackListener());
         this.eventDispatcher = new AudioRendererEventListener.EventDispatcher(eventHandler, eventListener);
+        DEMUX_ONLY = !passToCodec;
     }
 
     @Override
