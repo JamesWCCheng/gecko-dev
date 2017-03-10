@@ -22,6 +22,36 @@ typedef TrackInfo::TrackType TrackType;
 using media::TimeUnit;
 using media::TimeIntervals;
 
+static
+VideoInfo::Rotation getVideoInfoRotation(int aRotation) {
+  switch (aRotation) {
+    case 0:
+      return VideoInfo::Rotation::kDegree_0;
+    case 90:
+      return VideoInfo::Rotation::kDegree_90;
+    case 180:
+      return VideoInfo::Rotation::kDegree_180;
+    case 270:
+      return VideoInfo::Rotation::kDegree_270;
+    default:
+      return VideoInfo::Rotation::kDegree_0;
+  }
+}
+
+static
+mozilla::StereoMode getStereoMode(int aMode) {
+  switch (aMode) {
+    case 0:
+      return mozilla::StereoMode::MONO;
+    case 1:
+      return mozilla::StereoMode::TOP_BOTTOM;
+    case 2:
+      return mozilla::StereoMode::LEFT_RIGHT;
+    default:
+      return mozilla::StereoMode::MONO;
+  }
+}
+
 class HlsDemuxerCallbacksSupport
   : public GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::Natives<HlsDemuxerCallbacksSupport>
 {
@@ -35,13 +65,13 @@ public:
     mDemuxer = aDemuxer;
   }
 
-  void OnAudioFormatChanged(jni::Object::Param aParam) {
+  void OnAudioFormatChanged() {
     MOZ_ASSERT(mDemuxer);
     mDemuxer->onAudioFormatChanged();
     mDemuxer->onCheckInitDone();
   }
 
-  void OnVideoFormatChanged(jni::Object::Param aParam) {
+  void OnVideoFormatChanged() {
     MOZ_ASSERT(mDemuxer);
     mDemuxer->onVideoFormatChanged();
     mDemuxer->onCheckInitDone();
@@ -182,11 +212,23 @@ HLSDemuxer::GetTrackInfo(TrackType aTrack)
   MonitorAutoLock mon(mMonitor);
   switch (aTrack) {
     case TrackType::kAudioTrack: {
-      jni::Object::LocalRef hlsAInfoObj = mHlsDemuxerWrapper->GetAudioInfo(0);
+      jni::Object::LocalRef infoObj = mHlsDemuxerWrapper->GetAudioInfo(0);
+      java::HlsAudioInfo::LocalRef audioInfo(mozilla::Move(infoObj));
+      mInfo.mAudio.mRate = audioInfo->Rate();
+      mInfo.mAudio.mChannels = audioInfo->Channels();
+      mInfo.mAudio.mProfile = audioInfo->Profile();
+      mInfo.mAudio.mBitDepth = audioInfo->BitDepth();
+      mInfo.mAudio.mMimeType = NS_ConvertUTF16toUTF8(audioInfo->MimeType()->ToString());
       return &mInfo.mAudio;
     }
     case TrackType::kVideoTrack: {
-      jni::Object::LocalRef hlsVInfoObj = mHlsDemuxerWrapper->GetVideoInfo(0);
+      jni::Object::LocalRef infoObj = mHlsDemuxerWrapper->GetVideoInfo(0);
+      java::HlsVideoInfo::LocalRef videoInfo(mozilla::Move(infoObj));
+      mInfo.mVideo.mStereoMode = getStereoMode(videoInfo->StereoMode());
+      mInfo.mVideo.mRotation = getVideoInfoRotation(videoInfo->Rotation());
+      mInfo.mVideo.mDisplay.width = videoInfo->DisplayX();
+      mInfo.mVideo.mDisplay.height = videoInfo->DisplayY();
+      mInfo.mVideo.mMimeType = NS_ConvertUTF16toUTF8(videoInfo->MimeType()->ToString());
       return &mInfo.mVideo;
     }
     default:
