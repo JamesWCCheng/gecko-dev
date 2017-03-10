@@ -1345,7 +1345,6 @@ MediaFormatReader::OnDemuxerInitDone(nsresult)
   // To decode, we need valid video and a place to put it.
   bool videoActive =
     !!mDemuxer->GetNumberTracks(TrackInfo::kVideoTrack) && GetImageContainer();
-
   if (videoActive) {
     // We currently only handle the first video track.
     mVideo.mTrackDemuxer = mDemuxer->GetTrackDemuxer(TrackInfo::kVideoTrack, 0);
@@ -1390,7 +1389,6 @@ MediaFormatReader::OnDemuxerInitDone(nsresult)
       && audioInfo->IsValid()
       && (!platform || platform->SupportsMimeType(audioInfo->mMimeType,
                                                   nullptr));
-
     if (audioActive) {
       mInfo.mAudio = *audioInfo->GetAsAudioInfo();
       for (const MetadataTag& tag : audioInfo->mTags) {

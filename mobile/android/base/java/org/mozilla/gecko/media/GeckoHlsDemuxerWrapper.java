@@ -42,8 +42,8 @@ public final class GeckoHlsDemuxerWrapper {
 //    private Callbacks nativeDemuxerCallback;
 
     public interface Callbacks {
-        void onAudioFormatChanged(HlsAudioInfo audioInfo);
-        void onVideoFormatChanged(HlsVideoInfo videoInfo);
+        void onAudioFormatChanged();
+        void onVideoFormatChanged();
     }
 
     public static class HlsDemuxerCallbacks extends JNIObject implements Callbacks {
@@ -52,11 +52,11 @@ public final class GeckoHlsDemuxerWrapper {
 
         @Override
         @WrapForJNI(dispatchTo = "gecko")
-        public native void onAudioFormatChanged(HlsAudioInfo audioInfo);
+        public native void onAudioFormatChanged();
 
         @Override
         @WrapForJNI(dispatchTo = "gecko")
-        public native void onVideoFormatChanged(HlsVideoInfo videoInfo);
+        public native void onVideoFormatChanged();
 
         @Override // JNIObject
         protected void disposeNative() {
@@ -97,6 +97,7 @@ public final class GeckoHlsDemuxerWrapper {
         if (player != null) {
             aInfo.rate = fmt.sampleRate;
             aInfo.channels = fmt.channelCount;
+            aInfo.mimeType = fmt.sampleMimeType;
         }
         return aInfo;
     }
@@ -114,6 +115,7 @@ public final class GeckoHlsDemuxerWrapper {
             vInfo.pictureY = fmt.height;
             vInfo.stereoMode = fmt.stereoMode;
             vInfo.rotation = fmt.rotationDegrees;
+            vInfo.mimeType = fmt.sampleMimeType;
         }
         return vInfo;
     }

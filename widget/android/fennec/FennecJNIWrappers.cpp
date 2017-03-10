@@ -403,6 +403,19 @@ auto HlsAudioInfo::ExtraData(mozilla::jni::ByteArray::Param a0) const -> void
     return mozilla::jni::Field<ExtraData_t>::Set(HlsAudioInfo::mCtx, nullptr, a0);
 }
 
+constexpr char HlsAudioInfo::MimeType_t::name[];
+constexpr char HlsAudioInfo::MimeType_t::signature[];
+
+auto HlsAudioInfo::MimeType() const -> mozilla::jni::String::LocalRef
+{
+    return mozilla::jni::Field<MimeType_t>::Get(HlsAudioInfo::mCtx, nullptr);
+}
+
+auto HlsAudioInfo::MimeType(mozilla::jni::String::Param a0) const -> void
+{
+    return mozilla::jni::Field<MimeType_t>::Set(HlsAudioInfo::mCtx, nullptr, a0);
+}
+
 constexpr char HlsAudioInfo::Profile_t::name[];
 constexpr char HlsAudioInfo::Profile_t::signature[];
 
@@ -490,6 +503,19 @@ auto HlsVideoInfo::ExtraData() const -> mozilla::jni::ByteArray::LocalRef
 auto HlsVideoInfo::ExtraData(mozilla::jni::ByteArray::Param a0) const -> void
 {
     return mozilla::jni::Field<ExtraData_t>::Set(HlsVideoInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsVideoInfo::MimeType_t::name[];
+constexpr char HlsVideoInfo::MimeType_t::signature[];
+
+auto HlsVideoInfo::MimeType() const -> mozilla::jni::String::LocalRef
+{
+    return mozilla::jni::Field<MimeType_t>::Get(HlsVideoInfo::mCtx, nullptr);
+}
+
+auto HlsVideoInfo::MimeType(mozilla::jni::String::Param a0) const -> void
+{
+    return mozilla::jni::Field<MimeType_t>::Set(HlsVideoInfo::mCtx, nullptr, a0);
 }
 
 constexpr char HlsVideoInfo::PictureX_t::name[];

@@ -99,9 +99,9 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         @Override
         public void onVideoInputFormatChanged(Format format) {
             videoFormat = format;
-            if (DEBUG) Log.d( TAG, "onVideoInputFormatChanged [" + videoFormat + "]" + ", callback = " + nativeCallbacks);
-            HlsVideoInfo aInfo = new HlsVideoInfo();
-            nativeCallbacks.onVideoFormatChanged(aInfo);
+            if (DEBUG) Log.d( TAG, "onVideoInputFormatChanged [" + videoFormat + "]");
+            if (DEBUG) Log.d( TAG, "sMimetype [" + videoFormat.sampleMimeType + "], ContainerMIMETYPE" + videoFormat.containerMimeType);
+            nativeCallbacks.onVideoFormatChanged();
         }
 
         @Override
@@ -151,8 +151,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         public void onAudioInputFormatChanged(Format format) {
             audioFormat = format;
             if (DEBUG) Log.d(TAG, "onAudioInputFormatChanged [" + audioFormat + "]");
-            HlsAudioInfo aInfo = new HlsAudioInfo();
-            nativeCallbacks.onAudioFormatChanged(aInfo);
+            nativeCallbacks.onAudioFormatChanged();
         }
 
         @Override

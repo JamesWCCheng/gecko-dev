@@ -1102,11 +1102,10 @@ public:
         typedef HlsDemuxerCallbacks Owner;
         typedef void ReturnType;
         typedef void SetterType;
-        typedef mozilla::jni::Args<
-                mozilla::jni::Object::Param> Args;
+        typedef mozilla::jni::Args<> Args;
         static constexpr char name[] = "onAudioFormatChanged";
         static constexpr char signature[] =
-                "(Lorg/mozilla/gecko/media/HlsAudioInfo;)V";
+                "()V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -1120,11 +1119,10 @@ public:
         typedef HlsDemuxerCallbacks Owner;
         typedef void ReturnType;
         typedef void SetterType;
-        typedef mozilla::jni::Args<
-                mozilla::jni::Object::Param> Args;
+        typedef mozilla::jni::Args<> Args;
         static constexpr char name[] = "onVideoFormatChanged";
         static constexpr char signature[] =
-                "(Lorg/mozilla/gecko/media/HlsVideoInfo;)V";
+                "()V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -1249,6 +1247,27 @@ public:
     auto ExtraData() const -> mozilla::jni::ByteArray::LocalRef;
 
     auto ExtraData(mozilla::jni::ByteArray::Param) const -> void;
+
+    struct MimeType_t {
+        typedef HlsAudioInfo Owner;
+        typedef mozilla::jni::String::LocalRef ReturnType;
+        typedef mozilla::jni::String::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "mimeType";
+        static constexpr char signature[] =
+                "Ljava/lang/String;";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto MimeType() const -> mozilla::jni::String::LocalRef;
+
+    auto MimeType(mozilla::jni::String::Param) const -> void;
 
     struct Profile_t {
         typedef HlsAudioInfo Owner;
@@ -1406,6 +1425,27 @@ public:
     auto ExtraData() const -> mozilla::jni::ByteArray::LocalRef;
 
     auto ExtraData(mozilla::jni::ByteArray::Param) const -> void;
+
+    struct MimeType_t {
+        typedef HlsVideoInfo Owner;
+        typedef mozilla::jni::String::LocalRef ReturnType;
+        typedef mozilla::jni::String::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "mimeType";
+        static constexpr char signature[] =
+                "Ljava/lang/String;";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto MimeType() const -> mozilla::jni::String::LocalRef;
+
+    auto MimeType(mozilla::jni::String::Param) const -> void;
 
     struct PictureX_t {
         typedef HlsVideoInfo Owner;
