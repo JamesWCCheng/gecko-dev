@@ -5,7 +5,7 @@
 
 package org.mozilla.gecko.media;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -35,11 +35,9 @@ public final class GeckoHlsDemuxerWrapper {
     @WrapForJNI
     private static final String AVC = "video/avc";
 
-    private Queue<Sample> samples = new ConcurrentLinkedQueue<>();
     private GeckoHlsPlayer player = null;
     // A flag to avoid using the native object that has been destroyed.
     private boolean mDestroyed;
-//    private Callbacks nativeDemuxerCallback;
 
     public interface Callbacks {
         void onAudioFormatChanged();
@@ -131,13 +129,15 @@ public final class GeckoHlsDemuxerWrapper {
     }
 
     @WrapForJNI
-    private Sample getSample(int mediaType) {
+    private LinkedList<Sample> getSamples(int mediaType, int number) {
         if (DEBUG) Log.d(LOGTAG, "getSample, mediaType = " + mediaType);
+        LinkedList<Sample> samples = new LinkedList<Sample>();
         if (mediaType == TRACK_VIDEO) {
-            return Sample.create();
-        } else {
+
+        } else if (mediaType == TRACK_AUDIO) {
+
         }
-        return null;
+        return samples;
     }
 
     @WrapForJNI // Called when natvie object is destroyed.

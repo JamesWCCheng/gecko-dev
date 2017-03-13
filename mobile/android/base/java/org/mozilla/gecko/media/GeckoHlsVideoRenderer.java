@@ -537,6 +537,10 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
                 && SystemClock.elapsedRealtime() < codecHotswapDeadlineMs));
     }
 
+    public LinkedList<DecoderInputBuffer> getQueuedSamples(int number) {
+        return null;
+    }
+
     private boolean drainQueuedSamples(long positionUs, long elapsedRealtimeUs) throws ExoPlaybackException {
         if (DEBUG) Log.d(TAG, "                       drainOutputBuffer ===> positionUs : " + positionUs + ", elapsedRT : " + elapsedRealtimeUs);
         int queueSize = queuedInputSamples.size();

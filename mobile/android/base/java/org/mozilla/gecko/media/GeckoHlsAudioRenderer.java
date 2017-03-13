@@ -629,6 +629,10 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
         return false;
     }
 
+    public LinkedList<DecoderInputBuffer> getQueuedSamples(int number) {
+        return null;
+    }
+
     private boolean drainQueuedDemuxedSamples(long positionUs, long elapsedRealtimeUs) throws ExoPlaybackException {
         if (DEBUG) Log.d(TAG, "                       drainOutputBuffer ===> positionUs : " + positionUs + ", elapsedRT : " + elapsedRealtimeUs);
         int queueSize = demuxedSampleBuffer.size();
