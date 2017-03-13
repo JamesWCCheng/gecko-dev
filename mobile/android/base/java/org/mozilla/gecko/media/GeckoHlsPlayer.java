@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.Surface;
 
 import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
@@ -40,6 +41,7 @@ import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
 
+import java.util.LinkedList;
 import java.util.ArrayList;
 
 public class GeckoHlsPlayer implements ExoPlayer.EventListener {
@@ -331,7 +333,17 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         }
     }
 
-    // API for GeckoHlsSampleGetter ===============================
+    // =======================================================================
+    // API for GeckoHlsDemuxerWrapper
+    // =======================================================================
+    public LinkedList<DecoderInputBuffer> getVideoSamples(int number) {
+        return null;
+    }
+
+    public LinkedList<DecoderInputBuffer> getAudioSamples(int number) {
+        return null;
+    }
+
     public long getDuration() {
         if (DEBUG) Log.d(TAG, "getDuration");
         if (player != null) {

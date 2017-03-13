@@ -311,12 +311,12 @@ auto GeckoHlsDemuxerWrapper::Destroy() const -> void
     return mozilla::jni::Method<Destroy_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr);
 }
 
-constexpr char GeckoHlsDemuxerWrapper::GetSample_t::name[];
-constexpr char GeckoHlsDemuxerWrapper::GetSample_t::signature[];
+constexpr char GeckoHlsDemuxerWrapper::GetSamples_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetSamples_t::signature[];
 
-auto GeckoHlsDemuxerWrapper::GetSample(int32_t a0) const -> mozilla::jni::Object::LocalRef
+auto GeckoHlsDemuxerWrapper::GetSamples(int32_t a0, int32_t a1) const -> mozilla::jni::Object::LocalRef
 {
-    return mozilla::jni::Method<GetSample_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
+    return mozilla::jni::Method<GetSamples_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0, a1);
 }
 
 const char16_t GeckoHlsDemuxerWrapper::AAC[] = u"audio/mp4a-latm";

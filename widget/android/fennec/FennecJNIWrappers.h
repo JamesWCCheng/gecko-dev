@@ -1043,15 +1043,16 @@ public:
 
     auto Destroy() const -> void;
 
-    struct GetSample_t {
+    struct GetSamples_t {
         typedef GeckoHlsDemuxerWrapper Owner;
         typedef mozilla::jni::Object::LocalRef ReturnType;
         typedef mozilla::jni::Object::Param SetterType;
         typedef mozilla::jni::Args<
+                int32_t,
                 int32_t> Args;
-        static constexpr char name[] = "getSample";
+        static constexpr char name[] = "getSamples";
         static constexpr char signature[] =
-                "(I)Lorg/mozilla/gecko/media/Sample;";
+                "(II)Ljava/util/LinkedList;";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -1061,7 +1062,7 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    auto GetSample(int32_t) const -> mozilla::jni::Object::LocalRef;
+    auto GetSamples(int32_t, int32_t) const -> mozilla::jni::Object::LocalRef;
 
     static const char16_t AAC[];
 
