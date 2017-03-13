@@ -73,6 +73,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     private Format videoFormat;
     private int numVideoTracks = 0;
     private int numAudioTracks = 0;
+    private GeckoHlsVideoRenderer vRenderer = null;
+    private GeckoHlsAudioRenderer aRenderer = null;
 
     private GeckoHlsDemuxerWrapper.Callbacks nativeCallbacks;
 
@@ -231,17 +233,20 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
                 new AdaptiveVideoTrackSelection.Factory(BANDWIDTH_METER);
         trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
 
+        vRenderer = new GeckoHlsVideoRenderer(va,
+                                              MediaCodecSelector.DEFAULT,
+                                              mainHandler,
+                                              componentListener,
+                                              inPlayerRender);
+        aRenderer = new GeckoHlsAudioRenderer(MediaCodecSelector.DEFAULT,
+                                              mainHandler,
+                                              componentListener,
+                                              (AudioCapabilities)null,
+                                              inPlayerRender);
+
         ArrayList<Renderer> renderersList = new ArrayList<>();
-        renderersList.add(new GeckoHlsVideoRenderer(va,
-                                                    MediaCodecSelector.DEFAULT,
-                                                    mainHandler,
-                                                    componentListener,
-                                                    inPlayerRender));
-        renderersList.add(new GeckoHlsAudioRenderer(MediaCodecSelector.DEFAULT,
-                                                    mainHandler,
-                                                    componentListener,
-                                                    (AudioCapabilities)null,
-                                                    inPlayerRender));
+        renderersList.add(vRenderer);
+        renderersList.add(aRenderer);
         renderers = renderersList.toArray(new Renderer[renderersList.size()]);
 
         player = ExoPlayerFactory.newInstance(renderers, trackSelector);
@@ -337,7 +342,10 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     // API for GeckoHlsDemuxerWrapper
     // =======================================================================
     public LinkedList<DecoderInputBuffer> getVideoSamples(int number) {
-        return null;
+        if (vRenderer != null) {
+            return vRenderer.getQueuedSamples(number);
+        }
+        return new LinkedList<DecoderInputBuffer>();
     }
 
     public LinkedList<DecoderInputBuffer> getAudioSamples(int number) {

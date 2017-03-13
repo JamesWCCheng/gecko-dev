@@ -36,12 +36,11 @@ import java.util.LinkedList;
 
 public class GeckoHlsVideoRenderer extends BaseRenderer {
     private static final String TAG = "GeckoHlsVideoRenderer";
-    private static boolean DEBUG = false;
+    private static boolean DEBUG = true;
     private boolean passToCodec;
     private boolean initialized;
     private ByteBuffer inputBuffer;
     private int QUEUED_INPUT_SAMPLE_SIZE = 10;
-
     @SuppressWarnings("serial")
     public static class DecoderInitializationException extends Exception {
         private static final int CUSTOM_ERROR_CODE_BASE = -50000;
@@ -180,6 +179,9 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
 
         // NOTE : Modify this to change behavior.
         this.passToCodec = passToCodec;
+        if (!passToCodec) {
+            renderedFirstFrame = true;
+        }
     }
 
     public void handleMessage(int messageType, Object message) throws ExoPlaybackException {
@@ -325,7 +327,8 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
             if (passToCodec) {
                 while (drainOutputBuffer(positionUs, elapsedRealtimeUs)) {}
             } else {
-                while (drainQueuedSamples(positionUs, elapsedRealtimeUs)) {}
+//                while (drainQueuedSamples(positionUs, elapsedRealtimeUs)) {}
+//                getQueuedSamples(1);
             }
             while (feedSampleQueue()) {}
             if (passToCodec) {
@@ -531,14 +534,23 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
     }
 
     public boolean isReady1() {
-        boolean hasOutput = passToCodec ? this.outputIndex >= 0 : queuedInputSamples.size() > 0;
-        return format != null && (isSourceReady() || hasOutput
-                || (codecHotswapDeadlineMs != C.TIME_UNSET
-                && SystemClock.elapsedRealtime() < codecHotswapDeadlineMs));
+        boolean hasOutput = passToCodec ? this.outputIndex >= 0 : true;
+        return format != null &&
+                (isSourceReady() || hasOutput ||
+                (codecHotswapDeadlineMs != C.TIME_UNSET && SystemClock.elapsedRealtime() < codecHotswapDeadlineMs));
     }
 
     public LinkedList<DecoderInputBuffer> getQueuedSamples(int number) {
-        return null;
+        LinkedList<DecoderInputBuffer> samples = new LinkedList<DecoderInputBuffer>();
+        int queuedSize = queuedInputSamples.size();
+        for (int i = 0; i < queuedSize; i++) {
+            if (i >= number) {
+                break;
+            }
+            DecoderInputBuffer outputBuffer = queuedInputSamples.removeFirst();
+            samples.addLast(outputBuffer);
+        }
+        return samples;
     }
 
     private boolean drainQueuedSamples(long positionUs, long elapsedRealtimeUs) throws ExoPlaybackException {
@@ -726,7 +738,9 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         if (initialized) {
             flushRenderer();
         }
-        renderedFirstFrame = false;
+        if (this.passToCodec) {
+            renderedFirstFrame = false;
+        }
         joiningDeadlineMs = joining && allowedJoiningTimeMs > 0
                 ? (SystemClock.elapsedRealtime() + allowedJoiningTimeMs) : C.TIME_UNSET;
     }
