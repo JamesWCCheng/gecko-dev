@@ -18,6 +18,9 @@ import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
 import com.google.android.exoplayer2.Format;
 
 import android.content.Context;
+import android.media.MediaCodec;
+import android.media.MediaCodec.BufferInfo;
+import android.media.MediaCodec.CryptoInfo;
 import android.os.Build;
 import android.util.Log;
 
@@ -130,18 +133,21 @@ public final class GeckoHlsDemuxerWrapper {
     }
 
     @WrapForJNI
-    private LinkedList<Sample> getSamples(int mediaType, int number) {
+    private Sample[] getSamples(int mediaType, int number) {
         if (DEBUG) Log.d(LOGTAG, "getSample, mediaType = " + mediaType);
         LinkedList<DecoderInputBuffer> inputBuffers;
+
+        Sample[] samples = new Sample[number];
+        // TODO : Convert inputBuffers to Samples.
         if (mediaType == TRACK_VIDEO) {
             inputBuffers = player.getVideoSamples(number);
+            for (int i = 0; i < inputBuffers.size(); i++) {
+                BufferInfo bufferInfo = new BufferInfo();
+                bufferInfo.set(0, info.size, info.presentationTimeUs, info.flags);
+            }
         } else if (mediaType == TRACK_AUDIO) {
             inputBuffers = player.getAudioSamples(number);
         }
-
-        // TODO : Convert inputBuffers to Samples.
-
-        LinkedList<Sample> samples = null;
         return samples;
     }
 
