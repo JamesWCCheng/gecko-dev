@@ -5,6 +5,7 @@
 
 package org.mozilla.gecko.media;
 
+import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -135,18 +136,34 @@ public final class GeckoHlsDemuxerWrapper {
     @WrapForJNI
     private Sample[] getSamples(int mediaType, int number) {
         if (DEBUG) Log.d(LOGTAG, "getSample, mediaType = " + mediaType);
-        LinkedList<DecoderInputBuffer> inputBuffers;
-
+        LinkedList<DecoderInputBuffer> inputBuffers = null;
         Sample[] samples = new Sample[number];
         // TODO : Convert inputBuffers to Samples.
         if (mediaType == TRACK_VIDEO) {
             inputBuffers = player.getVideoSamples(number);
-            for (int i = 0; i < inputBuffers.size(); i++) {
-                BufferInfo bufferInfo = new BufferInfo();
-                bufferInfo.set(0, info.size, info.presentationTimeUs, info.flags);
-            }
         } else if (mediaType == TRACK_AUDIO) {
             inputBuffers = player.getAudioSamples(number);
+        }
+
+        int index = 0;
+        DecoderInputBuffer inputBuffer = null;
+        for (inputBuffer = inputBuffers.pollFirst(); inputBuffer != null; inputBuffer = inputBuffers.pollFirst()) {
+            CryptoInfo cryptoInfo = inputBuffer.cryptoInfo.getFrameworkCryptoInfoV16();
+            BufferInfo bufferInfo = new BufferInfo();
+            long pts = inputBuffer.timeUs;
+            // The flags in DecoderInputBuffer is syned with MediaCodec Buffer flags.
+            int flags = 0;
+            flags |= inputBuffer.isKeyFrame() ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0;
+            flags |= inputBuffer.isEndOfStream() ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0;
+            int size = inputBuffer.data.limit();
+
+            byte[] realData = new byte[size];
+            inputBuffer.data.get(realData, 0, size);
+            ByteBuffer buffer = ByteBuffer.wrap(realData);
+            bufferInfo.set(0, size, pts, flags);
+            if (DEBUG) Log.d(LOGTAG, "Type(" + mediaType + "), PTS(" + pts + "), size(" + size + ")");
+            samples[index] = Sample.create(buffer, bufferInfo, cryptoInfo);
+            index++;
         }
         return samples;
     }
