@@ -314,7 +314,7 @@ auto GeckoHlsDemuxerWrapper::Destroy() const -> void
 constexpr char GeckoHlsDemuxerWrapper::GetSamples_t::name[];
 constexpr char GeckoHlsDemuxerWrapper::GetSamples_t::signature[];
 
-auto GeckoHlsDemuxerWrapper::GetSamples(int32_t a0, int32_t a1) const -> mozilla::jni::Object::LocalRef
+auto GeckoHlsDemuxerWrapper::GetSamples(int32_t a0, int32_t a1) const -> mozilla::jni::ObjectArray::LocalRef
 {
     return mozilla::jni::Method<GetSamples_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0, a1);
 }
