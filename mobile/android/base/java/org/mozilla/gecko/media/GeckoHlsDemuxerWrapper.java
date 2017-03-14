@@ -14,6 +14,7 @@ import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.mozglue.JNIObject;
 
+import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
 import com.google.android.exoplayer2.Format;
 
 import android.content.Context;
@@ -131,12 +132,16 @@ public final class GeckoHlsDemuxerWrapper {
     @WrapForJNI
     private LinkedList<Sample> getSamples(int mediaType, int number) {
         if (DEBUG) Log.d(LOGTAG, "getSample, mediaType = " + mediaType);
-        LinkedList<Sample> samples = new LinkedList<Sample>();
+        LinkedList<DecoderInputBuffer> inputBuffers;
         if (mediaType == TRACK_VIDEO) {
-
+            inputBuffers = player.getVideoSamples(number);
         } else if (mediaType == TRACK_AUDIO) {
-
+            inputBuffers = player.getAudioSamples(number);
         }
+
+        // TODO : Convert inputBuffers to Samples.
+
+        LinkedList<Sample> samples = null;
         return samples;
     }
 

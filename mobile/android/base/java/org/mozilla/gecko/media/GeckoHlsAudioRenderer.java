@@ -319,7 +319,10 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
     }
 
     public boolean isReady() {
-        return (!DEMUX_ONLY && this.audioTrack.hasPendingData()) || this.format != null && !this.waitingForKeys && (this.isSourceReady() || this.outputIndex >= 0 || this.codecHotswapDeadlineMs != C.TIME_UNSET && SystemClock.elapsedRealtime() < this.codecHotswapDeadlineMs);
+        boolean hasOutput = !DEMUX_ONLY ? this.outputIndex >= 0 : true;
+        return (!DEMUX_ONLY && this.audioTrack.hasPendingData()) ||
+                this.format != null && !this.waitingForKeys &&
+                (this.isSourceReady() || hasOutput || this.codecHotswapDeadlineMs != C.TIME_UNSET && SystemClock.elapsedRealtime() < this.codecHotswapDeadlineMs);
     }
 
     public long getPositionUs() {
@@ -630,7 +633,16 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
     }
 
     public LinkedList<DecoderInputBuffer> getQueuedSamples(int number) {
-        return null;
+        LinkedList<DecoderInputBuffer> samples = new LinkedList<DecoderInputBuffer>();
+        int queuedSize = demuxedSampleBuffer.size();
+        for (int i = 0; i < queuedSize; i++) {
+            if (i >= number) {
+                break;
+            }
+            DecoderInputBuffer outputBuffer = demuxedSampleBuffer.removeFirst();
+            samples.addLast(outputBuffer);
+        }
+        return samples;
     }
 
     private boolean drainQueuedDemuxedSamples(long positionUs, long elapsedRealtimeUs) throws ExoPlaybackException {
@@ -849,7 +861,8 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
                 if (!DEMUX_ONLY) {
                     while (drainOutputBuffer(positionUs, elapsedRealtimeUs)) {}
                 } else {
-                    while (drainQueuedDemuxedSamples(positionUs, elapsedRealtimeUs)) {}
+//                    while (drainQueuedDemuxedSamples(positionUs, elapsedRealtimeUs)) {}
+//                    getQueuedSamples(1);
                 }
                 while (feedDemuxedSampleQueue()) {}
                 if (!DEMUX_ONLY) {

@@ -349,7 +349,10 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     }
 
     public LinkedList<DecoderInputBuffer> getAudioSamples(int number) {
-        return null;
+        if (aRenderer != null) {
+            return aRenderer.getQueuedSamples(number);
+        }
+        return new LinkedList<DecoderInputBuffer>();
     }
 
     public long getDuration() {
