@@ -11,6 +11,7 @@
 #include "FennecJNINatives.h"
 #include "HLSDemuxer.h"
 #include "HLSUtils.h"
+#include "MediaCodec.h"
 #include "nsPrintfCString.h"
 #include "mozilla/Unused.h"
 
@@ -270,7 +271,45 @@ RefPtr<HLSTrackDemuxer::SamplesPromise>
 HLSTrackDemuxer::GetSamples(int32_t aNumSamples)
 {
   MOZ_ASSERT(mParent, "Called after BreackCycle()");
+  if (!aNumSamples) {
+    return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_DEMUXER_ERR,
+                                           __func__);
+  }
   RefPtr<SamplesHolder> samples = new SamplesHolder;
+  //TRACK_AUDIO = 1;
+  //TRACK_VIDEO = 2;
+  mozilla::jni::ObjectArray::LocalRef demuxedSamples =
+      (mType == TrackInfo::kAudioTrack) ?
+        mParent->mHlsDemuxerWrapper->GetSamples(1, aNumSamples):
+        mParent->mHlsDemuxerWrapper->GetSamples(2, aNumSamples);
+  nsTArray<jni::Object::LocalRef> sampleObjectArray(demuxedSamples->GetElements());
+  for (auto&& demuxedSample : sampleObjectArray) {
+    java::Sample::LocalRef sample(mozilla::Move(demuxedSample));
+    java::sdk::BufferInfo::LocalRef info = sample->Info();
+    // TODO: Check which is essential material for MediaRawData.
+    // Currently extract PTS, Size and Data without Crypto information.
+    // Transform java Sample into MediaRawData
+    RefPtr<MediaRawData> mrd = new MediaRawData();
+    int64_t presentationTimeUs = 0;
+    bool ok = NS_SUCCEEDED(info->PresentationTimeUs(&presentationTimeUs));
+    mrd->mTime = presentationTimeUs;
+    int32_t size = 0;
+    ok &= NS_SUCCEEDED(info->Size(&size));
+    if (!ok) {
+      HLS_DEBUG("HLSTrackDemuxer", "Error occurred during extraction from Sample java object.");
+      return nullptr;
+    }
+    // Write payload into MediaRawData
+    UniquePtr<MediaRawDataWriter> writer(mrd->CreateWriter());
+    if (!writer->SetSize(size)) {
+      HLS_DEBUG("HLSTrackDemuxer", "Exit failed to allocated media buffer");
+      return nullptr;
+    }
+    jni::ByteBuffer::LocalRef dest =
+        jni::ByteBuffer::New(writer->Data(), writer->Size());
+    sample->WriteToByteBuffer(dest);
+    samples->mSamples.AppendElement(mrd);
+  }
   return SamplesPromise::CreateAndResolve(samples, __func__);
 }
 
