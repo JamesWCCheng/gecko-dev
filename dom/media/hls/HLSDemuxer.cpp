@@ -321,6 +321,54 @@ HLSTrackDemuxer::GetSamples(int32_t aNumSamples)
     jni::ByteBuffer::LocalRef dest =
         jni::ByteBuffer::New(writer->Data(), writer->Size());
     sample->WriteToByteBuffer(dest);
+
+    // Write Crypto information
+    java::sdk::CryptoInfo::LocalRef cryptoInfo = sample->CryptoInfo();
+    if (cryptoInfo) {
+      HLS_DEBUG("HLSTrackDemuxer", "Has Crypto Info");
+      writer->mCrypto.mValid = true;
+      int32_t mode = 0;
+      ok &= NS_SUCCEEDED(cryptoInfo->Mode(&mode));
+      writer->mCrypto.mMode = mode;
+      mozilla::jni::ByteArray::LocalRef ivData;
+      ok &= NS_SUCCEEDED(cryptoInfo->Iv(&ivData));
+      // Data in mIV is uint8_t and jbyte is signed char
+      auto&& ivArr= ivData->GetElements();
+      writer->mCrypto.mIV.AppendElements(reinterpret_cast<uint8_t*>(&ivArr[0]),
+                                         ivArr.Length());
+      writer->mCrypto.mIVSize = ivArr.Length();
+      mozilla::jni::ByteArray::LocalRef keyData;
+      ok &= NS_SUCCEEDED(cryptoInfo->Key(&keyData));
+      auto&& keyArr = keyData->GetElements();
+      // Data in mKeyId is uint8_t and jbyte is signed char
+      writer->mCrypto.mKeyId.AppendElements(reinterpret_cast<uint8_t*>(&keyArr[0]),
+                                            keyArr.Length());
+
+      mozilla::jni::IntArray::LocalRef clearData;
+      ok &= NS_SUCCEEDED(cryptoInfo->NumBytesOfClearData(&clearData));
+      // Data in mPlainSizes is uint16_t, NumBytesOfClearData is int32_t
+      // , so need a for loop to copy
+      for (const auto& b : clearData->GetElements()) {
+        writer->mCrypto.mPlainSizes.AppendElement(b);
+      }
+
+      mozilla::jni::IntArray::LocalRef encryptedData;
+      ok &= NS_SUCCEEDED(cryptoInfo->NumBytesOfEncryptedData(&encryptedData));
+      auto&& encryptedArr = encryptedData->GetElements();
+      // Data in mEncryptedSizes is uint32_t, NumBytesOfEncryptedData is int32_t
+      writer->mCrypto.mEncryptedSizes.AppendElements(reinterpret_cast<uint32_t*>(&encryptedArr[0]),
+                                                     encryptedArr.Length());
+      // TODO: Need to validate.
+      // Inverse the work by http://searchfox.org/mozilla-central/rev/ca7015fa45b30b29176fbaa70ba0a36fe9263c38/dom/media/platforms/android/AndroidDecoderModule.cpp#92
+      int subSamplesNum = 0;
+      ok &= NS_SUCCEEDED(cryptoInfo->NumSubSamples(&subSamplesNum));
+      writer->mCrypto.mPlainSizes[0] -= (writer->Size() - subSamplesNum);
+
+      if (!ok) {
+        // TODO: maybe print a warning msg.
+        HLS_DEBUG("HLSTrackDemuxer", "Error occurred during extraction from CryptoInfo java object.");
+      }
+    }
     samples->mSamples.AppendElement(mrd);
   }
   return SamplesPromise::CreateAndResolve(samples, __func__);
