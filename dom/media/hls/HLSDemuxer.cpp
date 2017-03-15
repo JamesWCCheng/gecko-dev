@@ -292,6 +292,10 @@ HLSTrackDemuxer::GetSamples(int32_t aNumSamples)
         mParent->mHlsDemuxerWrapper->GetSamples(1, aNumSamples):
         mParent->mHlsDemuxerWrapper->GetSamples(2, aNumSamples);
   nsTArray<jni::Object::LocalRef> sampleObjectArray(demuxedSamples->GetElements());
+
+  if (sampleObjectArray.IsEmpty()) {
+    return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_WAITING_FOR_DATA, __func__);
+  }
   for (auto&& demuxedSample : sampleObjectArray) {
     java::Sample::LocalRef sample(mozilla::Move(demuxedSample));
     java::sdk::BufferInfo::LocalRef info = sample->Info();
