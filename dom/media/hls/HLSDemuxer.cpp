@@ -77,12 +77,21 @@ public:
     mDemuxer->onVideoFormatChanged();
     mDemuxer->onCheckInitDone();
   }
+
+  void OnDataArrived() {
+    MOZ_ASSERT(mDemuxer);
+    mDemuxer->GetDecoder()->NotifyDataArrived();
+  }
+
 private:
   HLSDemuxer* mDemuxer;
 };
 
-HLSDemuxer::HLSDemuxer(MediaResource* aResource, AbstractThread* aAbstractMainThread)
-  : mResource(aResource)
+HLSDemuxer::HLSDemuxer(MediaDecoder* aDecoder,
+                       MediaResource* aResource,
+                       AbstractThread* aAbstractMainThread)
+  : mDecoder(aDecoder)
+  , mResource(aResource)
   , mTaskQueue(new AutoTaskQueue(GetMediaThreadPool(MediaThreadType::PLAYBACK),
                                  aAbstractMainThread,
                                  /* aSupportsTailDispatch = */ false))

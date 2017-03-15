@@ -21,7 +21,7 @@ HLSDecoder::CreateStateMachine()
   //TODO: check hls demuxer constructor's parameter
   mReader =
     new MediaFormatReader(this,
-                          new HLSDemuxer(GetResource(), AbstractMainThread()),
+                          new HLSDemuxer(this, GetResource(), AbstractMainThread()),
                           GetVideoFrameContainer());
 
   return new MediaDecoderStateMachine(this, mReader);

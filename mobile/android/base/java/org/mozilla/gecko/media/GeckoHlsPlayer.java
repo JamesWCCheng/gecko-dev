@@ -85,8 +85,21 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         TRACK_TEXT,
     }
 
+
+    private static void assertTrue(boolean condition) {
+      if (DEBUG && !condition) {
+        throw new AssertionError("Expected condition to be true");
+      }
+    }
+
     public final class ComponentListener implements VideoRendererEventListener,
             AudioRendererEventListener, MetadataRenderer.Output {
+
+        // General purpose implementation
+        public void onDataArrived() {
+            assertTrue(nativeCallbacks != null);
+            nativeCallbacks.onDataArrived();
+        }
 
         // VideoRendererEventListener implementation
 
@@ -102,6 +115,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
         @Override
         public void onVideoInputFormatChanged(Format format) {
+            assertTrue(nativeCallbacks != null);
+
             videoFormat = format;
             if (DEBUG) Log.d( TAG, "onVideoInputFormatChanged [" + videoFormat + "]");
             if (DEBUG) Log.d( TAG, "sMimetype [" + videoFormat.sampleMimeType + "], ContainerMIMETYPE" + videoFormat.containerMimeType);
@@ -153,6 +168,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
         @Override
         public void onAudioInputFormatChanged(Format format) {
+            assertTrue(nativeCallbacks != null);
+
             audioFormat = format;
             if (DEBUG) Log.d(TAG, "onAudioInputFormatChanged [" + audioFormat + "]");
             nativeCallbacks.onAudioFormatChanged();
@@ -357,23 +374,22 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     public long getDuration() {
         if (DEBUG) Log.d(TAG, "getDuration");
-        if (player != null) {
-            return player.getDuration();
-        }
-        return 0;
+        assertTrue(player != null);
+
+        return player.getDuration();
     }
 
     public long getBufferedPosition() {
         if (DEBUG) Log.d(TAG, "getBufferedPosition");
-        if (player != null) {
-            return player.getBufferedPosition();
-        }
-        return 0;
+        assertTrue(player != null);
+
+        return player.getBufferedPosition();
     }
 
     public int getNumberTracks(Track_Type trackType) {
         if (DEBUG) Log.d(TAG, "getNumberTracks");
-        assert trackGroupUpdated;
+        assertTrue(trackGroupUpdated != false);
+
         if (trackType == Track_Type.TRACK_VIDEO) {
             return numVideoTracks;
         } else if (trackType == Track_Type.TRACK_AUDIO) {

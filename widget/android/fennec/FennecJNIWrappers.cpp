@@ -337,6 +337,9 @@ auto GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New() -> HlsDemuxerCallbacks::
 constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnAudioFormatChanged_t::name[];
 constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnAudioFormatChanged_t::signature[];
 
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnDataArrived_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnDataArrived_t::signature[];
+
 constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t::name[];
 constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t::signature[];
 

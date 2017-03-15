@@ -47,6 +47,7 @@ public final class GeckoHlsDemuxerWrapper {
     public interface Callbacks {
         void onAudioFormatChanged();
         void onVideoFormatChanged();
+        void onDataArrived();
     }
 
     public static class HlsDemuxerCallbacks extends JNIObject implements Callbacks {
@@ -61,11 +62,21 @@ public final class GeckoHlsDemuxerWrapper {
         @WrapForJNI(dispatchTo = "gecko")
         public native void onVideoFormatChanged();
 
+        @Override
+        @WrapForJNI(dispatchTo = "gecko")
+        public native void onDataArrived();
+
         @Override // JNIObject
         protected void disposeNative() {
             throw new UnsupportedOperationException();
         }
     } // HlsDemuxerCallbacks
+
+    private static void assertTrue(boolean condition) {
+        if (DEBUG && !condition) {
+          throw new AssertionError("Expected condition to be true");
+        }
+      }
 
     private GeckoHlsPlayer.Track_Type getPlayerTrackType(int trackType) {
         if (trackType == 1) {
@@ -93,7 +104,8 @@ public final class GeckoHlsDemuxerWrapper {
 
     @WrapForJNI
     public HlsAudioInfo GetAudioInfo(int trackNumber) {
-        assert player != null;
+        assertTrue(player != null);
+
         if (DEBUG) Log.d(LOGTAG, "[GetAudioInfo]");
         Format fmt = player.getAudioTrackFormat();
         HlsAudioInfo aInfo = new HlsAudioInfo();
@@ -107,7 +119,8 @@ public final class GeckoHlsDemuxerWrapper {
 
     @WrapForJNI
     public HlsVideoInfo GetVideoInfo(int trackNumber) {
-        assert player != null;
+        assertTrue(player != null);
+
         if (DEBUG) Log.d(LOGTAG, "[GetVideoInfo]");
         Format fmt = player.getVideoTrackFormat();
         HlsVideoInfo vInfo = new HlsVideoInfo();
@@ -136,15 +149,16 @@ public final class GeckoHlsDemuxerWrapper {
     @WrapForJNI
     private Sample[] getSamples(int mediaType, int number) {
         if (DEBUG) Log.d(LOGTAG, "getSample, mediaType = " + mediaType);
-        LinkedList<DecoderInputBuffer> inputBuffers = null;
-        Sample[] samples = new Sample[number];
-        // TODO : Convert inputBuffers to Samples.
+        LinkedList<DecoderInputBuffer> inputBuffers = new LinkedList<DecoderInputBuffer>();
         if (mediaType == TRACK_VIDEO) {
             inputBuffers = player.getVideoSamples(number);
         } else if (mediaType == TRACK_AUDIO) {
             inputBuffers = player.getAudioSamples(number);
         }
 
+        assertTrue(inputBuffers.size() <= number);
+
+        Sample[] samples = new Sample[inputBuffers.size()];
         int index = 0;
         DecoderInputBuffer inputBuffer = null;
         for (inputBuffer = inputBuffers.pollFirst(); inputBuffer != null; inputBuffer = inputBuffers.pollFirst()) {
@@ -162,8 +176,7 @@ public final class GeckoHlsDemuxerWrapper {
             ByteBuffer buffer = ByteBuffer.wrap(realData);
             bufferInfo.set(0, size, pts, flags);
             if (DEBUG) Log.d(LOGTAG, "Type(" + mediaType + "), PTS(" + pts + "), size(" + size + ")");
-            samples[index] = Sample.create(buffer, bufferInfo, cryptoInfo);
-            index++;
+            samples[index++] = Sample.create(buffer, bufferInfo, cryptoInfo);
         }
         return samples;
     }

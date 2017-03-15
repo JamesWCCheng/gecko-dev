@@ -1116,6 +1116,23 @@ public:
                 mozilla::jni::DispatchTarget::GECKO;
     };
 
+    struct OnDataArrived_t {
+        typedef HlsDemuxerCallbacks Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "onDataArrived";
+        static constexpr char signature[] =
+                "()V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::GECKO;
+    };
+
     struct OnVideoFormatChanged_t {
         typedef HlsDemuxerCallbacks Owner;
         typedef void ReturnType;

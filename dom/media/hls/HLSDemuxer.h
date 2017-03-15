@@ -10,6 +10,7 @@
 #include "AutoTaskQueue.h"
 #include "FennecJNIWrappers.h"
 #include "MediaDataDemuxer.h"
+#include "MediaDecoder.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/Monitor.h"
@@ -27,7 +28,9 @@ class HLSTrackDemuxer;
 class HLSDemuxer : public MediaDataDemuxer
 {
 public:
-  explicit HLSDemuxer(MediaResource* aResource, AbstractThread* aAbstractMainThread);
+  explicit HLSDemuxer(MediaDecoder* aParent,
+                      MediaResource* aResource,
+                      AbstractThread* aAbstractMainThread);
 
   RefPtr<InitPromise> Init() override;
 
@@ -54,8 +57,11 @@ public:
   void onVideoFormatChanged();
   void onCheckInitDone();
 
+  MediaDecoder* GetDecoder() { return mDecoder; }
+
 private:
   ~HLSDemuxer();
+  RefPtr<MediaDecoder> mDecoder;
   RefPtr<MediaResource> mResource;
   friend class HLSTrackDemuxer;
   TrackInfo* GetTrackInfo(TrackInfo::TrackType);
