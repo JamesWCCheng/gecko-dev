@@ -620,6 +620,7 @@ gbjar.sources += ['java/org/mozilla/gecko/' + x for x in [
     'media/Sample.java',
     'media/SamplePool.java',
     'media/SessionKeyInfo.java',
+    'media/Utils.java',
     'media/VideoPlayer.java',
     'MediaCastingBar.java',
     'MemoryMonitor.java',
