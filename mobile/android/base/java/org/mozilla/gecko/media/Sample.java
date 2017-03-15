@@ -90,6 +90,7 @@ public final class Sample implements Parcelable {
     public Buffer buffer;
     @WrapForJNI
     public BufferInfo info;
+    @WrapForJNI
     public CryptoInfo cryptoInfo;
 
     public static Sample create() { return create(null, new BufferInfo(), null); }

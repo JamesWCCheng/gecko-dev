@@ -711,6 +711,19 @@ auto Sample::WriteToByteBuffer(mozilla::jni::ByteBuffer::Param a0) const -> void
     return mozilla::jni::Method<WriteToByteBuffer_t>::Call(Sample::mCtx, nullptr, a0);
 }
 
+constexpr char Sample::CryptoInfo_t::name[];
+constexpr char Sample::CryptoInfo_t::signature[];
+
+auto Sample::CryptoInfo() const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Field<CryptoInfo_t>::Get(Sample::mCtx, nullptr);
+}
+
+auto Sample::CryptoInfo(mozilla::jni::Object::Param a0) const -> void
+{
+    return mozilla::jni::Field<CryptoInfo_t>::Set(Sample::mCtx, nullptr, a0);
+}
+
 constexpr char Sample::Info_t::name[];
 constexpr char Sample::Info_t::signature[];
 

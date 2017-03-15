@@ -1981,6 +1981,27 @@ public:
 
     auto WriteToByteBuffer(mozilla::jni::ByteBuffer::Param) const -> void;
 
+    struct CryptoInfo_t {
+        typedef Sample Owner;
+        typedef mozilla::jni::Object::LocalRef ReturnType;
+        typedef mozilla::jni::Object::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "cryptoInfo";
+        static constexpr char signature[] =
+                "Landroid/media/MediaCodec$CryptoInfo;";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto CryptoInfo() const -> mozilla::jni::Object::LocalRef;
+
+    auto CryptoInfo(mozilla::jni::Object::Param) const -> void;
+
     struct Info_t {
         typedef Sample Owner;
         typedef mozilla::jni::Object::LocalRef ReturnType;
