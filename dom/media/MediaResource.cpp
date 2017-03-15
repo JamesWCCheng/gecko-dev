@@ -1524,8 +1524,7 @@ MediaResource::Create(MediaResourceCallback* aCallback, nsIChannel* aChannel)
 
   RefPtr<MediaResource> resource;
   if (IsHttpLiveStreamingType(containerType.value())) {
-    // TODO: fix me with a principal.
-    resource = new HLSResource(aCallback, aChannel, uri, *containerType, nullptr);
+    resource = new HLSResource(aCallback, aChannel, uri, *containerType);
     return resource.forget();
   }
   nsCOMPtr<nsIFileChannel> fc = do_QueryInterface(aChannel);

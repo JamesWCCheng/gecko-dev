@@ -18,10 +18,8 @@ public:
   HLSResource(MediaResourceCallback* aCallback,
               nsIChannel* aChannel,
               nsIURI* aURI,
-              const MediaContainerType& aContainerType,
-              nsIPrincipal* aPrincipal = nullptr) :
+              const MediaContainerType& aContainerType) :
     BaseMediaResource(aCallback, aChannel, aURI, aContainerType)
-    , mPrincipal(aPrincipal)
     , mMonitor("HLSResource")
     , mEnded(false)
   {
@@ -57,8 +55,15 @@ public:
 
   already_AddRefed<nsIPrincipal> GetCurrentPrincipal() override
   {
-    // TODO: try to get a principal, now it is null.
-    return RefPtr<nsIPrincipal>(mPrincipal).forget();
+    // TODO: Referenced from FileMediaResource::GetCurrentPrincipal(), should ensure what's that.
+    NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
+
+    nsCOMPtr<nsIPrincipal> principal;
+    nsIScriptSecurityManager* secMan = nsContentUtils::GetSecurityManager();
+    if (!secMan || !mChannel)
+      return nullptr;
+    secMan->GetChannelResultPrincipal(mChannel, getter_AddRefs(principal));
+    return principal.forget();
   }
 
   nsresult GetCachedRanges(MediaByteRangeSet& aRanges) override
@@ -100,7 +105,7 @@ private:
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
-  RefPtr<nsIPrincipal> mPrincipal;
+
   Monitor mMonitor;
   bool mEnded; // protected by mMonitor
 };
