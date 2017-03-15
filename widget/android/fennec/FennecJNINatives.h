@@ -185,7 +185,7 @@ template<class Impl>
 class GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::Natives : public mozilla::jni::NativeImpl<HlsDemuxerCallbacks, Impl>
 {
 public:
-    static const JNINativeMethod methods[2];
+    static const JNINativeMethod methods[3];
 };
 
 template<class Impl>
@@ -194,6 +194,10 @@ const JNINativeMethod GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::Natives<Impl>
     mozilla::jni::MakeNativeMethod<GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnAudioFormatChanged_t>(
             mozilla::jni::NativeStub<GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnAudioFormatChanged_t, Impl>
             ::template Wrap<&Impl::OnAudioFormatChanged>),
+
+    mozilla::jni::MakeNativeMethod<GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnDataArrived_t>(
+            mozilla::jni::NativeStub<GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnDataArrived_t, Impl>
+            ::template Wrap<&Impl::OnDataArrived>),
 
     mozilla::jni::MakeNativeMethod<GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t>(
             mozilla::jni::NativeStub<GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t, Impl>

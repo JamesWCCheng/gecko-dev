@@ -158,6 +158,9 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
     private boolean renderedFirstFrame;
     private long joiningDeadlineMs;
 
+    private boolean waitingForData;
+    private GeckoHlsPlayer.ComponentListener playerListener;
+
     public GeckoHlsVideoRenderer(Context context, MediaCodecSelector mediaCodecSelector,
                                  Handler eventHandler, VideoRendererEventListener eventListener,
                                  boolean passToCodec) {
@@ -171,11 +174,13 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         codecReconfigurationState = RECONFIGURATION_STATE_NONE;
         codecReinitializationState = REINITIALIZATION_STATE_NONE;
 
+        playerListener = (GeckoHlsPlayer.ComponentListener)eventListener;
         this.allowedJoiningTimeMs = 5000;
         frameReleaseTimeHelper = new VideoFrameReleaseTimeHelper(context);
         eventDispatcher = new VideoRendererEventListener.EventDispatcher(eventHandler, eventListener);
         deviceNeedsAutoFrcWorkaround = deviceNeedsAutoFrcWorkaround();
         joiningDeadlineMs = C.TIME_UNSET;
+        waitingForData = false;
 
         // NOTE : Modify this to change behavior.
         this.passToCodec = passToCodec;
@@ -470,6 +475,11 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         } catch (MediaCodec.CryptoException e) {
             throw ExoPlaybackException.createForRenderer(e, getIndex());
         }
+
+        if (waitingForData) {
+            playerListener.onDataArrived();
+            waitingForData = false;
+        }
         return true;
     }
 
@@ -492,36 +502,6 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         this.codecReceivedBuffers = true;
         this.codecReconfigurationState = 0;
         return true;
-    }
-
-    protected void onInputFormatChanged1(Format newFormat) throws ExoPlaybackException {
-        Format oldFormat = format;
-        format = newFormat;
-
-        boolean drmInitDataChanged = !Util.areEqual(format.drmInitData, oldFormat == null ? null
-                : oldFormat.drmInitData);
-        if (drmInitDataChanged) {
-            if (format.drmInitData != null) {
-//                TODO: May need to notify reader
-            } else {
-            }
-        }
-
-        if (initialized && canReconfigureCodec(codecIsAdaptive, oldFormat, format)) {
-            codecReconfigured = true;
-            codecReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
-            codecNeedsAdaptationWorkaroundBuffer = codecNeedsAdaptationWorkaround
-                    && format.width == oldFormat.width && format.height == oldFormat.height;
-        } else {
-            if (codecReceivedBuffers) {
-                // Signal end of stream and wait for any final output buffers before re-initialization.
-                codecReinitializationState = REINITIALIZATION_STATE_SIGNAL_END_OF_STREAM;
-            } else {
-                // There aren't any final output buffers, so perform re-initialization immediately.
-                releaseRenderer();
-                maybeInitRenderer();
-            }
-        }
     }
 
     protected void onOutputStreamEnded() {
@@ -549,6 +529,9 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
             }
             DecoderInputBuffer outputBuffer = queuedInputSamples.removeFirst();
             samples.addLast(outputBuffer);
+        }
+        if (samples.size() == 0) {
+            waitingForData = true;
         }
         return samples;
     }
@@ -793,7 +776,34 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
     }
 
     protected void onInputFormatChanged(Format newFormat) throws ExoPlaybackException {
-        onInputFormatChanged1(newFormat);
+        Format oldFormat = format;
+        format = newFormat;
+
+        boolean drmInitDataChanged = !Util.areEqual(format.drmInitData, oldFormat == null ? null
+                : oldFormat.drmInitData);
+        if (drmInitDataChanged) {
+            if (format.drmInitData != null) {
+//                TODO: May need to notify reader
+            } else {
+            }
+        }
+
+        if (initialized && canReconfigureCodec(codecIsAdaptive, oldFormat, format)) {
+            codecReconfigured = true;
+            codecReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
+            codecNeedsAdaptationWorkaroundBuffer = codecNeedsAdaptationWorkaround
+                    && format.width == oldFormat.width && format.height == oldFormat.height;
+        } else {
+            if (codecReceivedBuffers) {
+                // Signal end of stream and wait for any final output buffers before re-initialization.
+                codecReinitializationState = REINITIALIZATION_STATE_SIGNAL_END_OF_STREAM;
+            } else {
+                // There aren't any final output buffers, so perform re-initialization immediately.
+                releaseRenderer();
+                maybeInitRenderer();
+            }
+        }
+
         eventDispatcher.inputFormatChanged(newFormat);
     }
 

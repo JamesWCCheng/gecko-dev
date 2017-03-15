@@ -51,6 +51,8 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
     private static final int QUEUED_DEMUXED_INPUT_BUFFER_SIZE = 10;
     private boolean initialized = false;
     private ByteBuffer inputBuffer = null;
+    private boolean waitingForData;
+    private GeckoHlsPlayer.ComponentListener playerListener;
 
     // Copy from GrandFather
     private static final byte[] ADAPTATION_WORKAROUND_BUFFER = Util.getBytesFromHexString("0000016742C00BDA259000000168CE0F13200000016588840DCE7118A0002FBF1C31C3275D78");
@@ -129,6 +131,9 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
         this.audioTrack = new AudioTrack(audioCapabilities, new AudioTrackListener());
         this.eventDispatcher = new AudioRendererEventListener.EventDispatcher(eventHandler, eventListener);
         DEMUX_ONLY = !passToCodec;
+
+        waitingForData = false;
+        playerListener = (GeckoHlsPlayer.ComponentListener)eventListener;
     }
 
     @Override
@@ -642,6 +647,9 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
             DecoderInputBuffer outputBuffer = demuxedSampleBuffer.removeFirst();
             samples.addLast(outputBuffer);
         }
+        if (samples.size() == 0) {
+            waitingForData = true;
+        }
         return samples;
     }
 
@@ -845,6 +853,12 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
         } catch (MediaCodec.CryptoException e) {
             throw ExoPlaybackException.createForRenderer(e, getIndex());
         }
+
+        if (waitingForData) {
+            playerListener.onDataArrived();
+            waitingForData = false;
+        }
+
         return true;
     }
 
