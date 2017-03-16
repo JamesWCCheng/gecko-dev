@@ -93,6 +93,12 @@ public final class GeckoHlsDemuxerWrapper {
         return GeckoHlsPlayer.Track_Type.TRACK_UNDEFINED;
     }
 
+    @WrapForJNI
+    public long getBuffered() {
+        assertTrue(player != null);
+        return player.getBufferedPosition();
+    }
+
     @WrapForJNI(calledFrom = "gecko")
     public static GeckoHlsDemuxerWrapper create(String url, Callbacks callback) {
         GeckoHlsDemuxerWrapper wrapper = new GeckoHlsDemuxerWrapper(url, callback);
@@ -100,17 +106,17 @@ public final class GeckoHlsDemuxerWrapper {
     }
 
     @WrapForJNI
-    public int GetNumberOfTracks(int trackType) {
+    public int getNumberOfTracks(int trackType) {
         int tracks = player != null ? player.getNumberTracks(getPlayerTrackType(trackType)) : 0;
         if (DEBUG) Log.d(LOGTAG, "[GetNumberOfTracks] type : " + trackType + ", num = " + tracks);
         return tracks;
     }
 
     @WrapForJNI
-    public HlsAudioInfo GetAudioInfo(int trackNumber) {
+    public HlsAudioInfo getAudioInfo(int trackNumber) {
         assertTrue(player != null);
 
-        if (DEBUG) Log.d(LOGTAG, "[GetAudioInfo]");
+        if (DEBUG) Log.d(LOGTAG, "[getAudioInfo]");
         Format fmt = player.getAudioTrackFormat();
         HlsAudioInfo aInfo = new HlsAudioInfo();
         if (player != null) {
@@ -125,10 +131,10 @@ public final class GeckoHlsDemuxerWrapper {
     }
 
     @WrapForJNI
-    public HlsVideoInfo GetVideoInfo(int trackNumber) {
+    public HlsVideoInfo getVideoInfo(int trackNumber) {
         assertTrue(player != null);
 
-        if (DEBUG) Log.d(LOGTAG, "[GetVideoInfo]");
+        if (DEBUG) Log.d(LOGTAG, "[getVideoInfo]");
         Format fmt = player.getVideoTrackFormat();
         HlsVideoInfo vInfo = new HlsVideoInfo();
         if (fmt != null) {

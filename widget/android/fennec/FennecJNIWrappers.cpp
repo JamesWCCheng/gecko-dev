@@ -271,30 +271,6 @@ constexpr char CodecProxy::NativeCallbacks::OnOutputFormatChanged_t::signature[]
 const char GeckoHlsDemuxerWrapper::name[] =
         "org/mozilla/gecko/media/GeckoHlsDemuxerWrapper";
 
-constexpr char GeckoHlsDemuxerWrapper::GetAudioInfo_t::name[];
-constexpr char GeckoHlsDemuxerWrapper::GetAudioInfo_t::signature[];
-
-auto GeckoHlsDemuxerWrapper::GetAudioInfo(int32_t a0) const -> mozilla::jni::Object::LocalRef
-{
-    return mozilla::jni::Method<GetAudioInfo_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
-}
-
-constexpr char GeckoHlsDemuxerWrapper::GetNumberOfTracks_t::name[];
-constexpr char GeckoHlsDemuxerWrapper::GetNumberOfTracks_t::signature[];
-
-auto GeckoHlsDemuxerWrapper::GetNumberOfTracks(int32_t a0) const -> int32_t
-{
-    return mozilla::jni::Method<GetNumberOfTracks_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
-}
-
-constexpr char GeckoHlsDemuxerWrapper::GetVideoInfo_t::name[];
-constexpr char GeckoHlsDemuxerWrapper::GetVideoInfo_t::signature[];
-
-auto GeckoHlsDemuxerWrapper::GetVideoInfo(int32_t a0) const -> mozilla::jni::Object::LocalRef
-{
-    return mozilla::jni::Method<GetVideoInfo_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
-}
-
 constexpr char GeckoHlsDemuxerWrapper::Create_t::name[];
 constexpr char GeckoHlsDemuxerWrapper::Create_t::signature[];
 
@@ -311,12 +287,44 @@ auto GeckoHlsDemuxerWrapper::Destroy() const -> void
     return mozilla::jni::Method<Destroy_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr);
 }
 
+constexpr char GeckoHlsDemuxerWrapper::GetAudioInfo_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetAudioInfo_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetAudioInfo(int32_t a0) const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetAudioInfo_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::GetBuffered_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetBuffered_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetBuffered() const -> int64_t
+{
+    return mozilla::jni::Method<GetBuffered_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::GetNumberOfTracks_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetNumberOfTracks_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetNumberOfTracks(int32_t a0) const -> int32_t
+{
+    return mozilla::jni::Method<GetNumberOfTracks_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
+}
+
 constexpr char GeckoHlsDemuxerWrapper::GetSamples_t::name[];
 constexpr char GeckoHlsDemuxerWrapper::GetSamples_t::signature[];
 
 auto GeckoHlsDemuxerWrapper::GetSamples(int32_t a0, int32_t a1) const -> mozilla::jni::ObjectArray::LocalRef
 {
     return mozilla::jni::Method<GetSamples_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0, a1);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::GetVideoInfo_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetVideoInfo_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetVideoInfo(int32_t a0) const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetVideoInfo_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
 }
 
 const char16_t GeckoHlsDemuxerWrapper::AAC[] = u"audio/mp4a-latm";

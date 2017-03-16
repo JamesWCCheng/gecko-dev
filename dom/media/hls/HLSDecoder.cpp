@@ -17,6 +17,7 @@ namespace mozilla {
 MediaDecoderStateMachine*
 HLSDecoder::CreateStateMachine()
 {
+  MOZ_ASSERT(NS_IsMainThread());
   HLS_DEBUG("HLSDecoder", "");
   //TODO: check hls demuxer constructor's parameter
   mReader =

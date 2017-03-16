@@ -16,6 +16,7 @@
 #include "mozilla/Unused.h"
 
 using namespace mozilla::java;
+using namespace mozilla::java::sdk;
 
 namespace mozilla {
 
@@ -306,6 +307,13 @@ HLSTrackDemuxer::GetSamples(int32_t aNumSamples)
     int64_t presentationTimeUs = 0;
     bool ok = NS_SUCCEEDED(info->PresentationTimeUs(&presentationTimeUs));
     mrd->mTime = presentationTimeUs;
+    mrd->mTimecode = presentationTimeUs;
+    int32_t flags = 0;
+    ok = NS_SUCCEEDED(info->Flags(&flags));
+    mrd->mKeyframe = flags & MediaCodec::BUFFER_FLAG_KEY_FRAME;
+    // TODO : Fix this when we know how to calculate from ExoPlayer.
+    mrd->mDuration = (mType == TrackInfo::kVideoTrack) ? 33000 : 0;
+
     int32_t size = 0;
     ok &= NS_SUCCEEDED(info->Size(&size));
     if (!ok) {
