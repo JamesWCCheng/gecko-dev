@@ -162,7 +162,7 @@ public final class GeckoHlsDemuxerWrapper {
         int index = 0;
         DecoderInputBuffer inputBuffer = null;
         for (inputBuffer = inputBuffers.pollFirst(); inputBuffer != null; inputBuffer = inputBuffers.pollFirst()) {
-            CryptoInfo cryptoInfo = inputBuffer.cryptoInfo.getFrameworkCryptoInfoV16();
+            CryptoInfo cryptoInfo = inputBuffer.isEncrypted() ? inputBuffer.cryptoInfo.getFrameworkCryptoInfoV16() : null;
             BufferInfo bufferInfo = new BufferInfo();
             long pts = inputBuffer.timeUs;
             // The flags in DecoderInputBuffer is syned with MediaCodec Buffer flags.
