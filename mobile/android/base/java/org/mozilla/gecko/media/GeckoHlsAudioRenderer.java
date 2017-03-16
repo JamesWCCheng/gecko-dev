@@ -45,7 +45,7 @@ import java.util.LinkedList;
 
 public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
     private static boolean DEMUX_ONLY;
-    private static boolean DEBUG = false;
+    private static boolean DEBUG = true;
     private static final String TAG = "GeckoHlsAudioRenderer";
     private LinkedList<DecoderInputBuffer> demuxedSampleBuffer = new LinkedList<>();
     private static final int QUEUED_DEMUXED_INPUT_BUFFER_SIZE = 10;
