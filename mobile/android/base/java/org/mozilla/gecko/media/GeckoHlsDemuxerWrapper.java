@@ -15,6 +15,7 @@ import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.mozglue.JNIObject;
 
+import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
 import com.google.android.exoplayer2.Format;
 
@@ -46,13 +47,16 @@ public final class GeckoHlsDemuxerWrapper {
 
     public interface Callbacks {
         void onAudioFormatChanged();
+
         void onVideoFormatChanged();
+
         void onDataArrived();
     }
 
     public static class HlsDemuxerCallbacks extends JNIObject implements Callbacks {
         @WrapForJNI(calledFrom = "gecko")
-        HlsDemuxerCallbacks() {}
+        HlsDemuxerCallbacks() {
+        }
 
         @Override
         @WrapForJNI(dispatchTo = "gecko")
@@ -74,9 +78,9 @@ public final class GeckoHlsDemuxerWrapper {
 
     private static void assertTrue(boolean condition) {
         if (DEBUG && !condition) {
-          throw new AssertionError("Expected condition to be true");
+            throw new AssertionError("Expected condition to be true");
         }
-      }
+    }
 
     private GeckoHlsPlayer.Track_Type getPlayerTrackType(int trackType) {
         if (trackType == 1) {
@@ -112,6 +116,9 @@ public final class GeckoHlsDemuxerWrapper {
         if (player != null) {
             aInfo.rate = fmt.sampleRate;
             aInfo.channels = fmt.channelCount;
+            // TODO: due to http://searchfox.org/mozilla-central/rev/ca7015fa45b30b29176fbaa70ba0a36fe9263c38/dom/media/platforms/android/AndroidDecoderModule.cpp#197
+            // I have no idea how to get this value, hard code 16 even pcmEncoding is not indicating 16.
+            aInfo.bitDepth = fmt.pcmEncoding == C.ENCODING_PCM_16BIT? 16 : 16;
             aInfo.mimeType = fmt.sampleMimeType;
         }
         return aInfo;
@@ -137,7 +144,8 @@ public final class GeckoHlsDemuxerWrapper {
     }
 
     GeckoHlsDemuxerWrapper(String url, Callbacks callback) {
-        if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper : " + url + ", callback : " + callback);
+        if (DEBUG)
+            Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper : " + url + ", callback : " + callback);
         try {
             Context ctx = GeckoAppShell.getApplicationContext();
             player = new GeckoHlsPlayer(ctx, url, callback);
@@ -175,7 +183,8 @@ public final class GeckoHlsDemuxerWrapper {
             inputBuffer.data.get(realData, 0, size);
             ByteBuffer buffer = ByteBuffer.wrap(realData);
             bufferInfo.set(0, size, pts, flags);
-            if (DEBUG) Log.d(LOGTAG, "Type(" + mediaType + "), PTS(" + pts + "), size(" + size + ")");
+            if (DEBUG)
+                Log.d(LOGTAG, "Type(" + mediaType + "), PTS(" + pts + "), size(" + size + ")");
             samples[index++] = Sample.create(buffer, bufferInfo, cryptoInfo);
         }
         return samples;
