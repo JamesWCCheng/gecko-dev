@@ -32,7 +32,7 @@ import com.google.android.exoplayer2.video.VideoFrameReleaseTimeHelper;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
 
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class GeckoHlsVideoRenderer extends BaseRenderer {
     private static final String TAG = "GeckoHlsVideoRenderer";
@@ -135,7 +135,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
     private boolean codecNeedsAdaptationWorkaround;
     private boolean codecNeedsAdaptationWorkaroundBuffer;
     private boolean shouldSkipAdaptationWorkaroundOutputBuffer;
-    private LinkedList<DecoderInputBuffer> queuedInputSamples;
+    private ConcurrentLinkedQueue<DecoderInputBuffer> queuedInputSamples;
 
     private long codecHotswapDeadlineMs;
     private boolean codecReconfigured;
@@ -274,7 +274,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         codecHotswapDeadlineMs = getState() == STATE_STARTED
                 ? (SystemClock.elapsedRealtime() + MAX_CODEC_HOTSWAP_TIME_MS) : C.TIME_UNSET;
 
-        queuedInputSamples = new LinkedList<>();
+        queuedInputSamples = new ConcurrentLinkedQueue<>();
 
         inputBuffer = ByteBuffer.wrap(new byte[codecMaxValues.inputSize]);
         initialized = true;
@@ -380,7 +380,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         }
     }
 
-    private boolean feedSampleQueue() throws ExoPlaybackException {
+    private synchronized boolean feedSampleQueue() throws ExoPlaybackException {
         if (!initialized || codecReinitializationState == REINITIALIZATION_STATE_WAIT_END_OF_STREAM
                 || inputStreamEnded || queuedInputSamples.size() >= QUEUED_INPUT_SAMPLE_SIZE) {
             // We need to reinitialize the codec or the input stream has ended.
@@ -471,7 +471,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
             bufferForRead.data.get(realData, 0, bufferForRead.data.limit());
             bufferForRead.data = ByteBuffer.wrap(realData);
             inputBuffer.clear();
-            queuedInputSamples.addLast(bufferForRead);
+            queuedInputSamples.offer(bufferForRead);
         } catch (MediaCodec.CryptoException e) {
             throw ExoPlaybackException.createForRenderer(e, getIndex());
         }
@@ -483,8 +483,8 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         return true;
     }
 
-    public boolean feedInputBuffer() {
-        if(queuedInputSamples.size() <= 0) {
+    public synchronized boolean feedInputBuffer() {
+        if(queuedInputSamples.isEmpty()) {
             return false;
         }
         int index = this.codec.dequeueInputBuffer(0L);
@@ -492,7 +492,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
             return false;
         }
         ByteBuffer forInput = this.codec.getInputBuffer(index);
-        DecoderInputBuffer goingToFeed = queuedInputSamples.removeFirst();
+        DecoderInputBuffer goingToFeed = queuedInputSamples.poll();
         long presentationTimeUs = goingToFeed.timeUs;
         for (int i = goingToFeed.data.position(); i < goingToFeed.data.limit(); i++) {
             forInput.put(goingToFeed.data.get(i));
@@ -520,17 +520,17 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
                 (codecHotswapDeadlineMs != C.TIME_UNSET && SystemClock.elapsedRealtime() < codecHotswapDeadlineMs));
     }
 
-    public LinkedList<DecoderInputBuffer> getQueuedSamples(int number) {
-        LinkedList<DecoderInputBuffer> samples = new LinkedList<DecoderInputBuffer>();
+    public synchronized ConcurrentLinkedQueue<DecoderInputBuffer> getQueuedSamples(int number) {
+        ConcurrentLinkedQueue<DecoderInputBuffer> samples = new ConcurrentLinkedQueue<DecoderInputBuffer>();
         int queuedSize = queuedInputSamples.size();
         for (int i = 0; i < queuedSize; i++) {
             if (i >= number) {
                 break;
             }
-            DecoderInputBuffer outputBuffer = queuedInputSamples.removeFirst();
-            samples.addLast(outputBuffer);
+            DecoderInputBuffer outputBuffer = queuedInputSamples.poll();
+            samples.offer(outputBuffer);
         }
-        if (samples.size() == 0) {
+        if (samples.isEmpty()) {
             waitingForData = true;
         }
         return samples;
@@ -553,7 +553,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
                 // The dequeued buffer is a media buffer. Do some initial setup. The buffer will be
                 // processed by calling processOutputBuffer (possibly multiple times) below.
 
-                DecoderInputBuffer outputBuffer = queuedInputSamples.peekFirst();
+                DecoderInputBuffer outputBuffer = queuedInputSamples.peek();
                 outputBufferInfo.presentationTimeUs = outputBuffer.timeUs;
             }
         }
@@ -622,7 +622,7 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         if (codec != null && passToCodec && bufferIndex >= 0) {
             codec.releaseOutputBuffer(bufferIndex, false);
         } else {
-            queuedInputSamples.removeFirst();
+            queuedInputSamples.poll();
         }
         TraceUtil.endSection();
     }
@@ -885,8 +885,8 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         if (!renderedFirstFrame) {
             renderedFirstFrame = true;
         }
-        if (!passToCodec && queuedInputSamples.size() > 0) {
-            queuedInputSamples.removeFirst();
+        if (!passToCodec && !queuedInputSamples.isEmpty()) {
+            queuedInputSamples.poll();
         }
     }
 
@@ -898,8 +898,8 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
         if (!renderedFirstFrame) {
             renderedFirstFrame = true;
         }
-        if (!passToCodec && queuedInputSamples.size() > 0) {
-            queuedInputSamples.removeFirst();
+        if (!passToCodec && !queuedInputSamples.isEmpty()) {
+            queuedInputSamples.poll();
         }
     }
 

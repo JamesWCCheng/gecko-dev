@@ -12,7 +12,6 @@ import android.util.Log;
 import android.view.Surface;
 
 import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
@@ -22,6 +21,7 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.audio.AudioCapabilities;
 import com.google.android.exoplayer2.audio.AudioRendererEventListener;
 import com.google.android.exoplayer2.decoder.DecoderCounters;
+import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.metadata.Metadata;
 import com.google.android.exoplayer2.metadata.MetadataRenderer;
@@ -41,8 +41,8 @@ import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
 
-import java.util.LinkedList;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     private static boolean DEBUG = true;
@@ -358,18 +358,18 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     // =======================================================================
     // API for GeckoHlsDemuxerWrapper
     // =======================================================================
-    public LinkedList<DecoderInputBuffer> getVideoSamples(int number) {
+    public ConcurrentLinkedQueue<DecoderInputBuffer> getVideoSamples(int number) {
         if (vRenderer != null) {
             return vRenderer.getQueuedSamples(number);
         }
-        return new LinkedList<DecoderInputBuffer>();
+        return new ConcurrentLinkedQueue<DecoderInputBuffer>();
     }
 
-    public LinkedList<DecoderInputBuffer> getAudioSamples(int number) {
+    public ConcurrentLinkedQueue<DecoderInputBuffer> getAudioSamples(int number) {
         if (aRenderer != null) {
             return aRenderer.getQueuedSamples(number);
         }
-        return new LinkedList<DecoderInputBuffer>();
+        return new ConcurrentLinkedQueue<DecoderInputBuffer>();
     }
 
     public long getDuration() {
@@ -393,7 +393,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         if (trackType == Track_Type.TRACK_VIDEO) {
             return numVideoTracks;
         } else if (trackType == Track_Type.TRACK_AUDIO) {
-            return numAudioTracks;
+            return 0;
         }
         return 0;
     }
