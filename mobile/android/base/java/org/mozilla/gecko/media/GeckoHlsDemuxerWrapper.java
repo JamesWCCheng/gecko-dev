@@ -189,8 +189,7 @@ public final class GeckoHlsDemuxerWrapper {
             inputBuffer.data.get(realData, 0, size);
             ByteBuffer buffer = ByteBuffer.wrap(realData);
             bufferInfo.set(0, size, pts, flags);
-            if (DEBUG)
-                Log.d(LOGTAG, "Type(" + mediaType + "), PTS(" + pts + "), size(" + size + ")");
+            if (DEBUG) Log.d(LOGTAG, "Type(" + mediaType + "), PTS(" + pts + "), size(" + size + "), buffer(" + buffer + ")");
             samples[index++] = Sample.create(buffer, bufferInfo, cryptoInfo);
         }
         return samples;

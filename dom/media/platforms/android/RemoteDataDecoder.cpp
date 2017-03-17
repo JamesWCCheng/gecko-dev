@@ -270,7 +270,6 @@ public:
     }
     mIsCodecSupportAdaptivePlayback =
       mJavaDecoder->IsAdaptivePlaybackSupported();
-
     return InitPromise::CreateAndResolve(TrackInfo::kVideoTrack, __func__);
   }
 
@@ -580,7 +579,6 @@ RefPtr<MediaDataDecoder::DecodePromise>
 RemoteDataDecoder::Decode(MediaRawData* aSample)
 {
   MOZ_ASSERT(aSample != nullptr);
-
   RefPtr<RemoteDataDecoder> self = this;
   RefPtr<MediaRawData> sample = aSample;
   return InvokeAsync(mTaskQueue, __func__, [self, sample, this]() {
@@ -593,7 +591,9 @@ RemoteDataDecoder::Decode(MediaRawData* aSample)
       return DecodePromise::CreateAndReject(
         MediaResult(NS_ERROR_OUT_OF_MEMORY, __func__), __func__);
     }
-    bufferInfo->Set(0, sample->Size(), sample->mTime, 0);
+
+    int flags = sample->mKeyframe ? MediaCodec::BUFFER_FLAG_KEY_FRAME : 0;
+    bufferInfo->Set(0, sample->Size(), sample->mTime, flags);
 
     mDrainStatus = DrainStatus::DRAINABLE;
     return mJavaDecoder->Input(bytes, bufferInfo, GetCryptoInfoFromSample(sample))
