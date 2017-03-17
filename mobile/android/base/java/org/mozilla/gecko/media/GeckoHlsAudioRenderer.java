@@ -41,13 +41,13 @@ import com.google.android.exoplayer2.util.Util;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.LinkedList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
     private static boolean DEMUX_ONLY;
     private static boolean DEBUG = true;
     private static final String TAG = "GeckoHlsAudioRenderer";
-    private LinkedList<DecoderInputBuffer> demuxedSampleBuffer = new LinkedList<>();
+    private ConcurrentLinkedQueue<DecoderInputBuffer> demuxedSampleBuffer = new ConcurrentLinkedQueue<>();
     private static final int QUEUED_DEMUXED_INPUT_BUFFER_SIZE = 10;
     private boolean initialized = false;
     private ByteBuffer inputBuffer = null;
@@ -343,9 +343,9 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
     static final long THRESHOLD_US = 30000; //30ms
     protected boolean processOutputBuffer(long positionUs, long elapsedRealtimeUs, int bufferIndex, long bufferPresentationTimeUs) throws ExoPlaybackException {
         if (DEMUX_ONLY){
-            if (demuxedSampleBuffer.size() > 0) {
-                if (demuxedSampleBuffer.peekFirst().timeUs < positionUs + THRESHOLD_US) {
-                    demuxedSampleBuffer.removeFirst();
+            if (!demuxedSampleBuffer.isEmpty()) {
+                if (demuxedSampleBuffer.peek().timeUs < positionUs + THRESHOLD_US) {
+                    demuxedSampleBuffer.poll();
                     return true;
                 }
             }
@@ -356,14 +356,14 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
         }
         //if(this.passthroughEnabled && (bufferFlags & 2) != 0) {
         if(false) {
-            if (demuxedSampleBuffer.size() > 0) {
-                demuxedSampleBuffer.removeFirst();
+            if (!demuxedSampleBuffer.isEmpty()) {
+                demuxedSampleBuffer.poll();
             }
             codec.releaseOutputBuffer(bufferIndex, false);
             return true;
         } else if(this.shouldSkipOutputBuffer) {
-            if (demuxedSampleBuffer.size() > 0) {
-                demuxedSampleBuffer.removeFirst();
+            if (!demuxedSampleBuffer.isEmpty()) {
+                demuxedSampleBuffer.poll();
             }
             codec.releaseOutputBuffer(bufferIndex, false);
             ++this.decoderCounters.skippedOutputBufferCount;
@@ -374,8 +374,8 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
                 if (this.audioTrack.handleBuffer(this.outputBuffers[bufferIndex], bufferPresentationTimeUs)) {
                     codec.releaseOutputBuffer(bufferIndex, false);
                     ++this.decoderCounters.renderedOutputBufferCount;
-                    if (demuxedSampleBuffer.size() > 0) {
-                        demuxedSampleBuffer.removeFirst();
+                    if (!demuxedSampleBuffer.isEmpty()) {
+                        demuxedSampleBuffer.poll();
                     }
                     return true;
                 }
@@ -637,17 +637,17 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
         return false;
     }
 
-    public LinkedList<DecoderInputBuffer> getQueuedSamples(int number) {
-        LinkedList<DecoderInputBuffer> samples = new LinkedList<DecoderInputBuffer>();
+    public synchronized ConcurrentLinkedQueue<DecoderInputBuffer> getQueuedSamples(int number) {
+        ConcurrentLinkedQueue<DecoderInputBuffer> samples = new ConcurrentLinkedQueue<DecoderInputBuffer>();
         int queuedSize = demuxedSampleBuffer.size();
         for (int i = 0; i < queuedSize; i++) {
             if (i >= number) {
                 break;
             }
-            DecoderInputBuffer outputBuffer = demuxedSampleBuffer.removeFirst();
-            samples.addLast(outputBuffer);
+            DecoderInputBuffer outputBuffer = demuxedSampleBuffer.poll();
+            samples.offer(outputBuffer);
         }
-        if (samples.size() == 0) {
+        if (samples.isEmpty()) {
             waitingForData = true;
         }
         return samples;
@@ -670,7 +670,7 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
                 // The dequeued buffer is a media buffer. Do some initial setup. The buffer will be
                 // processed by calling processOutputBuffer (possibly multiple times) below.
 
-                DecoderInputBuffer outputBuffer = demuxedSampleBuffer.peekFirst();
+                DecoderInputBuffer outputBuffer = demuxedSampleBuffer.peek();
                 outputBufferInfo.presentationTimeUs = outputBuffer.timeUs;
             }
         }
@@ -734,8 +734,8 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
         }
     }
 
-    public boolean feedInputBuffer() {
-        if(demuxedSampleBuffer.size() <= 0) {
+    public synchronized boolean feedInputBuffer() {
+        if(demuxedSampleBuffer.isEmpty()) {
             return false;
         }
         int index = this.codec.dequeueInputBuffer(0L);
@@ -744,7 +744,7 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
         }
 
         ByteBuffer forInput = codec.getInputBuffer(index);
-        DecoderInputBuffer goingToFeed = demuxedSampleBuffer.peekFirst();
+        DecoderInputBuffer goingToFeed = demuxedSampleBuffer.peek();
 //        DecoderInputBuffer goingToFeed = demuxedSampleBuffer.removeFirst();
         long presentationTimeUs = goingToFeed.timeUs;
         for (int i = goingToFeed.data.position(); i < goingToFeed.data.limit(); i++) {
@@ -757,7 +757,7 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
         return true;
     }
 
-    private boolean feedDemuxedSampleQueue() throws ExoPlaybackException {
+    private synchronized boolean feedDemuxedSampleQueue() throws ExoPlaybackException {
         if (!initialized || codecReinitializationState == REINITIALIZATION_STATE_WAIT_END_OF_STREAM
                 || inputStreamEnded || demuxedSampleBuffer.size() >= QUEUED_DEMUXED_INPUT_BUFFER_SIZE) {
             // We need to reinitialize the codec or the input stream has ended.
@@ -849,7 +849,7 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
             // reuse the max sized buffer
             inputBuffer.clear();
             // add the demuxed sample buffer into linked list
-            demuxedSampleBuffer.addLast(bufferForRead);
+            demuxedSampleBuffer.offer(bufferForRead);
         } catch (MediaCodec.CryptoException e) {
             throw ExoPlaybackException.createForRenderer(e, getIndex());
         }

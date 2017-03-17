@@ -6,8 +6,7 @@
 package org.mozilla.gecko.media;
 
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
-import java.util.Queue;
+
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.mozilla.gecko.annotation.WrapForJNI;
@@ -163,7 +162,8 @@ public final class GeckoHlsDemuxerWrapper {
     @WrapForJNI
     private Sample[] getSamples(int mediaType, int number) {
         if (DEBUG) Log.d(LOGTAG, "getSample, mediaType = " + mediaType);
-        LinkedList<DecoderInputBuffer> inputBuffers = new LinkedList<DecoderInputBuffer>();
+        ConcurrentLinkedQueue<DecoderInputBuffer> inputBuffers = null;
+        // getA/VSamples will always return a non-null instance.
         if (mediaType == TRACK_VIDEO) {
             inputBuffers = player.getVideoSamples(number);
         } else if (mediaType == TRACK_AUDIO) {
@@ -175,7 +175,7 @@ public final class GeckoHlsDemuxerWrapper {
         Sample[] samples = new Sample[inputBuffers.size()];
         int index = 0;
         DecoderInputBuffer inputBuffer = null;
-        for (inputBuffer = inputBuffers.pollFirst(); inputBuffer != null; inputBuffer = inputBuffers.pollFirst()) {
+        for (inputBuffer = inputBuffers.poll(); inputBuffer != null; inputBuffer = inputBuffers.poll()) {
             CryptoInfo cryptoInfo = inputBuffer.isEncrypted() ? inputBuffer.cryptoInfo.getFrameworkCryptoInfoV16() : null;
             BufferInfo bufferInfo = new BufferInfo();
             long pts = inputBuffer.timeUs;
@@ -183,8 +183,8 @@ public final class GeckoHlsDemuxerWrapper {
             int flags = 0;
             flags |= inputBuffer.isKeyFrame() ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0;
             flags |= inputBuffer.isEndOfStream() ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0;
-            int size = inputBuffer.data.limit();
 
+            int size = inputBuffer.data.limit();
             byte[] realData = new byte[size];
             inputBuffer.data.get(realData, 0, size);
             ByteBuffer buffer = ByteBuffer.wrap(realData);
