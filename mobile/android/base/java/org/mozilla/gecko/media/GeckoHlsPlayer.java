@@ -250,20 +250,25 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
                 new AdaptiveVideoTrackSelection.Factory(BANDWIDTH_METER);
         trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
 
-        vRenderer = new GeckoHlsVideoRenderer(va,
-                                              MediaCodecSelector.DEFAULT,
-                                              mainHandler,
-                                              componentListener,
-                                              inPlayerRender);
-        aRenderer = new GeckoHlsAudioRenderer(MediaCodecSelector.DEFAULT,
-                                              mainHandler,
-                                              componentListener,
-                                              (AudioCapabilities)null,
-                                              inPlayerRender);
-
         ArrayList<Renderer> renderersList = new ArrayList<>();
-        renderersList.add(vRenderer);
-        renderersList.add(aRenderer);
+        boolean enableA = false;
+        boolean enableV = true;
+        if (enableV) {
+            vRenderer = new GeckoHlsVideoRenderer(va,
+                                                  MediaCodecSelector.DEFAULT,
+                                                  mainHandler,
+                                                  componentListener,
+                                                  inPlayerRender);
+            renderersList.add(vRenderer);
+        }
+        if (enableA) {
+            aRenderer = new GeckoHlsAudioRenderer(MediaCodecSelector.DEFAULT,
+                                                  mainHandler,
+                                                  componentListener,
+                                                  (AudioCapabilities)null,
+                                                  inPlayerRender);
+            renderersList.add(aRenderer);
+        }
         renderers = renderersList.toArray(new Renderer[renderersList.size()]);
 
         player = ExoPlayerFactory.newInstance(renderers, trackSelector);
@@ -393,7 +398,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         if (trackType == Track_Type.TRACK_VIDEO) {
             return numVideoTracks;
         } else if (trackType == Track_Type.TRACK_AUDIO) {
-            return 0;
+            return numAudioTracks;
         }
         return 0;
     }
