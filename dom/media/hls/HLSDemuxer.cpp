@@ -94,7 +94,6 @@ HLSDemuxer::HLSDemuxer(MediaDecoder* aDecoder,
   : mDecoder(aDecoder)
   , mResource(aResource)
   , mTaskQueue(new AutoTaskQueue(GetMediaThreadPool(MediaThreadType::PLAYBACK),
-                                 aAbstractMainThread,
                                  /* aSupportsTailDispatch = */ false))
   , mMonitor("HLSDemuxer")
   , mAudioInfoUpdated(false)
