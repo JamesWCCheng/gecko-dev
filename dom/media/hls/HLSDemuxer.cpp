@@ -236,6 +236,9 @@ HLSDemuxer::GetTrackInfo(TrackType aTrack)
       java::HlsVideoInfo::LocalRef videoInfo(mozilla::Move(infoObj));
       mInfo.mVideo.mStereoMode = getStereoMode(videoInfo->StereoMode());
       mInfo.mVideo.mRotation = getVideoInfoRotation(videoInfo->Rotation());
+      //TODO: Check how to get this information since DecoderInputBuffer did not provide this info.
+      mInfo.mVideo.mImage.width = videoInfo->DisplayX();
+      mInfo.mVideo.mImage.height = videoInfo->DisplayY();
       mInfo.mVideo.mDisplay.width = videoInfo->DisplayX();
       mInfo.mVideo.mDisplay.height = videoInfo->DisplayY();
       mInfo.mVideo.mMimeType = NS_ConvertUTF16toUTF8(videoInfo->MimeType()->ToString());

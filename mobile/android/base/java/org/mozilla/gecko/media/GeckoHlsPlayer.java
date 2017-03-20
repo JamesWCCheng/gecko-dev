@@ -251,7 +251,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
 
         ArrayList<Renderer> renderersList = new ArrayList<>();
-        boolean enableA = false;
+        boolean enableA = true;
         boolean enableV = true;
         if (enableV) {
             vRenderer = new GeckoHlsVideoRenderer(va,
@@ -398,7 +398,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         if (trackType == Track_Type.TRACK_VIDEO) {
             return numVideoTracks;
         } else if (trackType == Track_Type.TRACK_AUDIO) {
-            return numAudioTracks;
+            return 0;
         }
         return 0;
     }
