@@ -1152,6 +1152,25 @@ public:
                 mozilla::jni::DispatchTarget::GECKO;
     };
 
+    struct OnTrackInfoChanged_t {
+        typedef HlsDemuxerCallbacks Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                bool,
+                bool> Args;
+        static constexpr char name[] = "onTrackInfoChanged";
+        static constexpr char signature[] =
+                "(ZZ)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::GECKO;
+    };
+
     struct OnVideoFormatChanged_t {
         typedef HlsDemuxerCallbacks Owner;
         typedef void ReturnType;
@@ -1263,6 +1282,27 @@ public:
     auto CodecSpecificData() const -> mozilla::jni::ByteArray::LocalRef;
 
     auto CodecSpecificData(mozilla::jni::ByteArray::Param) const -> void;
+
+    struct Duration_t {
+        typedef HlsAudioInfo Owner;
+        typedef int64_t ReturnType;
+        typedef int64_t SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "duration";
+        static constexpr char signature[] =
+                "J";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto Duration() const -> int64_t;
+
+    auto Duration(int64_t) const -> void;
 
     struct ExtraData_t {
         typedef HlsAudioInfo Owner;
@@ -1441,6 +1481,27 @@ public:
     auto DisplayY() const -> int32_t;
 
     auto DisplayY(int32_t) const -> void;
+
+    struct Duration_t {
+        typedef HlsVideoInfo Owner;
+        typedef int64_t ReturnType;
+        typedef int64_t SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "duration";
+        static constexpr char signature[] =
+                "J";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto Duration() const -> int64_t;
+
+    auto Duration(int64_t) const -> void;
 
     struct ExtraData_t {
         typedef HlsVideoInfo Owner;

@@ -32,6 +32,9 @@ public final class HlsVideoInfo {
     public int stereoMode = 0;
 
     @WrapForJNI
+    public long duration = 0;
+
+    @WrapForJNI
     public String mimeType = null;
 
     @WrapForJNI

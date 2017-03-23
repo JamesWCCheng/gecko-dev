@@ -48,7 +48,11 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     private static boolean DEBUG = true;
     private static final String TAG = "GeckoHlsPlayer";
     private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
+    private static final int MAX_TIMELINE_ITEM_LINES = 3;
     private DataSource.Factory mediaDataSourceFactory;
+
+    private long durationUs;
+    private Timeline.Period period;
     private Timeline.Window window;
     protected String userAgent;
     private Handler mainHandler;
@@ -67,7 +71,6 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     private boolean inPlayerRender = false;
     private boolean trackGroupUpdated = false;
-    private long duration;
     private long bufferedPosition;
     private Format audioFormat;
     private Format videoFormat;
@@ -75,6 +78,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     private int numAudioTracks = 0;
     private GeckoHlsVideoRenderer vRenderer = null;
     private GeckoHlsAudioRenderer aRenderer = null;
+    private boolean enableV = true;
+    private boolean enableA = false;
 
     private GeckoHlsDemuxerWrapper.Callbacks nativeCallbacks;
 
@@ -84,7 +89,6 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         TRACK_VIDEO,
         TRACK_TEXT,
     }
-
 
     private static void assertTrue(boolean condition) {
       if (DEBUG && !condition) {
@@ -245,30 +249,26 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         componentListener = new ComponentListener();
         mainHandler = new Handler();
 
+        durationUs = 0;
         window = new Timeline.Window();
+        period = new Timeline.Period();
         TrackSelection.Factory videoTrackSelectionFactory =
                 new AdaptiveVideoTrackSelection.Factory(BANDWIDTH_METER);
         trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
 
         ArrayList<Renderer> renderersList = new ArrayList<>();
-        boolean enableA = true;
-        boolean enableV = true;
-        if (enableV) {
-            vRenderer = new GeckoHlsVideoRenderer(va,
-                                                  MediaCodecSelector.DEFAULT,
-                                                  mainHandler,
-                                                  componentListener,
-                                                  inPlayerRender);
-            renderersList.add(vRenderer);
-        }
-        if (enableA) {
-            aRenderer = new GeckoHlsAudioRenderer(MediaCodecSelector.DEFAULT,
-                                                  mainHandler,
-                                                  componentListener,
-                                                  (AudioCapabilities)null,
-                                                  inPlayerRender);
-            renderersList.add(aRenderer);
-        }
+        vRenderer = new GeckoHlsVideoRenderer(va,
+                                              MediaCodecSelector.DEFAULT,
+                                              mainHandler,
+                                              componentListener,
+                                              inPlayerRender);
+        renderersList.add(vRenderer);
+        aRenderer = new GeckoHlsAudioRenderer(MediaCodecSelector.DEFAULT,
+                                              mainHandler,
+                                              componentListener,
+                                              (AudioCapabilities)null,
+                                              inPlayerRender);
+        renderersList.add(aRenderer);
         renderers = renderersList.toArray(new Renderer[renderersList.size()]);
 
         player = ExoPlayerFactory.newInstance(renderers, trackSelector);
@@ -301,7 +301,6 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         if (DEBUG) Log.d(TAG, "state [" + playWhenReady + ", "+ getStateString(state) + "]");
         if (state == ExoPlayer.STATE_READY) {
             player.setPlayWhenReady(true);
-            duration = player.getDuration();
         }
     }
 
@@ -328,21 +327,40 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
             for (int i = 0; i < tg.length; i++) {
                 Format fmt = tg.getFormat(i);
                 if (fmt.sampleMimeType != null) {
-                    if (fmt.sampleMimeType.startsWith(new String("video"))) {
+                    if (enableV && fmt.sampleMimeType.startsWith(new String("video"))) {
                         numVideoTracks++;
-                    } else if (fmt.sampleMimeType.startsWith(new String("audio"))) {
+                    } else if (enableA && fmt.sampleMimeType.startsWith(new String("audio"))) {
                         numAudioTracks++;
                     }
                 }
             }
         }
         trackGroupUpdated = true;
+        nativeCallbacks.onTrackInfoChanged(numAudioTracks > 0? true : false,
+                                           numVideoTracks > 0? true : false );
     }
 
     @Override
     public void onTimelineChanged(Timeline timeline, Object manifest) {
         isTimelineStatic = !timeline.isEmpty()
                 && !timeline.getWindow(timeline.getWindowCount() - 1, window).isDynamic;
+
+        int periodCount = timeline.getPeriodCount();
+        int windowCount = timeline.getWindowCount();
+        if (DEBUG) Log.d(TAG, "sourceInfo [periodCount=" + periodCount + ", windowCount=" + windowCount);
+        for (int i = 0; i < Math.min(periodCount, MAX_TIMELINE_ITEM_LINES); i++) {
+          timeline.getPeriod(i, period);
+          if (durationUs < period.getDurationUs()) {
+              durationUs = period.getDurationUs();
+          }
+        }
+        for (int i = 0; i < Math.min(windowCount, MAX_TIMELINE_ITEM_LINES); i++) {
+          timeline.getWindow(i, window);
+          if (durationUs < window.getDurationUs()) {
+              durationUs = window.getDurationUs();
+          }
+        }
+        if (DEBUG) Log.d(TAG, "Media duration = " + durationUs + "(us)");
     }
 
     private static String getStateString(int state) {
@@ -378,10 +396,11 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     }
 
     public long getDuration() {
-        if (DEBUG) Log.d(TAG, "getDuration");
         assertTrue(player != null);
-
-        return player.getDuration();
+        // TODO : Find a way to get A/V duration separately.
+        long duratoin = player.getDuration() * 1000;
+        if (DEBUG) Log.d(TAG, "getDuration : " + duratoin  + "(us)");
+        return duratoin;
     }
 
     public long getBufferedPosition() {
@@ -398,7 +417,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         if (trackType == Track_Type.TRACK_VIDEO) {
             return numVideoTracks;
         } else if (trackType == Track_Type.TRACK_AUDIO) {
-            return 0;
+            return numAudioTracks;
         }
         return 0;
     }

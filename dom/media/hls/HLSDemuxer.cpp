@@ -79,6 +79,11 @@ public:
     mDemuxer->onCheckInitDone();
   }
 
+  void OnTrackInfoChanged(bool aHasAudio, bool aHasVideo) {
+    MOZ_ASSERT(mDemuxer);
+    mDemuxer->onTrackInfoChanged(aHasAudio, aHasVideo);
+  }
+
   void OnDataArrived() {
     MOZ_ASSERT(mDemuxer);
     mDemuxer->GetDecoder()->NotifyDataArrived();
@@ -96,6 +101,8 @@ HLSDemuxer::HLSDemuxer(MediaDecoder* aDecoder,
   , mTaskQueue(new AutoTaskQueue(GetMediaThreadPool(MediaThreadType::PLAYBACK),
                                  /* aSupportsTailDispatch = */ false))
   , mMonitor("HLSDemuxer")
+  , mHasAudio(false)
+  , mHasVideo(false)
   , mAudioInfoUpdated(false)
   , mVideoInfoUpdated(false)
 {
@@ -130,6 +137,15 @@ HLSDemuxer::onVideoFormatChanged()
 }
 
 void
+HLSDemuxer::onTrackInfoChanged(bool aHasAudio, bool aHasVideo)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  HLS_DEBUG("HLSDemuxer", "onTrackInfoChanged");
+  mHasAudio = aHasAudio;
+  mHasVideo = aHasVideo;
+}
+
+void
 HLSDemuxer::onCheckInitDone()
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -137,7 +153,9 @@ HLSDemuxer::onCheckInitDone()
   if (mInitPromise.IsEmpty()) {
     return;
   }
-  if (mAudioInfoUpdated && mVideoInfoUpdated) {
+  bool aDone = mHasAudio ? mAudioInfoUpdated : true;
+  bool vDone = mHasVideo ? mVideoInfoUpdated : true;
+  if (aDone && vDone) {
     mInitPromise.ResolveIfExists(NS_OK, __func__);
   }
 }
@@ -229,6 +247,7 @@ HLSDemuxer::GetTrackInfo(TrackType aTrack)
       mInfo.mAudio.mProfile = audioInfo->Profile();
       mInfo.mAudio.mBitDepth = audioInfo->BitDepth();
       mInfo.mAudio.mMimeType = NS_ConvertUTF16toUTF8(audioInfo->MimeType()->ToString());
+      mInfo.mAudio.mDuration = audioInfo->Duration();
       return &mInfo.mAudio;
     }
     case TrackType::kVideoTrack: {
@@ -242,6 +261,7 @@ HLSDemuxer::GetTrackInfo(TrackType aTrack)
       mInfo.mVideo.mDisplay.width = videoInfo->DisplayX();
       mInfo.mVideo.mDisplay.height = videoInfo->DisplayY();
       mInfo.mVideo.mMimeType = NS_ConvertUTF16toUTF8(videoInfo->MimeType()->ToString());
+      mInfo.mVideo.mDuration = videoInfo->Duration();
       return &mInfo.mVideo;
     }
     default:
@@ -314,7 +334,7 @@ HLSTrackDemuxer::GetSamples(int32_t aNumSamples)
     ok = NS_SUCCEEDED(info->Flags(&flags));
     mrd->mKeyframe = flags & MediaCodec::BUFFER_FLAG_KEY_FRAME;
     // TODO : Fix this when we know how to calculate from ExoPlayer.
-    mrd->mDuration = (mType == TrackInfo::kVideoTrack) ? 33000 : 0;
+    mrd->mDuration = (mType == TrackInfo::kVideoTrack) ? 33333 : 0;
 
     int32_t size = 0;
     ok &= NS_SUCCEEDED(info->Size(&size));

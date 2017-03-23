@@ -29,6 +29,9 @@ public final class HlsAudioInfo {
     public String mimeType = null;
 
     @WrapForJNI
+    public long duration = 0;
+
+    @WrapForJNI
     public HlsAudioInfo() {
     }
 }

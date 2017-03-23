@@ -55,6 +55,7 @@ public:
   AutoTaskQueue* GetTaskQueue() { return mTaskQueue; }
   void onAudioFormatChanged();
   void onVideoFormatChanged();
+  void onTrackInfoChanged(bool aHasAudio, bool aHasVideo);
   void onCheckInitDone();
 
   MediaDecoder* GetDecoder() { return mDecoder; }
@@ -77,6 +78,9 @@ private:
 
   java::GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::GlobalRef mJavaCallbacks;
   java::GeckoHlsDemuxerWrapper::GlobalRef mHlsDemuxerWrapper;
+
+  bool mHasAudio;
+  bool mHasVideo;
   bool mAudioInfoUpdated;
   bool mVideoInfoUpdated;
 };

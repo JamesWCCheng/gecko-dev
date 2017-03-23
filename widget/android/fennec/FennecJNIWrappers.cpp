@@ -348,6 +348,9 @@ constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnAudioFormatChanged
 constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnDataArrived_t::name[];
 constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnDataArrived_t::signature[];
 
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnTrackInfoChanged_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnTrackInfoChanged_t::signature[];
+
 constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t::name[];
 constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t::signature[];
 
@@ -399,6 +402,19 @@ auto HlsAudioInfo::CodecSpecificData() const -> mozilla::jni::ByteArray::LocalRe
 auto HlsAudioInfo::CodecSpecificData(mozilla::jni::ByteArray::Param a0) const -> void
 {
     return mozilla::jni::Field<CodecSpecificData_t>::Set(HlsAudioInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsAudioInfo::Duration_t::name[];
+constexpr char HlsAudioInfo::Duration_t::signature[];
+
+auto HlsAudioInfo::Duration() const -> int64_t
+{
+    return mozilla::jni::Field<Duration_t>::Get(HlsAudioInfo::mCtx, nullptr);
+}
+
+auto HlsAudioInfo::Duration(int64_t a0) const -> void
+{
+    return mozilla::jni::Field<Duration_t>::Set(HlsAudioInfo::mCtx, nullptr, a0);
 }
 
 constexpr char HlsAudioInfo::ExtraData_t::name[];
@@ -501,6 +517,19 @@ auto HlsVideoInfo::DisplayY() const -> int32_t
 auto HlsVideoInfo::DisplayY(int32_t a0) const -> void
 {
     return mozilla::jni::Field<DisplayY_t>::Set(HlsVideoInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsVideoInfo::Duration_t::name[];
+constexpr char HlsVideoInfo::Duration_t::signature[];
+
+auto HlsVideoInfo::Duration() const -> int64_t
+{
+    return mozilla::jni::Field<Duration_t>::Get(HlsVideoInfo::mCtx, nullptr);
+}
+
+auto HlsVideoInfo::Duration(int64_t a0) const -> void
+{
+    return mozilla::jni::Field<Duration_t>::Set(HlsVideoInfo::mCtx, nullptr, a0);
 }
 
 constexpr char HlsVideoInfo::ExtraData_t::name[];

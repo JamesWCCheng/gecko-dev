@@ -46,9 +46,8 @@ public final class GeckoHlsDemuxerWrapper {
 
     public interface Callbacks {
         void onAudioFormatChanged();
-
         void onVideoFormatChanged();
-
+        void onTrackInfoChanged(boolean hasAudio, boolean hasVideo);
         void onDataArrived();
     }
 
@@ -64,6 +63,10 @@ public final class GeckoHlsDemuxerWrapper {
         @Override
         @WrapForJNI(dispatchTo = "gecko")
         public native void onVideoFormatChanged();
+
+        @Override
+        @WrapForJNI(dispatchTo = "gecko")
+        public native void onTrackInfoChanged(boolean hasAudio, boolean hasVideo);
 
         @Override
         @WrapForJNI(dispatchTo = "gecko")
@@ -117,6 +120,7 @@ public final class GeckoHlsDemuxerWrapper {
 
         if (DEBUG) Log.d(LOGTAG, "[getAudioInfo]");
         Format fmt = player.getAudioTrackFormat();
+        long aDuration = player.getDuration();
         HlsAudioInfo aInfo = new HlsAudioInfo();
         if (player != null) {
             aInfo.rate = fmt.sampleRate;
@@ -125,6 +129,7 @@ public final class GeckoHlsDemuxerWrapper {
             // I have no idea how to get this value, hard code 16 even pcmEncoding is not indicating 16.
             aInfo.bitDepth = fmt.pcmEncoding == C.ENCODING_PCM_16BIT? 16 : 16;
             aInfo.mimeType = fmt.sampleMimeType;
+            aInfo.duration = aDuration;
         }
         return aInfo;
     }
@@ -135,6 +140,7 @@ public final class GeckoHlsDemuxerWrapper {
 
         if (DEBUG) Log.d(LOGTAG, "[getVideoInfo]");
         Format fmt = player.getVideoTrackFormat();
+        long vDuration = player.getDuration();
         HlsVideoInfo vInfo = new HlsVideoInfo();
         if (fmt != null) {
             vInfo.displayX = fmt.width;
@@ -144,6 +150,7 @@ public final class GeckoHlsDemuxerWrapper {
             vInfo.stereoMode = fmt.stereoMode;
             vInfo.rotation = fmt.rotationDegrees;
             vInfo.mimeType = fmt.sampleMimeType;
+            vInfo.duration = vDuration;
         }
         return vInfo;
     }
@@ -161,7 +168,6 @@ public final class GeckoHlsDemuxerWrapper {
 
     @WrapForJNI
     private Sample[] getSamples(int mediaType, int number) {
-        if (DEBUG) Log.d(LOGTAG, "getSample, mediaType = " + mediaType);
         ConcurrentLinkedQueue<DecoderInputBuffer> inputBuffers = null;
         // getA/VSamples will always return a non-null instance.
         if (mediaType == TRACK_VIDEO) {
@@ -189,7 +195,7 @@ public final class GeckoHlsDemuxerWrapper {
             inputBuffer.data.get(realData, 0, size);
             ByteBuffer buffer = ByteBuffer.wrap(realData);
             bufferInfo.set(0, size, pts, flags);
-            if (DEBUG) Log.d(LOGTAG, "Type(" + mediaType + "), PTS(" + pts + "), size(" + size + "), buffer(" + buffer + ")");
+            if (DEBUG) Log.d(LOGTAG, "[getSample] Type(" + mediaType + "), PTS(" + pts + "), size(" + size + ")");
             samples[index++] = Sample.create(buffer, bufferInfo, cryptoInfo);
         }
         return samples;
