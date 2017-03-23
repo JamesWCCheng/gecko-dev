@@ -399,14 +399,14 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         assertTrue(player != null);
         // TODO : Find a way to get A/V duration separately.
         long duratoin = player.getDuration() * 1000;
-        if (DEBUG) Log.d(TAG, "getDuration : " + duratoin  + "(us)");
+        if (DEBUG) Log.d(TAG, "getDuration : " + duratoin  + "(Us)");
         return duratoin;
     }
 
     public long getBufferedPosition() {
-        if (DEBUG) Log.d(TAG, "getBufferedPosition");
         assertTrue(player != null);
-
+        long bufferedPos = player.getBufferedPosition() * 1000;
+        if (DEBUG) Log.d(TAG, "getBufferedPosition : " + bufferedPos + "(Us)");
         return player.getBufferedPosition();
     }
 

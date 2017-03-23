@@ -36,11 +36,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class GeckoHlsVideoRenderer extends BaseRenderer {
     private static final String TAG = "GeckoHlsVideoRenderer";
-    private static boolean DEBUG = true;
+    private static boolean DEBUG = false;
     private boolean passToCodec;
     private boolean initialized;
     private ByteBuffer inputBuffer;
-    private int QUEUED_INPUT_SAMPLE_SIZE = 10;
+    private int QUEUED_INPUT_SAMPLE_SIZE = 100;
     @SuppressWarnings("serial")
     public static class DecoderInitializationException extends Exception {
         private static final int CUSTOM_ERROR_CODE_BASE = -50000;
