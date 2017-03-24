@@ -118,6 +118,7 @@ HLSDemuxer::HLSDemuxer(MediaDecoder* aDecoder,
                                            mozilla::MakeUnique<HlsDemuxerCallbacksSupport>(this));
 
   mHlsDemuxerWrapper = GeckoHlsDemuxerWrapper::Create(NS_ConvertUTF8toUTF16(hlsURI), mJavaCallbacks);
+  MOZ_ASSERT(mHlsDemuxerWrapper);
 }
 
 void
@@ -295,12 +296,36 @@ RefPtr<HLSTrackDemuxer::SeekPromise>
 HLSTrackDemuxer::Seek(const media::TimeUnit& aTime)
 {
   MOZ_ASSERT(mParent, "Called after BreackCycle()");
-  TimeUnit seekTime = TimeUnit::FromMicroseconds(0);
+  return InvokeAsync<media::TimeUnit&&>(
+           mParent->GetTaskQueue(), this, __func__,
+           &HLSTrackDemuxer::DoSeek, aTime);
+}
+
+RefPtr<HLSTrackDemuxer::SeekPromise>
+HLSTrackDemuxer::DoSeek(const media::TimeUnit& aTime)
+{
+  MOZ_ASSERT(mParent, "Called after BreackCycle()");
+  long seekTimeUs = aTime.ToMicroseconds();
+  long seekTimeMs = seekTimeUs / 1000;
+  bool result = mParent->mHlsDemuxerWrapper->Seek(seekTimeMs);
+  if (!result) {
+    return SeekPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_WAITING_FOR_DATA,
+                                        __func__);
+  }
+  TimeUnit seekTime = TimeUnit::FromMicroseconds(seekTimeUs);
   return SeekPromise::CreateAndResolve(seekTime, __func__);
 }
 
 RefPtr<HLSTrackDemuxer::SamplesPromise>
 HLSTrackDemuxer::GetSamples(int32_t aNumSamples)
+{
+  MOZ_ASSERT(mParent, "Called after BreackCycle()");
+  return InvokeAsync(mParent->GetTaskQueue(), this, __func__,
+                     &HLSTrackDemuxer::DoGetSamples, aNumSamples);
+}
+
+RefPtr<HLSTrackDemuxer::SamplesPromise>
+HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
 {
   MOZ_ASSERT(mParent, "Called after BreackCycle()");
   if (!aNumSamples) {

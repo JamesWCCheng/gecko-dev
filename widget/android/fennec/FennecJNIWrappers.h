@@ -1083,6 +1083,26 @@ public:
 
     auto GetVideoInfo(int32_t) const -> mozilla::jni::Object::LocalRef;
 
+    struct Seek_t {
+        typedef GeckoHlsDemuxerWrapper Owner;
+        typedef bool ReturnType;
+        typedef bool SetterType;
+        typedef mozilla::jni::Args<
+                int64_t> Args;
+        static constexpr char name[] = "seek";
+        static constexpr char signature[] =
+                "(J)Z";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto Seek(int64_t) const -> bool;
+
     static const char16_t AAC[];
 
     static const char16_t AVC[];

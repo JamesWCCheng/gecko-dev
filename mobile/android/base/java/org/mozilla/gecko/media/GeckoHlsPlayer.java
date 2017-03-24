@@ -432,11 +432,18 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         return audioFormat;
     }
 
-    public void seek(long positionMs) {
-        if (DEBUG) Log.d(TAG, "seeking  : " + positionMs);
-        if (player != null) {
+    public boolean seek(long positionMs) {
+        // positionMs : milliseconds.
+        // NOTE : It's not possible to seek media by tracktype via ExoPlayer Interface.
+        if (DEBUG) Log.d(TAG, "seeking  : " + positionMs + " (Ms)");
+        try {
+            // TODO : Gather Timeline Period / Window information to develop
+            //        complete timeilne, and seekTime should be inside the duration.
             player.seekTo(positionMs);
+        } catch (Exception e) {
+            return false;
         }
+        return true;
     }
 
     public void release() {

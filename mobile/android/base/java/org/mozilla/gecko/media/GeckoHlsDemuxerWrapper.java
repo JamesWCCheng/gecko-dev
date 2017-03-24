@@ -155,6 +155,14 @@ public final class GeckoHlsDemuxerWrapper {
         return vInfo;
     }
 
+    @WrapForJNI
+    public boolean seek(long seekTime) {
+        // seekTime : milliseconds.
+        assertTrue(player != null);
+        if (DEBUG) Log.d(LOGTAG, "seek  : " + seekTime + " (Ms)");
+        return player.seek(seekTime);
+    }
+
     GeckoHlsDemuxerWrapper(String url, Callbacks callback) {
         if (DEBUG)
             Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper : " + url + ", callback : " + callback);

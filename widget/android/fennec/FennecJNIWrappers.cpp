@@ -327,6 +327,14 @@ auto GeckoHlsDemuxerWrapper::GetVideoInfo(int32_t a0) const -> mozilla::jni::Obj
     return mozilla::jni::Method<GetVideoInfo_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
 }
 
+constexpr char GeckoHlsDemuxerWrapper::Seek_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::Seek_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::Seek(int64_t a0) const -> bool
+{
+    return mozilla::jni::Method<Seek_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
+}
+
 const char16_t GeckoHlsDemuxerWrapper::AAC[] = u"audio/mp4a-latm";
 
 const char16_t GeckoHlsDemuxerWrapper::AVC[] = u"video/avc";
