@@ -69,19 +69,19 @@ public:
 
   void OnAudioFormatChanged() {
     MOZ_ASSERT(mDemuxer);
-    mDemuxer->onAudioFormatChanged();
-    mDemuxer->onCheckInitDone();
+    mDemuxer->OnAudioFormatChanged();
+    mDemuxer->OnCheckInitDone();
   }
 
   void OnVideoFormatChanged() {
     MOZ_ASSERT(mDemuxer);
-    mDemuxer->onVideoFormatChanged();
-    mDemuxer->onCheckInitDone();
+    mDemuxer->OnVideoFormatChanged();
+    mDemuxer->OnCheckInitDone();
   }
 
   void OnTrackInfoChanged(bool aHasAudio, bool aHasVideo) {
     MOZ_ASSERT(mDemuxer);
-    mDemuxer->onTrackInfoChanged(aHasAudio, aHasVideo);
+    mDemuxer->OnTrackInfoChanged(aHasAudio, aHasVideo);
   }
 
   void OnDataArrived() {
@@ -122,7 +122,7 @@ HLSDemuxer::HLSDemuxer(MediaDecoder* aDecoder,
 }
 
 void
-HLSDemuxer::onAudioFormatChanged()
+HLSDemuxer::OnAudioFormatChanged()
 {
   MOZ_ASSERT(NS_IsMainThread());
   HLS_DEBUG("HLSDemuxer", "onAudioFormatChanged");
@@ -130,7 +130,7 @@ HLSDemuxer::onAudioFormatChanged()
 }
 
 void
-HLSDemuxer::onVideoFormatChanged()
+HLSDemuxer::OnVideoFormatChanged()
 {
   MOZ_ASSERT(NS_IsMainThread());
   HLS_DEBUG("HLSDemuxer", "onVideoFormatChanged");
@@ -138,7 +138,7 @@ HLSDemuxer::onVideoFormatChanged()
 }
 
 void
-HLSDemuxer::onTrackInfoChanged(bool aHasAudio, bool aHasVideo)
+HLSDemuxer::OnTrackInfoChanged(bool aHasAudio, bool aHasVideo)
 {
   MOZ_ASSERT(NS_IsMainThread());
   HLS_DEBUG("HLSDemuxer", "onTrackInfoChanged");
@@ -147,7 +147,7 @@ HLSDemuxer::onTrackInfoChanged(bool aHasAudio, bool aHasVideo)
 }
 
 void
-HLSDemuxer::onCheckInitDone()
+HLSDemuxer::OnCheckInitDone()
 {
   MOZ_ASSERT(NS_IsMainThread());
   HLS_DEBUG("HLSDemuxer", "onCheckInitDone");
@@ -273,8 +273,14 @@ HLSDemuxer::GetTrackInfo(TrackType aTrack)
 HLSDemuxer::~HLSDemuxer()
 {
   HLS_DEBUG("HLSDemuxer", "~HLSDemuxer()");
-  HlsDemuxerCallbacksSupport::DisposeNative(mJavaCallbacks);
-  mHlsDemuxerWrapper->Destroy();
+  if (mJavaCallbacks) {
+    HlsDemuxerCallbacksSupport::DisposeNative(mJavaCallbacks);
+    mJavaCallbacks = nullptr;
+  }
+  if (mHlsDemuxerWrapper) {
+    mHlsDemuxerWrapper->Destroy();
+    mHlsDemuxerWrapper = nullptr;
+  }
   mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
 }
 
@@ -306,8 +312,8 @@ RefPtr<HLSTrackDemuxer::SeekPromise>
 HLSTrackDemuxer::DoSeek(const media::TimeUnit& aTime)
 {
   MOZ_ASSERT(mParent, "Called after BreackCycle()");
-  long seekTimeUs = aTime.ToMicroseconds();
-  long seekTimeMs = seekTimeUs / 1000;
+  int64_t seekTimeUs = aTime.ToMicroseconds();
+  int64_t seekTimeMs = seekTimeUs / 1000;
   bool result = mParent->mHlsDemuxerWrapper->Seek(seekTimeMs);
   if (!result) {
     return SeekPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_WAITING_FOR_DATA,
@@ -461,6 +467,16 @@ HLSTrackDemuxer::GetBuffered()
 
 void
 HLSTrackDemuxer::BreakCycles()
+{
+  RefPtr<HLSTrackDemuxer> self = this;
+  nsCOMPtr<nsIRunnable> task =
+    NS_NewRunnableFunction([self]() {
+      self->mParent = nullptr;
+    } );
+  mParent->GetTaskQueue()->Dispatch(task.forget());
+}
+
+HLSTrackDemuxer::~HLSTrackDemuxer()
 {
 }
 

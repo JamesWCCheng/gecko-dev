@@ -53,10 +53,10 @@ public:
   static const media::TimeUnit EOS_FUZZ;
 
   AutoTaskQueue* GetTaskQueue() { return mTaskQueue; }
-  void onAudioFormatChanged();
-  void onVideoFormatChanged();
-  void onTrackInfoChanged(bool aHasAudio, bool aHasVideo);
-  void onCheckInitDone();
+  void OnAudioFormatChanged();
+  void OnVideoFormatChanged();
+  void OnTrackInfoChanged(bool aHasAudio, bool aHasVideo);
+  void OnCheckInitDone();
 
   MediaDecoder* GetDecoder() { return mDecoder; }
 
@@ -90,7 +90,7 @@ class HLSTrackDemuxer : public MediaTrackDemuxer
 public:
   HLSTrackDemuxer(HLSDemuxer* aParent,
                   TrackInfo::TrackType aType);
-
+  ~HLSTrackDemuxer();
   UniquePtr<TrackInfo> GetInfo() const override;
 
   RefPtr<SeekPromise> Seek(const media::TimeUnit& aTime) override;
