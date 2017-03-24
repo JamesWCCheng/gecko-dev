@@ -45,7 +45,7 @@ public:
 
   UniquePtr<EncryptionInfo> GetCrypto() override;
 
-  bool ShouldComputeStartTime() const override { return false; }
+  bool ShouldComputeStartTime() const override { return true; }
 
   void NotifyDataArrived() override;
 
