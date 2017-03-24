@@ -38,6 +38,7 @@ android {
 
     dexOptions {
         javaMaxHeapSize "2g"
+        jumboMode = true
     }
 
     lintOptions {
