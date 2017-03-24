@@ -89,7 +89,9 @@ public:
   bool IsExpectingMoreData() override
   {
     MonitorAutoLock mon(mMonitor);
-    return !mEnded;
+    // TODO: find the correct way to handle this API.
+    //return !mEnded;
+    return false;
   }
 
 private:

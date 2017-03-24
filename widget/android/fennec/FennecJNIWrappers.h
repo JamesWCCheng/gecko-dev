@@ -1214,6 +1214,38 @@ public:
     template<class Impl> class Natives;
 };
 
+class GeckoHlsResourceWrapper : public mozilla::jni::ObjectBase<GeckoHlsResourceWrapper>
+{
+public:
+    static const char name[];
+
+    explicit GeckoHlsResourceWrapper(const Context& ctx) : ObjectBase<GeckoHlsResourceWrapper>(ctx) {}
+
+    struct Create_t {
+        typedef GeckoHlsResourceWrapper Owner;
+        typedef GeckoHlsResourceWrapper::LocalRef ReturnType;
+        typedef GeckoHlsResourceWrapper::Param SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::String::Param> Args;
+        static constexpr char name[] = "create";
+        static constexpr char signature[] =
+                "(Ljava/lang/String;)Lorg/mozilla/gecko/media/GeckoHlsResourceWrapper;";
+        static const bool isStatic = true;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::GECKO;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    static auto Create(mozilla::jni::String::Param) -> GeckoHlsResourceWrapper::LocalRef;
+
+    static const mozilla::jni::CallingThread callingThread =
+            mozilla::jni::CallingThread::GECKO;
+
+};
+
 class HlsAudioInfo : public mozilla::jni::ObjectBase<HlsAudioInfo>
 {
 public:

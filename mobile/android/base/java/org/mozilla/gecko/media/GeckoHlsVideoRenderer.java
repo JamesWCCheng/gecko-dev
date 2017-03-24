@@ -34,7 +34,7 @@ import com.google.android.exoplayer2.video.VideoRendererEventListener;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class GeckoHlsVideoRenderer extends BaseRenderer {
+public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     private static final String TAG = "GeckoHlsVideoRenderer";
     private static boolean DEBUG = false;
     private boolean passToCodec;
@@ -378,6 +378,12 @@ public class GeckoHlsVideoRenderer extends BaseRenderer {
             // avoid this issue by sending reconfiguration data following every flush.
             codecReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
         }
+    }
+
+    @Override
+    public synchronized boolean drainSampleQueue() {
+        queuedInputSamples.clear();
+        return true;
     }
 
     private synchronized boolean feedSampleQueue() throws ExoPlaybackException {

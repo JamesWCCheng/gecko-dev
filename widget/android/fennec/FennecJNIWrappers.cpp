@@ -362,6 +362,17 @@ constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnTrackInfoChanged_t
 constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t::name[];
 constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t::signature[];
 
+const char GeckoHlsResourceWrapper::name[] =
+        "org/mozilla/gecko/media/GeckoHlsResourceWrapper";
+
+constexpr char GeckoHlsResourceWrapper::Create_t::name[];
+constexpr char GeckoHlsResourceWrapper::Create_t::signature[];
+
+auto GeckoHlsResourceWrapper::Create(mozilla::jni::String::Param a0) -> GeckoHlsResourceWrapper::LocalRef
+{
+    return mozilla::jni::Method<Create_t>::Call(GeckoHlsResourceWrapper::Context(), nullptr, a0);
+}
+
 const char HlsAudioInfo::name[] =
         "org/mozilla/gecko/media/HlsAudioInfo";
 

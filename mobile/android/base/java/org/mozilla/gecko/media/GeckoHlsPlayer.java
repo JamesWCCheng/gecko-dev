@@ -69,7 +69,7 @@ public enum GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     private DefaultTrackSelector trackSelector;
     private boolean isTimelineStatic = false;
-    private Renderer[] renderers;
+    private GeckoHlsRendererBase[] renderers;
     private MediaSource mediaSource;
 
     private ComponentListener componentListener;
@@ -274,7 +274,7 @@ public enum GeckoHlsPlayer implements ExoPlayer.EventListener {
                 new AdaptiveVideoTrackSelection.Factory(BANDWIDTH_METER);
         trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
 
-        ArrayList<Renderer> renderersList = new ArrayList<>();
+        ArrayList<GeckoHlsRendererBase> renderersList = new ArrayList<>();
         vRenderer = new GeckoHlsVideoRenderer(ctx,
                 MediaCodecSelector.DEFAULT,
                 mainHandler,
@@ -287,7 +287,7 @@ public enum GeckoHlsPlayer implements ExoPlayer.EventListener {
                 (AudioCapabilities) null,
                 inPlayerRender);
         renderersList.add(aRenderer);
-        renderers = renderersList.toArray(new Renderer[renderersList.size()]);
+        renderers = renderersList.toArray(new GeckoHlsRendererBase[renderersList.size()]);
 
         player = ExoPlayerFactory.newInstance(renderers, trackSelector);
         player.addListener(this);
@@ -458,6 +458,9 @@ public enum GeckoHlsPlayer implements ExoPlayer.EventListener {
         try {
             // TODO : Gather Timeline Period / Window information to develop
             //        complete timeilne, and seekTime should be inside the duration.
+            for (GeckoHlsRendererBase r : renderers) {
+                r.drainSampleQueue();
+            }
             player.seekTo(positionMs);
         } catch (Exception e) {
             return false;

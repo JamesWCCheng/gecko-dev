@@ -14,7 +14,6 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.Surface;
 
-import com.google.android.exoplayer2.BaseRenderer;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.Format;
@@ -43,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
+public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements MediaClock {
     private static boolean DEMUX_ONLY;
     private static boolean DEBUG = false;
     private static final String TAG = "GeckoHlsAudioRenderer";
@@ -754,6 +753,12 @@ public class GeckoHlsAudioRenderer extends BaseRenderer implements MediaClock {
         this.codec.queueInputBuffer(index, 0, goingToFeed.data.limit(), presentationTimeUs, 0);
         this.codecReceivedBuffers = true;
         this.codecReconfigurationState = 0;
+        return true;
+    }
+
+    @Override
+    public synchronized boolean drainSampleQueue() {
+        demuxedSampleBuffer.clear();
         return true;
     }
 
