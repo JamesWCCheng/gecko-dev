@@ -274,6 +274,7 @@ HLSDemuxer::~HLSDemuxer()
 {
   HLS_DEBUG("HLSDemuxer", "~HLSDemuxer()");
   HlsDemuxerCallbacksSupport::DisposeNative(mJavaCallbacks);
+  mHlsDemuxerWrapper->Destroy();
   mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
 }
 

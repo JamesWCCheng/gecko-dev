@@ -258,7 +258,7 @@ public enum GeckoHlsPlayer implements ExoPlayer.EventListener {
         nativeCallbacks = callback;
     }
 
-    void init(String url) {
+    synchronized void init(String url) {
         if (DEBUG) Log.d(TAG, "init");
         if (isInitDone == true) {
             return;
@@ -308,6 +308,12 @@ public enum GeckoHlsPlayer implements ExoPlayer.EventListener {
             player.prepare(mediaSource);
         }
         isInitDone = true;
+    }
+
+    synchronized void deinit() {
+        if (DEBUG) Log.d(TAG, "deinit");
+        nativeCallbacks = null;
+        isInitDone = false;
     }
 
     @Override
@@ -477,5 +483,6 @@ public enum GeckoHlsPlayer implements ExoPlayer.EventListener {
             player.release();
             player = null;
         }
+        deinit();
     }
 }

@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     private static final String TAG = "GeckoHlsVideoRenderer";
-    private static boolean DEBUG = false;
+    private static boolean DEBUG = true;
     private boolean passToCodec;
     private boolean initialized;
     private ByteBuffer inputBuffer;
