@@ -164,11 +164,11 @@ public final class GeckoHlsDemuxerWrapper {
     }
 
     GeckoHlsDemuxerWrapper(String url, Callbacks callback) {
-        if (DEBUG)
-            Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper : " + url + ", callback : " + callback);
+        if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper : " + url + ", callback : " + callback);
         try {
-            Context ctx = GeckoAppShell.getApplicationContext();
-            player = new GeckoHlsPlayer(ctx, url, callback);
+            player = GeckoHlsPlayer.INSTANCE;
+            player.init(url);
+            player.addDemuxerWrapperCallbackListener(callback);
         } catch (Exception e) {
             Log.e(LOGTAG, "Constructing GeckoHlsDemuxerWrapper ... error", e);
         }

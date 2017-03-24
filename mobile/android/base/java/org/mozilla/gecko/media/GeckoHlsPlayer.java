@@ -41,10 +41,15 @@ import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
 
+import org.mozilla.gecko.GeckoAppShell;
+
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class GeckoHlsPlayer implements ExoPlayer.EventListener {
+// Singleton class
+public enum GeckoHlsPlayer implements ExoPlayer.EventListener {
+    // Single Instance
+    INSTANCE;
     private static boolean DEBUG = true;
     private static final String TAG = "GeckoHlsPlayer";
     private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
@@ -64,10 +69,10 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     private DefaultTrackSelector trackSelector;
     private boolean isTimelineStatic = false;
-    private final Renderer[] renderers;
+    private Renderer[] renderers;
     private MediaSource mediaSource;
 
-    private final ComponentListener componentListener;
+    private ComponentListener componentListener;
 
     private boolean inPlayerRender = false;
     private boolean trackGroupUpdated = false;
@@ -81,6 +86,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     private boolean enableV = true;
     private boolean enableA = false;
 
+    private boolean isInitDone = false;
     private GeckoHlsDemuxerWrapper.Callbacks nativeCallbacks;
 
     public enum Track_Type {
@@ -244,8 +250,20 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         }
     }
 
-    public GeckoHlsPlayer(Context va, String url, GeckoHlsDemuxerWrapper.Callbacks callback) {
+    GeckoHlsPlayer() {
+
+    }
+
+    void addDemuxerWrapperCallbackListener(GeckoHlsDemuxerWrapper.Callbacks callback) {
         nativeCallbacks = callback;
+    }
+
+    void init(String url) {
+        if (DEBUG) Log.d(TAG, "init");
+        if (isInitDone == true) {
+            return;
+        }
+        Context ctx = GeckoAppShell.getApplicationContext();
         componentListener = new ComponentListener();
         mainHandler = new Handler();
 
@@ -257,17 +275,17 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
 
         ArrayList<Renderer> renderersList = new ArrayList<>();
-        vRenderer = new GeckoHlsVideoRenderer(va,
-                                              MediaCodecSelector.DEFAULT,
-                                              mainHandler,
-                                              componentListener,
-                                              inPlayerRender);
+        vRenderer = new GeckoHlsVideoRenderer(ctx,
+                MediaCodecSelector.DEFAULT,
+                mainHandler,
+                componentListener,
+                inPlayerRender);
         renderersList.add(vRenderer);
         aRenderer = new GeckoHlsAudioRenderer(MediaCodecSelector.DEFAULT,
-                                              mainHandler,
-                                              componentListener,
-                                              (AudioCapabilities)null,
-                                              inPlayerRender);
+                mainHandler,
+                componentListener,
+                (AudioCapabilities) null,
+                inPlayerRender);
         renderersList.add(aRenderer);
         renderers = renderersList.toArray(new Renderer[renderersList.size()]);
 
@@ -279,8 +297,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
         Uri[] uris = new Uri[]{Uri.parse(url)};
         String[] extensions = new String[]{extension};
-        userAgent = Util.getUserAgent(va, "RemoteDecoder");
-        mediaDataSourceFactory = buildDataSourceFactory(va, null);
+        userAgent = Util.getUserAgent(ctx, "RemoteDecoder");
+        mediaDataSourceFactory = buildDataSourceFactory(ctx, null);
 
         MediaSource[] mediaSources = new MediaSource[1];
         mediaSources[0] = buildMediaSource(uris[0], extensions[0]);
@@ -289,6 +307,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         if (!inPlayerRender) {
             player.prepare(mediaSource);
         }
+        isInitDone = true;
     }
 
     @Override
