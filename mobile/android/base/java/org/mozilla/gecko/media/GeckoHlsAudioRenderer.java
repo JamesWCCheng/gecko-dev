@@ -46,7 +46,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
     private static boolean DEMUX_ONLY;
     private static boolean DEBUG = false;
     private static final String TAG = "GeckoHlsAudioRenderer";
-    private ConcurrentLinkedQueue<DecoderInputBuffer> demuxedSampleBuffer = new ConcurrentLinkedQueue<>();
+    private ConcurrentLinkedQueue<DecoderInputBuffer> dexmuedInputBuffers = new ConcurrentLinkedQueue<>();
     private static final int QUEUED_DEMUXED_INPUT_BUFFER_SIZE = 100;
     private boolean initialized = false;
     private ByteBuffer inputBuffer = null;
@@ -114,8 +114,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
     public GeckoHlsAudioRenderer(MediaCodecSelector mediaCodecSelector,
                                  Handler eventHandler,
                                  AudioRendererEventListener eventListener,
-                                 AudioCapabilities audioCapabilities,
-                                 boolean passToCodec) {
+                                 AudioCapabilities audioCapabilities) {
         super(C.TRACK_TYPE_AUDIO);
         Assertions.checkState(Util.SDK_INT >= 16);
         this.mediaCodecSelector = Assertions.checkNotNull(mediaCodecSelector);
@@ -129,7 +128,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
         this.codecReinitializationState = 0;
         this.audioTrack = new AudioTrack(audioCapabilities, new AudioTrackListener());
         this.eventDispatcher = new AudioRendererEventListener.EventDispatcher(eventHandler, eventListener);
-        DEMUX_ONLY = !passToCodec;
+        DEMUX_ONLY = true;
 
         waitingForData = false;
         playerListener = (GeckoHlsPlayer.ComponentListener)eventListener;
@@ -342,9 +341,9 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
     static final long THRESHOLD_US = 30000; //30ms
     protected boolean processOutputBuffer(long positionUs, long elapsedRealtimeUs, int bufferIndex, long bufferPresentationTimeUs) throws ExoPlaybackException {
         if (DEMUX_ONLY){
-            if (!demuxedSampleBuffer.isEmpty()) {
-                if (demuxedSampleBuffer.peek().timeUs < positionUs + THRESHOLD_US) {
-                    demuxedSampleBuffer.poll();
+            if (!dexmuedInputBuffers.isEmpty()) {
+                if (dexmuedInputBuffers.peek().timeUs < positionUs + THRESHOLD_US) {
+                    dexmuedInputBuffers.poll();
                     return true;
                 }
             }
@@ -355,14 +354,14 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
         }
         //if(this.passthroughEnabled && (bufferFlags & 2) != 0) {
         if(false) {
-            if (!demuxedSampleBuffer.isEmpty()) {
-                demuxedSampleBuffer.poll();
+            if (!dexmuedInputBuffers.isEmpty()) {
+                dexmuedInputBuffers.poll();
             }
             codec.releaseOutputBuffer(bufferIndex, false);
             return true;
         } else if(this.shouldSkipOutputBuffer) {
-            if (!demuxedSampleBuffer.isEmpty()) {
-                demuxedSampleBuffer.poll();
+            if (!dexmuedInputBuffers.isEmpty()) {
+                dexmuedInputBuffers.poll();
             }
             codec.releaseOutputBuffer(bufferIndex, false);
             ++this.decoderCounters.skippedOutputBufferCount;
@@ -373,8 +372,8 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
                 if (this.audioTrack.handleBuffer(this.outputBuffers[bufferIndex], bufferPresentationTimeUs)) {
                     codec.releaseOutputBuffer(bufferIndex, false);
                     ++this.decoderCounters.renderedOutputBufferCount;
-                    if (!demuxedSampleBuffer.isEmpty()) {
-                        demuxedSampleBuffer.poll();
+                    if (!dexmuedInputBuffers.isEmpty()) {
+                        dexmuedInputBuffers.poll();
                     }
                     return true;
                 }
@@ -638,12 +637,12 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
 
     public synchronized ConcurrentLinkedQueue<DecoderInputBuffer> getQueuedSamples(int number) {
         ConcurrentLinkedQueue<DecoderInputBuffer> samples = new ConcurrentLinkedQueue<DecoderInputBuffer>();
-        int queuedSize = demuxedSampleBuffer.size();
+        int queuedSize = dexmuedInputBuffers.size();
         for (int i = 0; i < queuedSize; i++) {
             if (i >= number) {
                 break;
             }
-            DecoderInputBuffer outputBuffer = demuxedSampleBuffer.poll();
+            DecoderInputBuffer outputBuffer = dexmuedInputBuffers.poll();
             samples.offer(outputBuffer);
         }
         if (samples.isEmpty()) {
@@ -654,7 +653,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
 
     private boolean drainQueuedDemuxedSamples(long positionUs, long elapsedRealtimeUs) throws ExoPlaybackException {
         if (DEBUG) Log.d(TAG, "                       drainOutputBuffer ===> positionUs : " + positionUs + ", elapsedRT : " + elapsedRealtimeUs);
-        int queueSize = demuxedSampleBuffer.size();
+        int queueSize = dexmuedInputBuffers.size();
         if (queueSize > 0) {
             // We've dequeued a buffer.
             if (shouldSkipAdaptationWorkaroundOutputBuffer) {
@@ -669,7 +668,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
                 // The dequeued buffer is a media buffer. Do some initial setup. The buffer will be
                 // processed by calling processOutputBuffer (possibly multiple times) below.
 
-                DecoderInputBuffer outputBuffer = demuxedSampleBuffer.peek();
+                DecoderInputBuffer outputBuffer = dexmuedInputBuffers.peek();
                 outputBufferInfo.presentationTimeUs = outputBuffer.timeUs;
             }
         }
@@ -734,7 +733,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
     }
 
     public synchronized boolean feedInputBuffer() {
-        if(demuxedSampleBuffer.isEmpty()) {
+        if(dexmuedInputBuffers.isEmpty()) {
             return false;
         }
         int index = this.codec.dequeueInputBuffer(0L);
@@ -743,8 +742,8 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
         }
 
         ByteBuffer forInput = codec.getInputBuffer(index);
-        DecoderInputBuffer goingToFeed = demuxedSampleBuffer.peek();
-//        DecoderInputBuffer goingToFeed = demuxedSampleBuffer.removeFirst();
+        DecoderInputBuffer goingToFeed = dexmuedInputBuffers.peek();
+//        DecoderInputBuffer goingToFeed = dexmuedInputBuffers.removeFirst();
         long presentationTimeUs = goingToFeed.timeUs;
         for (int i = goingToFeed.data.position(); i < goingToFeed.data.limit(); i++) {
             forInput.put(goingToFeed.data.get(i));
@@ -757,14 +756,14 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
     }
 
     @Override
-    public synchronized boolean drainSampleQueue() {
-        demuxedSampleBuffer.clear();
+    public synchronized boolean clearInputBuffersQueue() {
+        dexmuedInputBuffers.clear();
         return true;
     }
 
-    private synchronized boolean feedDemuxedSampleQueue() throws ExoPlaybackException {
+    private synchronized boolean feedInputBuffersQueue() throws ExoPlaybackException {
         if (!initialized || codecReinitializationState == REINITIALIZATION_STATE_WAIT_END_OF_STREAM
-                || inputStreamEnded || demuxedSampleBuffer.size() >= QUEUED_DEMUXED_INPUT_BUFFER_SIZE) {
+                || inputStreamEnded || dexmuedInputBuffers.size() >= QUEUED_DEMUXED_INPUT_BUFFER_SIZE) {
             // We need to reinitialize the codec or the input stream has ended.
             return false;
         }
@@ -846,7 +845,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
             bufferForRead.flip();
 
             if (this.getTrackType() == C.TRACK_TYPE_AUDIO) {
-                if (DEBUG) Log.d(TAG, "feedDemuxedSampleQueue: bufferTimeUs : " + bufferForRead.timeUs + ", queueSize = " + demuxedSampleBuffer.size());
+                if (DEBUG) Log.d(TAG, "feedInputBuffersQueue: bufferTimeUs : " + bufferForRead.timeUs + ", queueSize = " + dexmuedInputBuffers.size());
             }
             byte[] realData = new byte[bufferForRead.data.limit()];
             bufferForRead.data.get(realData, 0, bufferForRead.data.limit());
@@ -854,7 +853,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
             // reuse the max sized buffer
             inputBuffer.clear();
             // add the demuxed sample buffer into linked list
-            demuxedSampleBuffer.offer(bufferForRead);
+            dexmuedInputBuffers.offer(bufferForRead);
         } catch (MediaCodec.CryptoException e) {
             throw ExoPlaybackException.createForRenderer(e, getIndex());
         }
@@ -883,7 +882,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
 //                    while (drainQueuedDemuxedSamples(positionUs, elapsedRealtimeUs)) {}
 //                    getQueuedSamples(1);
                 }
-                while (feedDemuxedSampleQueue()) {}
+                while (feedInputBuffersQueue()) {}
                 if (!DEMUX_ONLY) {
                     while (feedInputBuffer()) {}
                 }

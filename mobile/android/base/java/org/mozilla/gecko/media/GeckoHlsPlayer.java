@@ -71,7 +71,6 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     private ComponentListener componentListener;
 
-    private boolean inPlayerRender = false;
     private boolean trackGroupUpdated = false;
     private long bufferedPosition;
     private Format audioFormat;
@@ -227,26 +226,6 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         }
     }
 
-    public void setSurface(Surface surface) {
-        if (!inPlayerRender) {
-            return;
-        }
-
-        player.prepare(mediaSource);
-
-        ExoPlayer.ExoPlayerMessage[] messages = new ExoPlayer.ExoPlayerMessage[1];
-        int count = 0;
-        for (Renderer renderer : renderers) {
-            if (renderer.getTrackType() == C.TRACK_TYPE_VIDEO) {
-                messages[count++] = new ExoPlayer.ExoPlayerMessage(renderer, C.MSG_SET_SURFACE, surface);
-            }
-        }
-
-        if (surface != null && count != 0) {
-            player.blockingSendMessages(messages);
-        }
-    }
-
     GeckoHlsPlayer() {
         if (DEBUG) Log.d(TAG, "GeckoHlsPlayer construct");
     }
@@ -273,17 +252,14 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
 
         ArrayList<GeckoHlsRendererBase> renderersList = new ArrayList<>();
-        vRenderer = new GeckoHlsVideoRenderer(ctx,
-                MediaCodecSelector.DEFAULT,
-                mainHandler,
-                componentListener,
-                inPlayerRender);
+        vRenderer = new GeckoHlsVideoRenderer(MediaCodecSelector.DEFAULT,
+                                              mainHandler,
+                                              componentListener);
         renderersList.add(vRenderer);
         aRenderer = new GeckoHlsAudioRenderer(MediaCodecSelector.DEFAULT,
                 mainHandler,
                 componentListener,
-                (AudioCapabilities) null,
-                inPlayerRender);
+                (AudioCapabilities) null);
         renderersList.add(aRenderer);
         renderers = renderersList.toArray(new GeckoHlsRendererBase[renderersList.size()]);
 
@@ -302,9 +278,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         mediaSources[0] = buildMediaSource(uris[0], extensions[0]);
         mediaSource = mediaSources[0];
 
-        if (!inPlayerRender) {
-            player.prepare(mediaSource);
-        }
+        player.prepare(mediaSource);
         isInitDone = true;
     }
 
@@ -463,7 +437,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
             // TODO : Gather Timeline Period / Window information to develop
             //        complete timeilne, and seekTime should be inside the duration.
             for (GeckoHlsRendererBase r : renderers) {
-                r.drainSampleQueue();
+                r.clearInputBuffersQueue();
             }
             player.seekTo(positionMs);
         } catch (Exception e) {
