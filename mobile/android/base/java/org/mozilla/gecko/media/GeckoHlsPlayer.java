@@ -16,7 +16,6 @@ import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.Format;
-import com.google.android.exoplayer2.Renderer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.audio.AudioCapabilities;
 import com.google.android.exoplayer2.audio.AudioRendererEventListener;
@@ -436,10 +435,16 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         try {
             // TODO : Gather Timeline Period / Window information to develop
             //        complete timeilne, and seekTime should be inside the duration.
+            Long startTime = Long.MAX_VALUE;
             for (GeckoHlsRendererBase r : renderers) {
+                // Find the min value of the start time
+                if (r.firstSampleStartTime != null && r.firstSampleStartTime < startTime) {
+                    startTime = r.firstSampleStartTime;
+                }
                 r.clearInputBuffersQueue();
             }
-            player.seekTo(positionMs);
+
+            player.seekTo(positionMs - startTime / 1000);
         } catch (Exception e) {
             return false;
         }

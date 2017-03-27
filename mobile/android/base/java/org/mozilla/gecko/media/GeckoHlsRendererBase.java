@@ -10,4 +10,5 @@ import com.google.android.exoplayer2.BaseRenderer;
 public abstract class GeckoHlsRendererBase extends BaseRenderer {
     public GeckoHlsRendererBase(int trackType) { super(trackType); }
     public abstract boolean clearInputBuffersQueue();
+    public Long firstSampleStartTime = null;
 }

@@ -647,7 +647,11 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
         }
         if (samples.isEmpty()) {
             waitingForData = true;
+        } else {
+        if (firstSampleStartTime == null) {
+            firstSampleStartTime = samples.peek().timeUs;
         }
+    }
         return samples;
     }
 
