@@ -17,8 +17,6 @@
 
 #include "VideoUtils.h"
 
-using namespace mozilla::java;
-
 namespace mozilla {
 
 class AbstractThread;

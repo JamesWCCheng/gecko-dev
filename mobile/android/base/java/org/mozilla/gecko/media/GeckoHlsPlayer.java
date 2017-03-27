@@ -46,10 +46,7 @@ import org.mozilla.gecko.GeckoAppShell;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-// Singleton class
-public enum GeckoHlsPlayer implements ExoPlayer.EventListener {
-    // Single Instance
-    INSTANCE;
+public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     private static boolean DEBUG = true;
     private static final String TAG = "GeckoHlsPlayer";
     private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
@@ -251,15 +248,16 @@ public enum GeckoHlsPlayer implements ExoPlayer.EventListener {
     }
 
     GeckoHlsPlayer() {
-
+        if (DEBUG) Log.d(TAG, "GeckoHlsPlayer construct");
     }
 
     void addDemuxerWrapperCallbackListener(GeckoHlsDemuxerWrapper.Callbacks callback) {
+        if (DEBUG) Log.d(TAG, "GeckoHlsPlayer addDemuxerWrapperCallbackListener");
         nativeCallbacks = callback;
     }
 
     synchronized void init(String url) {
-        if (DEBUG) Log.d(TAG, "init");
+        if (DEBUG) Log.d(TAG, "GeckoHlsPlayer init");
         if (isInitDone == true) {
             return;
         }
@@ -311,7 +309,7 @@ public enum GeckoHlsPlayer implements ExoPlayer.EventListener {
     }
 
     synchronized void deinit() {
-        if (DEBUG) Log.d(TAG, "deinit");
+        if (DEBUG) Log.d(TAG, "GeckoHlsPlayer deinit");
         nativeCallbacks = null;
         isInitDone = false;
     }

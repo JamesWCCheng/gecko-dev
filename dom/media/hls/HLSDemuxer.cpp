@@ -10,6 +10,7 @@
 
 #include "FennecJNINatives.h"
 #include "HLSDemuxer.h"
+#include "HLSResource.h"
 #include "HLSUtils.h"
 #include "MediaCodec.h"
 #include "nsPrintfCString.h"
@@ -107,9 +108,6 @@ HLSDemuxer::HLSDemuxer(MediaDecoder* aDecoder,
   , mVideoInfoUpdated(false)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  nsCString hlsURI;
-  Unused << mResource->URI()->GetSpec(hlsURI);
-  HLS_DEBUG("HLSDemuxer", "Ctor(%s)", hlsURI.get());
   HlsDemuxerCallbacksSupport::Init();
   mJavaCallbacks = GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New();
   MOZ_ASSERT(mJavaCallbacks);
@@ -117,7 +115,8 @@ HLSDemuxer::HLSDemuxer(MediaDecoder* aDecoder,
   HlsDemuxerCallbacksSupport::AttachNative(mJavaCallbacks,
                                            mozilla::MakeUnique<HlsDemuxerCallbacksSupport>(this));
 
-  mHlsDemuxerWrapper = GeckoHlsDemuxerWrapper::Create(NS_ConvertUTF8toUTF16(hlsURI), mJavaCallbacks);
+  auto hlsRes = static_cast<HLSResource*>(aResource);
+  mHlsDemuxerWrapper = GeckoHlsDemuxerWrapper::Create(hlsRes->GetResourceWrapper(), mJavaCallbacks);
   MOZ_ASSERT(mHlsDemuxerWrapper);
 }
 

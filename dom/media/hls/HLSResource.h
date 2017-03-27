@@ -7,7 +7,9 @@
 #ifndef HLSResource_h_
 #define HLSResource_h_
 
+#include "FennecJNIWrappers.h"
 #include "HLSUtils.h"
+#include "nsContentUtils.h"
 
 #define UNIMPLEMENTED() HLS_DEBUG("HLSResource", "UNIMPLEMENTED FUNCTION")
 
@@ -27,6 +29,8 @@ public:
     nsresult rv = aURI->GetSpec(spec);
     (void)rv;
     HLS_DEBUG("HLSResource", "aContainerType = %s, aURI->GetSpec = %s", aContainerType.OriginalString().Data(), spec.get());
+    mHlsResourceWrapper = java::GeckoHlsResourceWrapper::Create(NS_ConvertUTF8toUTF16(spec));
+    MOZ_ASSERT(mHlsResourceWrapper);
   }
 
   ~HLSResource()
@@ -94,6 +98,10 @@ public:
     return false;
   }
 
+  java::GeckoHlsResourceWrapper::GlobalRef GetResourceWrapper() {
+    return mHlsResourceWrapper;
+  }
+
 private:
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
@@ -110,6 +118,7 @@ private:
 
   Monitor mMonitor;
   bool mEnded; // protected by mMonitor
+  java::GeckoHlsResourceWrapper::GlobalRef mHlsResourceWrapper;
 };
 
 } // namespace mozilla

@@ -274,7 +274,7 @@ const char GeckoHlsDemuxerWrapper::name[] =
 constexpr char GeckoHlsDemuxerWrapper::Create_t::name[];
 constexpr char GeckoHlsDemuxerWrapper::Create_t::signature[];
 
-auto GeckoHlsDemuxerWrapper::Create(mozilla::jni::String::Param a0, mozilla::jni::Object::Param a1) -> GeckoHlsDemuxerWrapper::LocalRef
+auto GeckoHlsDemuxerWrapper::Create(mozilla::jni::Object::Param a0, mozilla::jni::Object::Param a1) -> GeckoHlsDemuxerWrapper::LocalRef
 {
     return mozilla::jni::Method<Create_t>::Call(GeckoHlsDemuxerWrapper::Context(), nullptr, a0, a1);
 }
@@ -364,6 +364,14 @@ constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged
 
 const char GeckoHlsResourceWrapper::name[] =
         "org/mozilla/gecko/media/GeckoHlsResourceWrapper";
+
+constexpr char GeckoHlsResourceWrapper::GetPlayer_t::name[];
+constexpr char GeckoHlsResourceWrapper::GetPlayer_t::signature[];
+
+auto GeckoHlsResourceWrapper::GetPlayer() const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetPlayer_t>::Call(GeckoHlsResourceWrapper::mCtx, nullptr);
+}
 
 constexpr char GeckoHlsResourceWrapper::Create_t::name[];
 constexpr char GeckoHlsResourceWrapper::Create_t::signature[];

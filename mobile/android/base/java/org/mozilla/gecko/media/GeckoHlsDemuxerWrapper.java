@@ -25,6 +25,8 @@ import android.media.MediaCodec.CryptoInfo;
 import android.os.Build;
 import android.util.Log;
 
+import static org.mozilla.gecko.R.id.url;
+
 public final class GeckoHlsDemuxerWrapper {
     private static final String LOGTAG = "GeckoHlsDemuxerWrapper";
     private static final boolean DEBUG = true;
@@ -102,8 +104,8 @@ public final class GeckoHlsDemuxerWrapper {
     }
 
     @WrapForJNI(calledFrom = "gecko")
-    public static GeckoHlsDemuxerWrapper create(String url, Callbacks callback) {
-        GeckoHlsDemuxerWrapper wrapper = new GeckoHlsDemuxerWrapper(url, callback);
+    public static GeckoHlsDemuxerWrapper create(GeckoHlsResourceWrapper resWrapper, Callbacks callback) {
+        GeckoHlsDemuxerWrapper wrapper = new GeckoHlsDemuxerWrapper(resWrapper, callback);
         return wrapper;
     }
 
@@ -163,11 +165,10 @@ public final class GeckoHlsDemuxerWrapper {
         return player.seek(seekTime);
     }
 
-    GeckoHlsDemuxerWrapper(String url, Callbacks callback) {
+    GeckoHlsDemuxerWrapper(GeckoHlsResourceWrapper resWrapper, Callbacks callback) {
         if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper : " + url + ", callback : " + callback);
         try {
-            player = GeckoHlsPlayer.INSTANCE;
-            player.init(url);
+            player = resWrapper.GetPlayer();
             player.addDemuxerWrapperCallbackListener(callback);
         } catch (Exception e) {
             Log.e(LOGTAG, "Constructing GeckoHlsDemuxerWrapper ... error", e);
