@@ -9,6 +9,6 @@ import com.google.android.exoplayer2.BaseRenderer;
 // TODO: Extract the identical member function or data from Video/Audio Renderer
 public abstract class GeckoHlsRendererBase extends BaseRenderer {
     public GeckoHlsRendererBase(int trackType) { super(trackType); }
-    public abstract boolean clearInputBuffersQueue();
+    public abstract boolean clearInputSamplesQueue();
     public Long firstSampleStartTime = null;
 }

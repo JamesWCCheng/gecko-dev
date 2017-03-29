@@ -181,38 +181,18 @@ public final class GeckoHlsDemuxerWrapper {
     }
 
     @WrapForJNI
-    private Sample[] getSamples(int mediaType, int number) {
-        ConcurrentLinkedQueue<DecoderInputBuffer> inputBuffers = null;
+    private GeckoHlsSample[] getSamples(int mediaType, int number) {
+        ConcurrentLinkedQueue<GeckoHlsSample> samples = null;
         // getA/VSamples will always return a non-null instance.
         if (mediaType == TRACK_VIDEO) {
-            inputBuffers = player.getVideoSamples(number);
+            samples = player.getVideoSamples(number);
         } else if (mediaType == TRACK_AUDIO) {
-            inputBuffers = player.getAudioSamples(number);
+            samples = player.getAudioSamples(number);
         }
 
-        assertTrue(inputBuffers.size() <= number);
-
-        Sample[] samples = new Sample[inputBuffers.size()];
-        int index = 0;
-        DecoderInputBuffer inputBuffer = null;
-        for (inputBuffer = inputBuffers.poll(); inputBuffer != null; inputBuffer = inputBuffers.poll()) {
-            CryptoInfo cryptoInfo = inputBuffer.isEncrypted() ? inputBuffer.cryptoInfo.getFrameworkCryptoInfoV16() : null;
-            BufferInfo bufferInfo = new BufferInfo();
-            long pts = inputBuffer.timeUs;
-            // The flags in DecoderInputBuffer is syned with MediaCodec Buffer flags.
-            int flags = 0;
-            flags |= inputBuffer.isKeyFrame() ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0;
-            flags |= inputBuffer.isEndOfStream() ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0;
-
-            int size = inputBuffer.data.limit();
-            byte[] realData = new byte[size];
-            inputBuffer.data.get(realData, 0, size);
-            ByteBuffer buffer = ByteBuffer.wrap(realData);
-            bufferInfo.set(0, size, pts, flags);
-            if (DEBUG) Log.d(LOGTAG, "[getSample] Type(" + mediaType + "), PTS(" + pts + "), size(" + size + ")");
-            samples[index++] = Sample.create(buffer, bufferInfo, cryptoInfo);
-        }
-        return samples;
+        assertTrue(samples.size() <= number);
+        GeckoHlsSample[] sampleArray = samples.toArray(new GeckoHlsSample[samples.size()]);
+        return sampleArray;
     }
 
     @WrapForJNI // Called when natvie object is destroyed.

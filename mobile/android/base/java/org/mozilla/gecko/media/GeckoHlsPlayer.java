@@ -377,18 +377,18 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     // =======================================================================
     // API for GeckoHlsDemuxerWrapper
     // =======================================================================
-    public ConcurrentLinkedQueue<DecoderInputBuffer> getVideoSamples(int number) {
+    public ConcurrentLinkedQueue<GeckoHlsSample> getVideoSamples(int number) {
         if (vRenderer != null) {
             return vRenderer.getQueuedSamples(number);
         }
-        return new ConcurrentLinkedQueue<DecoderInputBuffer>();
+        return new ConcurrentLinkedQueue<GeckoHlsSample>();
     }
 
-    public ConcurrentLinkedQueue<DecoderInputBuffer> getAudioSamples(int number) {
+    public ConcurrentLinkedQueue<GeckoHlsSample> getAudioSamples(int number) {
         if (aRenderer != null) {
             return aRenderer.getQueuedSamples(number);
         }
-        return new ConcurrentLinkedQueue<DecoderInputBuffer>();
+        return new ConcurrentLinkedQueue<GeckoHlsSample>();
     }
 
     public long getDuration() {
@@ -441,7 +441,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
                 if (r.firstSampleStartTime != null && r.firstSampleStartTime < startTime) {
                     startTime = r.firstSampleStartTime;
                 }
-                r.clearInputBuffersQueue();
+                r.clearInputSamplesQueue();
             }
 
             player.seekTo(positionMs - startTime / 1000);

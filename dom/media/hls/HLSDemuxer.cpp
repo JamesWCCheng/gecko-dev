@@ -354,7 +354,7 @@ HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
     return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_WAITING_FOR_DATA, __func__);
   }
   for (auto&& demuxedSample : sampleObjectArray) {
-    java::Sample::LocalRef sample(mozilla::Move(demuxedSample));
+    java::GeckoHlsSample::LocalRef sample(mozilla::Move(demuxedSample));
     java::sdk::BufferInfo::LocalRef info = sample->Info();
     // TODO: Check which is essential material for MediaRawData.
     // Currently extract PTS, Size and Data without Crypto information.
@@ -368,7 +368,7 @@ HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
     ok = NS_SUCCEEDED(info->Flags(&flags));
     mrd->mKeyframe = flags & MediaCodec::BUFFER_FLAG_KEY_FRAME;
     // TODO : Fix this when we know how to calculate from ExoPlayer.
-    mrd->mDuration = (mType == TrackInfo::kVideoTrack) ? 33333 : 0;
+    mrd->mDuration = (mType == TrackInfo::kVideoTrack) ? (int64_t)sample->Duration() : 0;
 
     int32_t size = 0;
     ok &= NS_SUCCEEDED(info->Size(&size));

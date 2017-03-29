@@ -381,6 +381,56 @@ auto GeckoHlsResourceWrapper::Create(mozilla::jni::String::Param a0) -> GeckoHls
     return mozilla::jni::Method<Create_t>::Call(GeckoHlsResourceWrapper::Context(), nullptr, a0);
 }
 
+const char GeckoHlsSample::name[] =
+        "org/mozilla/gecko/media/GeckoHlsSample";
+
+constexpr char GeckoHlsSample::WriteToByteBuffer_t::name[];
+constexpr char GeckoHlsSample::WriteToByteBuffer_t::signature[];
+
+auto GeckoHlsSample::WriteToByteBuffer(mozilla::jni::ByteBuffer::Param a0) const -> void
+{
+    return mozilla::jni::Method<WriteToByteBuffer_t>::Call(GeckoHlsSample::mCtx, nullptr, a0);
+}
+
+constexpr char GeckoHlsSample::CryptoInfo_t::name[];
+constexpr char GeckoHlsSample::CryptoInfo_t::signature[];
+
+auto GeckoHlsSample::CryptoInfo() const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Field<CryptoInfo_t>::Get(GeckoHlsSample::mCtx, nullptr);
+}
+
+auto GeckoHlsSample::CryptoInfo(mozilla::jni::Object::Param a0) const -> void
+{
+    return mozilla::jni::Field<CryptoInfo_t>::Set(GeckoHlsSample::mCtx, nullptr, a0);
+}
+
+constexpr char GeckoHlsSample::Duration_t::name[];
+constexpr char GeckoHlsSample::Duration_t::signature[];
+
+auto GeckoHlsSample::Duration() const -> int64_t
+{
+    return mozilla::jni::Field<Duration_t>::Get(GeckoHlsSample::mCtx, nullptr);
+}
+
+auto GeckoHlsSample::Duration(int64_t a0) const -> void
+{
+    return mozilla::jni::Field<Duration_t>::Set(GeckoHlsSample::mCtx, nullptr, a0);
+}
+
+constexpr char GeckoHlsSample::Info_t::name[];
+constexpr char GeckoHlsSample::Info_t::signature[];
+
+auto GeckoHlsSample::Info() const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Field<Info_t>::Get(GeckoHlsSample::mCtx, nullptr);
+}
+
+auto GeckoHlsSample::Info(mozilla::jni::Object::Param a0) const -> void
+{
+    return mozilla::jni::Field<Info_t>::Set(GeckoHlsSample::mCtx, nullptr, a0);
+}
+
 const char HlsAudioInfo::name[] =
         "org/mozilla/gecko/media/HlsAudioInfo";
 

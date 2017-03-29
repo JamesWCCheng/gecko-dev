@@ -7,6 +7,8 @@ package org.mozilla.gecko.media;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.media.MediaCodec;
+import android.media.MediaCodec.BufferInfo;
+import android.media.MediaCodec.CryptoInfo;
 import android.media.MediaCrypto;
 import android.media.MediaFormat;
 import android.os.Handler;
@@ -109,7 +111,8 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     private boolean codecNeedsAdaptationWorkaround;
     private boolean codecNeedsAdaptationWorkaroundBuffer;
     private boolean shouldSkipAdaptationWorkaroundOutputBuffer;
-    private ConcurrentLinkedQueue<DecoderInputBuffer> dexmuedInputBuffers;
+    private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedInputSamples;
+    private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedInputSamplesNoDura;
 
     private boolean codecReconfigured;
     private int codecReconfigurationState;
@@ -202,7 +205,8 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                     false, codecName));
         }
 
-        dexmuedInputBuffers = new ConcurrentLinkedQueue<>();
+        dexmuedInputSamples = new ConcurrentLinkedQueue<>();
+        dexmuedInputSamplesNoDura = new ConcurrentLinkedQueue<>();
 
         inputBuffer = ByteBuffer.wrap(new byte[codecMaxValues.inputSize]);
         initialized = true;
@@ -281,14 +285,15 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     }
 
     @Override
-    public synchronized boolean clearInputBuffersQueue() {
-        dexmuedInputBuffers.clear();
+    public synchronized boolean clearInputSamplesQueue() {
+        dexmuedInputSamples.clear();
+        dexmuedInputSamplesNoDura.clear();
         return true;
     }
 
     private synchronized boolean feedInputBuffersQueue() throws ExoPlaybackException {
         if (!initialized || codecReinitializationState == REINITIALIZATION_STATE_WAIT_END_OF_STREAM
-                || inputStreamEnded || dexmuedInputBuffers.size() >= QUEUED_INPUT_SAMPLE_SIZE) {
+                || inputStreamEnded || dexmuedInputSamples.size() >= QUEUED_INPUT_SAMPLE_SIZE) {
             // We need to reinitialize the codec or the input stream has ended.
             return false;
         }
@@ -306,6 +311,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         }
 
         if (codecNeedsAdaptationWorkaroundBuffer) {
+            if (DEBUG) Log.d(TAG, "feedInputBuffersQueue : codecNeedsAdaptationWorkaroundBuffer !!!!!!!!!!!!!!!!!!!!!!! ");
             codecNeedsAdaptationWorkaroundBuffer = false;
             bufferForRead.data.put(ADAPTATION_WORKAROUND_BUFFER);
             codecReceivedBuffers = true;
@@ -369,15 +375,23 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         }
         try {
             bufferForRead.flip();
+            if (DEBUG) Log.d(TAG, "feedInputBuffersQueue: bufferTimeUs : " + bufferForRead.timeUs + ", queueSize = " + dexmuedInputSamples.size());
 
-            if (this.getTrackType() == C.TRACK_TYPE_VIDEO) {
-                if (DEBUG) Log.d(TAG, "feedInputBuffersQueue: bufferTimeUs : " + bufferForRead.timeUs + ", queueSize = " + dexmuedInputBuffers.size());
-            }
-            byte[] realData = new byte[bufferForRead.data.limit()];
-            bufferForRead.data.get(realData, 0, bufferForRead.data.limit());
-            bufferForRead.data = ByteBuffer.wrap(realData);
+            int size = bufferForRead.data.limit();
+            byte[] realData = new byte[size];
+            bufferForRead.data.get(realData, 0, size);
+            ByteBuffer buffer = ByteBuffer.wrap(realData);
             inputBuffer.clear();
-            dexmuedInputBuffers.offer(bufferForRead);
+
+            CryptoInfo cryptoInfo = bufferForRead.isEncrypted() ? bufferForRead.cryptoInfo.getFrameworkCryptoInfoV16() : null;
+            BufferInfo bufferInfo = new BufferInfo();
+            // The flags in DecoderInputBuffer is syned with MediaCodec Buffer flags.
+            int flags = 0;
+            flags |= bufferForRead.isKeyFrame() ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0;
+            flags |= bufferForRead.isEndOfStream() ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0;
+            bufferInfo.set(0, size, bufferForRead.timeUs, flags);
+            GeckoHlsSample sample = GeckoHlsSample.create(buffer, bufferInfo, cryptoInfo);
+            calculatDuration(sample);
         } catch (MediaCodec.CryptoException e) {
             throw ExoPlaybackException.createForRenderer(e, getIndex());
         }
@@ -389,6 +403,53 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         return true;
     }
 
+    private void calculatDuration(GeckoHlsSample inputSample) {
+        // TODO : Temparary code here, need to refacotr !!
+        if (inputSample != null) {
+            dexmuedInputSamplesNoDura.offer(inputSample);
+        }
+        int sizeOfNoDura = dexmuedInputSamplesNoDura.size();
+        int range = sizeOfNoDura >= 7 ? 7 : sizeOfNoDura;
+        GeckoHlsSample[] inputArray =
+                dexmuedInputSamplesNoDura.toArray(new GeckoHlsSample[sizeOfNoDura]);
+        if (range >= 7 && !inputStreamEnded) {
+            // Calculate the first 'range' elements
+            for (int i = 0; i < range; i++) {
+                // Comparing window size.
+                for (int j = -2; j < 4; j++) {
+                    if (i+j >= 0 &&
+                        i+j < range &&
+                        inputArray[i+j].info.presentationTimeUs > inputArray[i].info.presentationTimeUs) {
+                        inputArray[i].duration =
+                            Math.min(inputArray[i].duration,
+                                     inputArray[i+j].info.presentationTimeUs - inputArray[i].info.presentationTimeUs);
+                    }
+                }
+            }
+            GeckoHlsSample goingToQueue = dexmuedInputSamplesNoDura.poll();
+            if (DEBUG) Log.d(TAG, "[calculatDuration]:  bufferTimeUs : " + goingToQueue.info.presentationTimeUs + ", duration : " + goingToQueue.duration);
+            dexmuedInputSamples.offer(goingToQueue);
+        } else if (inputStreamEnded) {
+            for (int i = 0; i < sizeOfNoDura; i++) {
+                // Comparing window size.
+                for (int j = -2; j < 4; j++) {
+                    if (inputArray[i+j].info.presentationTimeUs > inputArray[i].info.presentationTimeUs &&
+                        i+j >= 0 &&
+                        i+j < range) {
+                        inputArray[i].duration =
+                            Math.min(inputArray[i].duration,
+                                     inputArray[i+j].info.presentationTimeUs - inputArray[i].info.presentationTimeUs);
+                    }
+                }
+            }
+            GeckoHlsSample sample = null;
+            for (sample = dexmuedInputSamples.poll(); sample != null; sample = dexmuedInputSamples.poll()) {
+                if (DEBUG) Log.d(TAG, "[calculatDuration]:  bufferTimeUs : " + sample.info.presentationTimeUs + ", duration : " + sample.duration);
+                dexmuedInputSamples.offer(sample);
+            }
+        }
+    }
+
     protected void onOutputStreamEnded() {
         // Do nothing.
     }
@@ -398,29 +459,23 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         return outputStreamEnded;
     }
 
-    public synchronized ConcurrentLinkedQueue<DecoderInputBuffer> getQueuedSamples(int number) {
-        ConcurrentLinkedQueue<DecoderInputBuffer> samples = new ConcurrentLinkedQueue<DecoderInputBuffer>();
-        int queuedSize = dexmuedInputBuffers.size();
+    public synchronized ConcurrentLinkedQueue<GeckoHlsSample> getQueuedSamples(int number) {
+        ConcurrentLinkedQueue<GeckoHlsSample> samples = new ConcurrentLinkedQueue<GeckoHlsSample>();
+        int queuedSize = dexmuedInputSamples.size();
         for (int i = 0; i < queuedSize; i++) {
             if (i >= number) {
                 break;
             }
-            DecoderInputBuffer outputBuffer = dexmuedInputBuffers.poll();
-            samples.offer(outputBuffer);
+            GeckoHlsSample sample = dexmuedInputSamples.poll();
+            samples.offer(sample);
         }
         if (samples.isEmpty()) {
             waitingForData = true;
-        } else {
-            if (firstSampleStartTime == null) {
-                firstSampleStartTime = samples.peek().timeUs;
-            }
+        } else if (firstSampleStartTime == null) {
+            firstSampleStartTime = samples.peek().info.presentationTimeUs;
         }
         return samples;
     }
-
-    private void processOutputBuffersChanged() {
-    }
-
 
     private void processEndOfStream() throws ExoPlaybackException {
         if (codecReinitializationState == REINITIALIZATION_STATE_WAIT_END_OF_STREAM) {
@@ -566,7 +621,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             } else {
             }
         }
-
+        if (DEBUG) Log.d(TAG, "[onInputFormatChanged] >>>>>>>>>>>>>>>> onInputFormatChanged !!!! initialized : " + initialized);
         if (initialized && canReconfigureCodec(codecIsAdaptive, oldFormat, format)) {
             codecReconfigured = true;
             codecReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
@@ -588,11 +643,13 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
     protected boolean canReconfigureCodec(boolean codecIsAdaptive,
                                           Format oldFormat, Format newFormat) {
-        return areAdaptationCompatible(oldFormat, newFormat)
-                && newFormat.width <= codecMaxValues.width && newFormat.height <= codecMaxValues.height
-                && newFormat.maxInputSize <= codecMaxValues.inputSize
-                && (codecIsAdaptive
-                || (oldFormat.width == newFormat.width && oldFormat.height == newFormat.height));
+        boolean canReconfig = areAdaptationCompatible(oldFormat, newFormat)
+                                && newFormat.width <= codecMaxValues.width && newFormat.height <= codecMaxValues.height
+                                && newFormat.maxInputSize <= codecMaxValues.inputSize
+                                && (codecIsAdaptive
+                                || (oldFormat.width == newFormat.width && oldFormat.height == newFormat.height));
+        if (DEBUG) Log.d(TAG, "[canReconfigureCodec] >>>>>>>>>>>>>>>> canConfig :" + canReconfig);
+        return canReconfig;
     }
 
     private static CodecMaxValues getCodecMaxValues(Format format, Format[] streamFormats) {

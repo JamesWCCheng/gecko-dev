@@ -1051,7 +1051,7 @@ public:
                 int32_t> Args;
         static constexpr char name[] = "getSamples";
         static constexpr char signature[] =
-                "(II)[Lorg/mozilla/gecko/media/Sample;";
+                "(II)[Lorg/mozilla/gecko/media/GeckoHlsSample;";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -1262,6 +1262,101 @@ public:
 
     static const mozilla::jni::CallingThread callingThread =
             mozilla::jni::CallingThread::GECKO;
+
+};
+
+class GeckoHlsSample : public mozilla::jni::ObjectBase<GeckoHlsSample>
+{
+public:
+    static const char name[];
+
+    explicit GeckoHlsSample(const Context& ctx) : ObjectBase<GeckoHlsSample>(ctx) {}
+
+    struct WriteToByteBuffer_t {
+        typedef GeckoHlsSample Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::ByteBuffer::Param> Args;
+        static constexpr char name[] = "writeToByteBuffer";
+        static constexpr char signature[] =
+                "(Ljava/nio/ByteBuffer;)V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto WriteToByteBuffer(mozilla::jni::ByteBuffer::Param) const -> void;
+
+    struct CryptoInfo_t {
+        typedef GeckoHlsSample Owner;
+        typedef mozilla::jni::Object::LocalRef ReturnType;
+        typedef mozilla::jni::Object::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "cryptoInfo";
+        static constexpr char signature[] =
+                "Landroid/media/MediaCodec$CryptoInfo;";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto CryptoInfo() const -> mozilla::jni::Object::LocalRef;
+
+    auto CryptoInfo(mozilla::jni::Object::Param) const -> void;
+
+    struct Duration_t {
+        typedef GeckoHlsSample Owner;
+        typedef int64_t ReturnType;
+        typedef int64_t SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "duration";
+        static constexpr char signature[] =
+                "J";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto Duration() const -> int64_t;
+
+    auto Duration(int64_t) const -> void;
+
+    struct Info_t {
+        typedef GeckoHlsSample Owner;
+        typedef mozilla::jni::Object::LocalRef ReturnType;
+        typedef mozilla::jni::Object::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "info";
+        static constexpr char signature[] =
+                "Landroid/media/MediaCodec$BufferInfo;";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto Info() const -> mozilla::jni::Object::LocalRef;
+
+    auto Info(mozilla::jni::Object::Param) const -> void;
+
+    static const mozilla::jni::CallingThread callingThread =
+            mozilla::jni::CallingThread::ANY;
 
 };
 

@@ -5,6 +5,8 @@
 package org.mozilla.gecko.media;
 
 import android.media.MediaCodec;
+import android.media.MediaCodec.BufferInfo;
+import android.media.MediaCodec.CryptoInfo;
 import android.media.MediaCrypto;
 import android.media.MediaFormat;
 import android.media.PlaybackParams;
@@ -46,7 +48,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
     private static boolean DEMUX_ONLY;
     private static boolean DEBUG = true;
     private static final String TAG = "GeckoHlsAudioRenderer";
-    private ConcurrentLinkedQueue<DecoderInputBuffer> dexmuedInputBuffers = new ConcurrentLinkedQueue<>();
+    private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedInputSamples = new ConcurrentLinkedQueue<>();
     private static final int QUEUED_DEMUXED_INPUT_BUFFER_SIZE = 100;
     private boolean initialized = false;
     private ByteBuffer inputBuffer = null;
@@ -338,52 +340,6 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
         return this.currentPositionUs;
     }
 
-    static final long THRESHOLD_US = 30000; //30ms
-    protected boolean processOutputBuffer(long positionUs, long elapsedRealtimeUs, int bufferIndex, long bufferPresentationTimeUs) throws ExoPlaybackException {
-        if (DEMUX_ONLY){
-            if (!dexmuedInputBuffers.isEmpty()) {
-                if (dexmuedInputBuffers.peek().timeUs < positionUs + THRESHOLD_US) {
-                    dexmuedInputBuffers.poll();
-                    return true;
-                }
-            }
-            return false;
-        }
-        if (bufferIndex < 0) {
-            return true;
-        }
-        //if(this.passthroughEnabled && (bufferFlags & 2) != 0) {
-        if(false) {
-            if (!dexmuedInputBuffers.isEmpty()) {
-                dexmuedInputBuffers.poll();
-            }
-            codec.releaseOutputBuffer(bufferIndex, false);
-            return true;
-        } else if(this.shouldSkipOutputBuffer) {
-            if (!dexmuedInputBuffers.isEmpty()) {
-                dexmuedInputBuffers.poll();
-            }
-            codec.releaseOutputBuffer(bufferIndex, false);
-            ++this.decoderCounters.skippedOutputBufferCount;
-            this.audioTrack.handleDiscontinuity();
-            return true;
-        } else {
-            try {
-                if (this.audioTrack.handleBuffer(this.outputBuffers[bufferIndex], bufferPresentationTimeUs)) {
-                    codec.releaseOutputBuffer(bufferIndex, false);
-                    ++this.decoderCounters.renderedOutputBufferCount;
-                    if (!dexmuedInputBuffers.isEmpty()) {
-                        dexmuedInputBuffers.poll();
-                    }
-                    return true;
-                }
-            } catch (AudioTrack.InitializationException | AudioTrack.WriteException var14) {
-                throw ExoPlaybackException.createForRenderer(var14, this.getIndex());
-            }
-            return false;
-        }
-    }
-
     protected void onOutputStreamEnded() {
         if (!DEMUX_ONLY) {
             this.audioTrack.handleEndOfStream();
@@ -572,12 +528,6 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
         }
     }
 
-    private void processOutputBuffersChanged() {
-        if (!DEMUX_ONLY) {
-            this.outputBuffers = this.codec.getOutputBuffers();
-        }
-    }
-
     private void processEndOfStream() throws ExoPlaybackException {
         if(this.codecReinitializationState == REINITIALIZATION_STATE_WAIT_END_OF_STREAM) {
             this.releaseRenderer();
@@ -590,9 +540,6 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
     }
 
     protected void onProcessedOutputBuffer(long presentationTimeUs) {
-    }
-
-    protected void onQueueInputBuffer(DecoderInputBuffer buffer) {
     }
 
     private static MediaCodec.CryptoInfo getFrameworkCryptoInfo(DecoderInputBuffer buffer, int adaptiveReconfigurationBytes) {
@@ -635,139 +582,33 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
         return false;
     }
 
-    public synchronized ConcurrentLinkedQueue<DecoderInputBuffer> getQueuedSamples(int number) {
-        ConcurrentLinkedQueue<DecoderInputBuffer> samples = new ConcurrentLinkedQueue<DecoderInputBuffer>();
-        int queuedSize = dexmuedInputBuffers.size();
+    public synchronized ConcurrentLinkedQueue<GeckoHlsSample> getQueuedSamples(int number) {
+        ConcurrentLinkedQueue<GeckoHlsSample> samples = new ConcurrentLinkedQueue<GeckoHlsSample>();
+        int queuedSize = dexmuedInputSamples.size();
         for (int i = 0; i < queuedSize; i++) {
             if (i >= number) {
                 break;
             }
-            DecoderInputBuffer outputBuffer = dexmuedInputBuffers.poll();
-            samples.offer(outputBuffer);
+            GeckoHlsSample sample = dexmuedInputSamples.poll();
+            samples.offer(sample);
         }
         if (samples.isEmpty()) {
             waitingForData = true;
-        } else {
-        if (firstSampleStartTime == null) {
-            firstSampleStartTime = samples.peek().timeUs;
+        } else if (firstSampleStartTime == null) {
+            firstSampleStartTime = samples.peek().info.presentationTimeUs;
         }
-    }
         return samples;
     }
 
-    private boolean drainQueuedDemuxedSamples(long positionUs, long elapsedRealtimeUs) throws ExoPlaybackException {
-        if (DEBUG) Log.d(TAG, "                       drainOutputBuffer ===> positionUs : " + positionUs + ", elapsedRT : " + elapsedRealtimeUs);
-        int queueSize = dexmuedInputBuffers.size();
-        if (queueSize > 0) {
-            // We've dequeued a buffer.
-            if (shouldSkipAdaptationWorkaroundOutputBuffer) {
-                shouldSkipAdaptationWorkaroundOutputBuffer = false;
-                return true;
-            }
-            if ((outputBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                // The dequeued buffer indicates the end of the stream. Process it immediately.
-                processEndOfStream();
-                return false;
-            } else {
-                // The dequeued buffer is a media buffer. Do some initial setup. The buffer will be
-                // processed by calling processOutputBuffer (possibly multiple times) below.
-
-                DecoderInputBuffer outputBuffer = dexmuedInputBuffers.peek();
-                outputBufferInfo.presentationTimeUs = outputBuffer.timeUs;
-            }
-        }
-
-        if (processOutputBuffer(positionUs, elapsedRealtimeUs, -1, outputBufferInfo.presentationTimeUs)) {
-            if (DEBUG) Log.d(TAG, "                       remove outputbuffer ===> timeUs : " + outputBufferInfo.presentationTimeUs);
-            return true;
-        }
-        return false;
-    }
-
-    private boolean drainOutputBuffer(long positionUs, long elapsedRealtimeUs) throws ExoPlaybackException {
-        if(this.outputIndex < 0) {
-            this.outputIndex = this.codec.dequeueOutputBuffer(this.outputBufferInfo, this.getDequeueOutputBufferTimeoutUs());
-            if(this.outputIndex < 0) {
-                if(this.outputIndex == -2) {
-                    this.processOutputFormat();
-                    return true;
-                }
-
-                if(this.outputIndex == -3) {
-                    this.processOutputBuffersChanged();
-                    return true;
-                }
-
-                if(this.codecNeedsEosPropagationWorkaround && (this.inputStreamEnded || this.codecReinitializationState == 2)) {
-                    this.processEndOfStream();
-                }
-
-                return false;
-            }
-
-            if(this.shouldSkipAdaptationWorkaroundOutputBuffer) {
-                this.shouldSkipAdaptationWorkaroundOutputBuffer = false;
-                this.codec.releaseOutputBuffer(this.outputIndex, false);
-                this.outputIndex = -1;
-                return true;
-            }
-
-            if((this.outputBufferInfo.flags & 4) != 0) {
-                this.processEndOfStream();
-                this.outputIndex = -1;
-                return false;
-            }
-
-            ByteBuffer outputBuffer = this.outputBuffers[this.outputIndex];
-            if(outputBuffer != null) {
-                outputBuffer.position(this.outputBufferInfo.offset);
-                outputBuffer.limit(this.outputBufferInfo.offset + this.outputBufferInfo.size);
-            }
-
-            this.shouldSkipOutputBuffer = this.shouldSkipOutputBuffer(this.outputBufferInfo.presentationTimeUs);
-        }
-
-        if(this.processOutputBuffer(positionUs, elapsedRealtimeUs, this.outputIndex, this.outputBufferInfo.presentationTimeUs)) {
-            this.onProcessedOutputBuffer(this.outputBufferInfo.presentationTimeUs);
-            this.outputIndex = -1;
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public synchronized boolean feedInputBuffer() {
-        if(dexmuedInputBuffers.isEmpty()) {
-            return false;
-        }
-        int index = this.codec.dequeueInputBuffer(0L);
-        if (index < 0) {
-            return false;
-        }
-
-        ByteBuffer forInput = codec.getInputBuffer(index);
-        DecoderInputBuffer goingToFeed = dexmuedInputBuffers.peek();
-//        DecoderInputBuffer goingToFeed = dexmuedInputBuffers.removeFirst();
-        long presentationTimeUs = goingToFeed.timeUs;
-        for (int i = goingToFeed.data.position(); i < goingToFeed.data.limit(); i++) {
-            forInput.put(goingToFeed.data.get(i));
-        }
-
-        this.codec.queueInputBuffer(index, 0, goingToFeed.data.limit(), presentationTimeUs, 0);
-        this.codecReceivedBuffers = true;
-        this.codecReconfigurationState = 0;
-        return true;
-    }
-
     @Override
-    public synchronized boolean clearInputBuffersQueue() {
-        dexmuedInputBuffers.clear();
+    public synchronized boolean clearInputSamplesQueue() {
+        dexmuedInputSamples.clear();
         return true;
     }
 
     private synchronized boolean feedInputBuffersQueue() throws ExoPlaybackException {
         if (!initialized || codecReinitializationState == REINITIALIZATION_STATE_WAIT_END_OF_STREAM
-                || inputStreamEnded || dexmuedInputBuffers.size() >= QUEUED_DEMUXED_INPUT_BUFFER_SIZE) {
+                || inputStreamEnded || dexmuedInputSamples.size() >= QUEUED_DEMUXED_INPUT_BUFFER_SIZE) {
             // We need to reinitialize the codec or the input stream has ended.
             return false;
         }
@@ -847,17 +688,24 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
         }
         try {
             bufferForRead.flip();
+            if (DEBUG) Log.d(TAG, "feedInputBuffersQueue: bufferTimeUs : " + bufferForRead.timeUs + ", queueSize = " + dexmuedInputSamples.size());
 
-            if (this.getTrackType() == C.TRACK_TYPE_AUDIO) {
-                if (DEBUG) Log.d(TAG, "feedInputBuffersQueue: bufferTimeUs : " + bufferForRead.timeUs + ", queueSize = " + dexmuedInputBuffers.size());
-            }
-            byte[] realData = new byte[bufferForRead.data.limit()];
-            bufferForRead.data.get(realData, 0, bufferForRead.data.limit());
-            bufferForRead.data = ByteBuffer.wrap(realData);
-            // reuse the max sized buffer
+            int size = bufferForRead.data.limit();
+            byte[] realData = new byte[size];
+            bufferForRead.data.get(realData, 0, size);
+            ByteBuffer buffer = ByteBuffer.wrap(realData);
             inputBuffer.clear();
+
             // add the demuxed sample buffer into linked list
-            dexmuedInputBuffers.offer(bufferForRead);
+            CryptoInfo cryptoInfo = bufferForRead.isEncrypted() ? bufferForRead.cryptoInfo.getFrameworkCryptoInfoV16() : null;
+            BufferInfo bufferInfo = new BufferInfo();
+            // The flags in DecoderInputBuffer is syned with MediaCodec Buffer flags.
+            int flags = 0;
+            flags |= bufferForRead.isKeyFrame() ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0;
+            flags |= bufferForRead.isEndOfStream() ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0;
+            bufferInfo.set(0, size, bufferForRead.timeUs, flags);
+            GeckoHlsSample sample = GeckoHlsSample.create(buffer, bufferInfo, cryptoInfo);
+            dexmuedInputSamples.offer(sample);
         } catch (MediaCodec.CryptoException e) {
             throw ExoPlaybackException.createForRenderer(e, getIndex());
         }
@@ -880,16 +728,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
             this.maybeInitRenderer();
             if (initialized) {
                 TraceUtil.beginSection("drainAndFeed");
-                if (!DEMUX_ONLY) {
-                    while (drainOutputBuffer(positionUs, elapsedRealtimeUs)) {}
-                } else {
-//                    while (drainQueuedDemuxedSamples(positionUs, elapsedRealtimeUs)) {}
-//                    getQueuedSamples(1);
-                }
                 while (feedInputBuffersQueue()) {}
-                if (!DEMUX_ONLY) {
-                    while (feedInputBuffer()) {}
-                }
                 TraceUtil.endSection();
             } else if(this.format != null) {
                 this.skipToKeyframeBefore(positionUs);
