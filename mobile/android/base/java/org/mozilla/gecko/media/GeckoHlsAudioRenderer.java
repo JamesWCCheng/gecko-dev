@@ -44,7 +44,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements MediaClock {
     private static boolean DEMUX_ONLY;
-    private static boolean DEBUG = false;
+    private static boolean DEBUG = true;
     private static final String TAG = "GeckoHlsAudioRenderer";
     private ConcurrentLinkedQueue<DecoderInputBuffer> dexmuedInputBuffers = new ConcurrentLinkedQueue<>();
     private static final int QUEUED_DEMUXED_INPUT_BUFFER_SIZE = 100;

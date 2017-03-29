@@ -79,7 +79,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     private GeckoHlsVideoRenderer vRenderer = null;
     private GeckoHlsAudioRenderer aRenderer = null;
     private boolean enableV = true;
-    private boolean enableA = false;
+    private boolean enableA = true;
 
     private boolean isInitDone = false;
     private GeckoHlsDemuxerWrapper.Callbacks nativeCallbacks;

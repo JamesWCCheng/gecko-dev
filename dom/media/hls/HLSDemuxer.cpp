@@ -248,6 +248,9 @@ HLSDemuxer::GetTrackInfo(TrackType aTrack)
       mInfo.mAudio.mBitDepth = audioInfo->BitDepth();
       mInfo.mAudio.mMimeType = NS_ConvertUTF16toUTF8(audioInfo->MimeType()->ToString());
       mInfo.mAudio.mDuration = audioInfo->Duration();
+      auto&& csd = audioInfo->CodecSpecificData()->GetElements();
+      mInfo.mAudio.mCodecSpecificConfig->AppendElements(reinterpret_cast<uint8_t*>(&csd[0]),
+                                                        csd.Length());
       return &mInfo.mAudio;
     }
     case TrackType::kVideoTrack: {

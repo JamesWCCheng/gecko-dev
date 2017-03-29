@@ -132,6 +132,11 @@ public final class GeckoHlsDemuxerWrapper {
             aInfo.bitDepth = fmt.pcmEncoding == C.ENCODING_PCM_16BIT? 16 : 16;
             aInfo.mimeType = fmt.sampleMimeType;
             aInfo.duration = aDuration;
+            // TODO: currently I extract csd0 only
+            // Reference: http://searchfox.org/mozilla-central/rev/7419b368156a6efa24777b21b0e5706be89a9c2f/dom/media/platforms/android/RemoteDataDecoder.cpp#324-329
+            if (!fmt.initializationData.isEmpty()) {
+                aInfo.codecSpecificData = fmt.initializationData.get(0);
+            }
         }
         return aInfo;
     }
