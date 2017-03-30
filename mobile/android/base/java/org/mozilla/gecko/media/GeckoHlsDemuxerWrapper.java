@@ -191,8 +191,7 @@ public final class GeckoHlsDemuxerWrapper {
         }
 
         assertTrue(samples.size() <= number);
-        GeckoHlsSample[] sampleArray = samples.toArray(new GeckoHlsSample[samples.size()]);
-        return sampleArray;
+        return sampleArray = samples.toArray(new GeckoHlsSample[samples.size()]);
     }
 
     @WrapForJNI // Called when natvie object is destroyed.

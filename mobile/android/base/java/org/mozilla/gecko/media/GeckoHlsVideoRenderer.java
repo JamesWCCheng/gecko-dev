@@ -112,7 +112,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     private boolean codecNeedsAdaptationWorkaroundBuffer;
     private boolean shouldSkipAdaptationWorkaroundOutputBuffer;
     private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedInputSamples;
-    private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedInputSamplesNoDura;
+    private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedNoDurationSamples;
 
     private boolean codecReconfigured;
     private int codecReconfigurationState;
@@ -206,7 +206,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         }
 
         dexmuedInputSamples = new ConcurrentLinkedQueue<>();
-        dexmuedInputSamplesNoDura = new ConcurrentLinkedQueue<>();
+        dexmuedNoDurationSamples = new ConcurrentLinkedQueue<>();
 
         inputBuffer = ByteBuffer.wrap(new byte[codecMaxValues.inputSize]);
         initialized = true;
@@ -287,7 +287,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     @Override
     public synchronized boolean clearInputSamplesQueue() {
         dexmuedInputSamples.clear();
-        dexmuedInputSamplesNoDura.clear();
+        dexmuedNoDurationSamples.clear();
         return true;
     }
 
@@ -406,12 +406,12 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     private void calculatDuration(GeckoHlsSample inputSample) {
         // TODO : Temparary code here, need to refacotr !!
         if (inputSample != null) {
-            dexmuedInputSamplesNoDura.offer(inputSample);
+            dexmuedNoDurationSamples.offer(inputSample);
         }
-        int sizeOfNoDura = dexmuedInputSamplesNoDura.size();
+        int sizeOfNoDura = dexmuedNoDurationSamples.size();
         int range = sizeOfNoDura >= 7 ? 7 : sizeOfNoDura;
         GeckoHlsSample[] inputArray =
-                dexmuedInputSamplesNoDura.toArray(new GeckoHlsSample[sizeOfNoDura]);
+                dexmuedNoDurationSamples.toArray(new GeckoHlsSample[sizeOfNoDura]);
         if (range >= 7 && !inputStreamEnded) {
             // Calculate the first 'range' elements
             for (int i = 0; i < range; i++) {
@@ -426,7 +426,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                     }
                 }
             }
-            GeckoHlsSample goingToQueue = dexmuedInputSamplesNoDura.poll();
+            GeckoHlsSample goingToQueue = dexmuedNoDurationSamples.poll();
             if (DEBUG) Log.d(TAG, "[calculatDuration]:  bufferTimeUs : " + goingToQueue.info.presentationTimeUs + ", duration : " + goingToQueue.duration);
             dexmuedInputSamples.offer(goingToQueue);
         } else if (inputStreamEnded) {
@@ -443,7 +443,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                 }
             }
             GeckoHlsSample sample = null;
-            for (sample = dexmuedInputSamples.poll(); sample != null; sample = dexmuedInputSamples.poll()) {
+            for (sample = dexmuedNoDurationSamples.poll(); sample != null; sample = dexmuedNoDurationSamples.poll()) {
                 if (DEBUG) Log.d(TAG, "[calculatDuration]:  bufferTimeUs : " + sample.info.presentationTimeUs + ", duration : " + sample.duration);
                 dexmuedInputSamples.offer(sample);
             }
