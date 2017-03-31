@@ -45,8 +45,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements MediaClock {
-    private static boolean DEMUX_ONLY;
-    private static boolean DEBUG = true;
+    private static boolean DEBUG = false;
     private static final String TAG = "GeckoHlsAudioRenderer";
     private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedInputSamples = new ConcurrentLinkedQueue<>();
     private static final int QUEUED_DEMUXED_INPUT_BUFFER_SIZE = 100;
@@ -85,14 +84,9 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
     private DrmSession<FrameworkMediaCrypto> pendingDrmSession;
     private boolean codecIsAdaptive;
     private boolean codecNeedsDiscardToSpsWorkaround;
-    private boolean codecNeedsFlushWorkaround;
     private boolean codecNeedsAdaptationWorkaround;
-    private boolean codecNeedsEosPropagationWorkaround;
-    private boolean codecNeedsEosFlushWorkaround;
-    private boolean codecNeedsMonoChannelCountWorkaround;
     private boolean codecNeedsAdaptationWorkaroundBuffer;
     private boolean shouldSkipAdaptationWorkaroundOutputBuffer;
-    private ByteBuffer[] outputBuffers;
     private long codecHotswapDeadlineMs;
     private int outputIndex;
     private boolean shouldSkipOutputBuffer;
@@ -120,8 +114,6 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
         super(C.TRACK_TYPE_AUDIO);
         Assertions.checkState(Util.SDK_INT >= 16);
         this.mediaCodecSelector = Assertions.checkNotNull(mediaCodecSelector);
-//        this.drmSessionManager = drmSessionManager;
-//        this.playClearSamplesWithoutKeys = playClearSamplesWithoutKeys;
         this.buffer = new DecoderInputBuffer(0);
         this.formatHolder = new FormatHolder();
         this.decodeOnlyPresentationTimestamps = new ArrayList<Long>();
@@ -130,7 +122,6 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
         this.codecReinitializationState = 0;
         this.audioTrack = new AudioTrack(audioCapabilities, new AudioTrackListener());
         this.eventDispatcher = new AudioRendererEventListener.EventDispatcher(eventHandler, eventListener);
-        DEMUX_ONLY = true;
 
         waitingForData = false;
         playerListener = (GeckoHlsPlayer.ComponentListener)eventListener;
@@ -177,31 +168,11 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
     }
 
     protected boolean allowPassthrough(String mimeType) {
-        if (!DEMUX_ONLY) {
-            return this.audioTrack.isPassthroughSupported(mimeType);
-        } else {
-            return false;
-        }
-    }
-
-    protected void configureCodec(MediaCodec codec, Format format, MediaCrypto crypto) {
-        if (this.passthroughEnabled) {
-            this.passthroughMediaFormat = format.getFrameworkMediaFormatV16();
-            this.passthroughMediaFormat.setString("mime", "audio/raw");
-            codec.configure(this.passthroughMediaFormat, (Surface) null, crypto, 0);
-            this.passthroughMediaFormat.setString("mime", format.sampleMimeType);
-        } else {
-            codec.configure(format.getFrameworkMediaFormatV16(), (Surface) null, crypto, 0);
-            this.passthroughMediaFormat = null;
-        }
-
+        return false;
     }
 
     public MediaClock getMediaClock() {
-        if (DEMUX_ONLY) {
-            return null;
-        }
-        return this;
+        return null;
     }
 
     protected void onCodecInitialized(String name, long initializedTimestampMs, long initializationDurationMs) {
@@ -276,58 +247,37 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
         if (initialized) {
             flushRenderer();
         }
-        if (!DEMUX_ONLY) {
-            this.audioTrack.reset();
-        }
         this.currentPositionUs = positionUs;
         this.allowPositionDiscontinuity = true;
     }
 
     protected void onStarted() {
-        if (!DEMUX_ONLY) {
-            this.audioTrack.play();
-        }
     }
 
     protected void onStopped() {
-        if (!DEMUX_ONLY) {
-            this.audioTrack.pause();
-        }
     }
 
     protected void onDisabled() {
         try {
-            if (!DEMUX_ONLY) {
-                this.audioTrack.release();
-            }
+            super.onDisabled();
         } finally {
-            try {
-                super.onDisabled();
-            } finally {
-                this.decoderCounters.ensureUpdated();
-                this.eventDispatcher.disabled(this.decoderCounters);
-            }
+            this.decoderCounters.ensureUpdated();
+            this.eventDispatcher.disabled(this.decoderCounters);
         }
 
     }
 
     public boolean isEnded() {
         if (this.outputStreamEnded) {
-            if (DEMUX_ONLY) {
-                return true;
-            } else {
-                return !this.audioTrack.hasPendingData();
-            }
+            return true;
         }
         return false;
 
     }
 
     public boolean isReady() {
-        boolean hasOutput = !DEMUX_ONLY ? this.outputIndex >= 0 : true;
-        return (!DEMUX_ONLY && this.audioTrack.hasPendingData()) ||
-                this.format != null && !this.waitingForKeys &&
-                (this.isSourceReady() || hasOutput || this.codecHotswapDeadlineMs != C.TIME_UNSET && SystemClock.elapsedRealtime() < this.codecHotswapDeadlineMs);
+        boolean hasOutput = true;
+        return this.format != null && !this.waitingForKeys && hasOutput;
     }
 
     public long getPositionUs() {
@@ -341,9 +291,6 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
     }
 
     protected void onOutputStreamEnded() {
-        if (!DEMUX_ONLY) {
-            this.audioTrack.handleEndOfStream();
-        }
     }
 
     public void handleMessage(int messageType, Object message) throws ExoPlaybackException {
@@ -366,28 +313,12 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
 
 
     // Copy from GrandFather
-    private static boolean codecNeedsFlushWorkaround(String name) {
-        return Util.SDK_INT < 18 || Util.SDK_INT == 18 && ("OMX.SEC.avc.dec".equals(name) || "OMX.SEC.avc.dec.secure".equals(name)) || Util.SDK_INT == 19 && Util.MODEL.startsWith("SM-G800") && ("OMX.Exynos.avc.dec".equals(name) || "OMX.Exynos.avc.dec.secure".equals(name));
-    }
-
     private static boolean codecNeedsAdaptationWorkaround(String name) {
         return Util.SDK_INT < 24 && ("OMX.Nvidia.h264.decode".equals(name) || "OMX.Nvidia.h264.decode.secure".equals(name)) && ("flounder".equals(Util.DEVICE) || "flounder_lte".equals(Util.DEVICE) || "grouper".equals(Util.DEVICE) || "tilapia".equals(Util.DEVICE));
     }
 
     private static boolean codecNeedsDiscardToSpsWorkaround(String name, Format format) {
         return Util.SDK_INT < 21 && format.initializationData.isEmpty() && "OMX.MTK.VIDEO.DECODER.AVC".equals(name);
-    }
-
-    private static boolean codecNeedsEosPropagationWorkaround(String name) {
-        return Util.SDK_INT <= 17 && ("OMX.rk.video_decoder.avc".equals(name) || "OMX.allwinner.video.decoder.avc".equals(name));
-    }
-
-    private static boolean codecNeedsEosFlushWorkaround(String name) {
-        return Util.SDK_INT <= 23 && "OMX.google.vorbis.decoder".equals(name) || Util.SDK_INT <= 19 && "hb2000".equals(Util.DEVICE) && ("OMX.amlogic.avc.decoder.awesome".equals(name) || "OMX.amlogic.avc.decoder.awesome.secure".equals(name));
-    }
-
-    private static boolean codecNeedsMonoChannelCountWorkaround(String name, Format format) {
-        return Util.SDK_INT <= 18 && format.channelCount == 1 && "OMX.MTK.AUDIO.DECODER.MP3".equals(name);
     }
 
     private void throwDecoderInitError(MediaCodecRenderer.DecoderInitializationException e) throws ExoPlaybackException {
@@ -439,36 +370,13 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
             String codecName = decoderInfo1.name;
             this.codecIsAdaptive = decoderInfo1.adaptive;
             this.codecNeedsDiscardToSpsWorkaround = codecNeedsDiscardToSpsWorkaround(codecName, this.format);
-            this.codecNeedsFlushWorkaround = codecNeedsFlushWorkaround(codecName);
             this.codecNeedsAdaptationWorkaround = codecNeedsAdaptationWorkaround(codecName);
-            this.codecNeedsEosPropagationWorkaround = codecNeedsEosPropagationWorkaround(codecName);
-            this.codecNeedsEosFlushWorkaround = codecNeedsEosFlushWorkaround(codecName);
-            this.codecNeedsMonoChannelCountWorkaround = codecNeedsMonoChannelCountWorkaround(codecName, this.format);
-
-            try {
-                if (!DEMUX_ONLY) {
-                    long e = SystemClock.elapsedRealtime();
-                    TraceUtil.beginSection("createCodec:" + codecName);
-                    this.codec = MediaCodec.createByCodecName(codecName);
-                    TraceUtil.endSection();
-                    TraceUtil.beginSection("configureCodec");
-                    this.configureCodec(this.codec, this.format, mediaCrypto);
-                    TraceUtil.endSection();
-                    TraceUtil.beginSection("startCodec");
-                    this.codec.start();
-                    TraceUtil.endSection();
-                    long codecInitializedTimestamp = SystemClock.elapsedRealtime();
-                    this.onCodecInitialized(codecName, codecInitializedTimestamp, codecInitializedTimestamp - e);
-                    this.outputBuffers = this.codec.getOutputBuffers();
-                }
-            } catch (Exception var10) {
-                this.throwDecoderInitError(new MediaCodecRenderer.DecoderInitializationException(this.format, var10, drmSessionRequiresSecureDecoder, codecName));
-            }
 
             this.codecHotswapDeadlineMs = this.getState() == 2?SystemClock.elapsedRealtime() + 1000L:-9223372036854775807L;
             this.outputIndex = -1;
             ++this.decoderCounters.decoderInitCount;
 
+            clearInputSamplesQueue();
             inputBuffer = ByteBuffer.wrap(new byte[22048]);
             this.initialized = true;
         }
@@ -490,20 +398,13 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
         decodeOnlyPresentationTimestamps.clear();
         codecNeedsAdaptationWorkaroundBuffer = false;
         shouldSkipAdaptationWorkaroundOutputBuffer = false;
-        if (codecNeedsFlushWorkaround || (codecNeedsEosFlushWorkaround && codecReceivedEos)) {
-            // Workaround framework bugs. See [Internal: b/8347958, b/8578467, b/8543366, b/23361053].
-            releaseRenderer();
-            maybeInitRenderer();
-        } else if (codecReinitializationState != REINITIALIZATION_STATE_NONE) {
+        clearInputSamplesQueue();
+        if (codecReinitializationState != REINITIALIZATION_STATE_NONE) {
             // We're already waiting to release and re-initialize the codec. Since we're now flushing,
             // there's no need to wait any longer.
             releaseRenderer();
             maybeInitRenderer();
         } else {
-            if(!DEMUX_ONLY) {
-                // We can flush and re-use the existing decoder.
-                codec.flush();
-            }
             codecReceivedBuffers = false;
         }
         if (codecReconfigured && format != null) {
@@ -514,18 +415,6 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
     }
 
     private void processOutputFormat() {
-        if (!DEMUX_ONLY) {
-            MediaFormat format = this.codec.getOutputFormat();
-            if (this.codecNeedsAdaptationWorkaround && format.getInteger("width") == 32 && format.getInteger("height") == 32) {
-                this.shouldSkipAdaptationWorkaroundOutputBuffer = true;
-            } else {
-                if (this.codecNeedsMonoChannelCountWorkaround) {
-                    format.setInteger("channel-count", 1);
-                }
-
-                this.onOutputFormatChanged(this.codec, format);
-            }
-        }
     }
 
     private void processEndOfStream() throws ExoPlaybackException {
@@ -745,16 +634,11 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
             this.waitingForKeys = false;
             this.shouldSkipOutputBuffer = false;
             this.decodeOnlyPresentationTimestamps.clear();
-            this.outputBuffers = null;
             this.codecReconfigured = false;
             this.codecReceivedBuffers = false;
             this.codecIsAdaptive = false;
             this.codecNeedsDiscardToSpsWorkaround = false;
-            this.codecNeedsFlushWorkaround = false;
             this.codecNeedsAdaptationWorkaround = false;
-            this.codecNeedsEosPropagationWorkaround = false;
-            this.codecNeedsEosFlushWorkaround = false;
-            this.codecNeedsMonoChannelCountWorkaround = false;
             this.codecNeedsAdaptationWorkaroundBuffer = false;
             this.shouldSkipAdaptationWorkaroundOutputBuffer = false;
             this.codecReceivedEos = false;
@@ -762,25 +646,6 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase implements Media
             this.codecReinitializationState = 0;
             ++this.decoderCounters.decoderReleaseCount;
 
-            if (!DEMUX_ONLY) {
-                try {
-                    this.codec.stop();
-                } finally {
-                    try {
-                        this.codec.release();
-                    } finally {
-                        this.codec = null;
-                        if (this.drmSession != null && this.pendingDrmSession != this.drmSession) {
-                            try {
-                                this.drmSessionManager.releaseSession(this.drmSession);
-                            } finally {
-                                this.drmSession = null;
-                            }
-                        }
-
-                    }
-                }
-            }
         }
         initialized = false;
     }

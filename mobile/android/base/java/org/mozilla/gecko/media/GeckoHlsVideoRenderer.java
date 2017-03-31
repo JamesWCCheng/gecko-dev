@@ -87,9 +87,6 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     private static final int RECONFIGURATION_STATE_NONE = 0;
     private static final int RECONFIGURATION_STATE_WRITE_PENDING = 1;
     private static final int RECONFIGURATION_STATE_QUEUE_PENDING = 2;
-    private static final int REINITIALIZATION_STATE_NONE = 0;
-    private static final int REINITIALIZATION_STATE_SIGNAL_END_OF_STREAM = 1;
-    private static final int REINITIALIZATION_STATE_WAIT_END_OF_STREAM = 2;
 
     /**
      * H.264/AVC buffer to queue when using the adaptation workaround (see
@@ -103,11 +100,9 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     private final MediaCodecSelector mediaCodecSelector;
     private final FormatHolder formatHolder;
 
-    private MediaCodec codec;
     private Format format;
     private boolean codecIsAdaptive;
     private boolean codecNeedsDiscardToSpsWorkaround;
-    private boolean codecNeedsFlushWorkaround;
     private boolean codecNeedsAdaptationWorkaround;
     private boolean codecNeedsAdaptationWorkaroundBuffer;
     private boolean shouldSkipAdaptationWorkaroundOutputBuffer;
@@ -116,9 +111,6 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
     private boolean codecReconfigured;
     private int codecReconfigurationState;
-    private int codecReinitializationState;
-    private boolean codecReceivedBuffers;
-    private boolean codecReceivedEos;
 
     private boolean inputStreamEnded;
     private boolean outputStreamEnded;
@@ -143,13 +135,15 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         this.mediaCodecSelector = Assertions.checkNotNull(mediaCodecSelector);
         formatHolder = new FormatHolder();
         codecReconfigurationState = RECONFIGURATION_STATE_NONE;
-        codecReinitializationState = REINITIALIZATION_STATE_NONE;
 
         playerListener = (GeckoHlsPlayer.ComponentListener)eventListener;
         this.allowedJoiningTimeMs = 5000;
         eventDispatcher = new VideoRendererEventListener.EventDispatcher(eventHandler, eventListener);
         joiningDeadlineMs = C.TIME_UNSET;
         waitingForData = false;
+
+        dexmuedInputSamples = new ConcurrentLinkedQueue<>();
+        dexmuedNoDurationSamples = new ConcurrentLinkedQueue<>();
     }
 
     public void handleMessage(int messageType, Object message) throws ExoPlaybackException {
@@ -192,7 +186,6 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         String codecName = decoderInfo.name;
         codecIsAdaptive = decoderInfo.adaptive;
         codecNeedsDiscardToSpsWorkaround = codecNeedsDiscardToSpsWorkaround(codecName, format);
-        codecNeedsFlushWorkaround = codecNeedsFlushWorkaround(codecName);
         codecNeedsAdaptationWorkaround = codecNeedsAdaptationWorkaround(codecName);
         try {
             long codecInitializingTimestamp = SystemClock.elapsedRealtime();
@@ -205,9 +198,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                     false, codecName));
         }
 
-        dexmuedInputSamples = new ConcurrentLinkedQueue<>();
-        dexmuedNoDurationSamples = new ConcurrentLinkedQueue<>();
-
+        clearInputSamplesQueue();
         inputBuffer = ByteBuffer.wrap(new byte[codecMaxValues.inputSize]);
         initialized = true;
     }
@@ -220,16 +211,12 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     protected void releaseRenderer() {
         if (initialized) {
             codecReconfigured = false;
-            codecReceivedBuffers = false;
             codecIsAdaptive = false;
             codecNeedsDiscardToSpsWorkaround = false;
-            codecNeedsFlushWorkaround = false;
             codecNeedsAdaptationWorkaround = false;
             codecNeedsAdaptationWorkaroundBuffer = false;
             shouldSkipAdaptationWorkaroundOutputBuffer = false;
-            codecReceivedEos = false;
             codecReconfigurationState = RECONFIGURATION_STATE_NONE;
-            codecReinitializationState = REINITIALIZATION_STATE_NONE;
             inputBuffer = null;
             initialized = false;
         }
@@ -237,8 +224,11 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
     @Override
     public void render(long positionUs, long elapsedRealtimeUs) throws ExoPlaybackException {
-        if (DEBUG) Log.d(TAG, this + ": positionUs = " + positionUs + ", elapsedRealtimeUs = "+ elapsedRealtimeUs);
-        if (outputStreamEnded) {
+        if (DEBUG) Log.d(TAG, "positionUs = " + positionUs +
+                              ", elapsedRealtimeUs = "+ elapsedRealtimeUs +
+                              ", inputStreamEnded = " + inputStreamEnded +
+                              ", outputStreamEnded = " + outputStreamEnded);
+        if (inputStreamEnded || outputStreamEnded) {
             return;
         }
         if (format == null) {
@@ -264,19 +254,8 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     protected void flushRenderer() throws ExoPlaybackException {
         codecNeedsAdaptationWorkaroundBuffer = false;
         shouldSkipAdaptationWorkaroundOutputBuffer = false;
-        if (codecNeedsFlushWorkaround) {
-            // Workaround framework bugs. See [Internal: b/8347958, b/8578467, b/8543366, b/23361053].
-            releaseRenderer();
-            maybeInitRenderer();
-        } else if (codecReinitializationState != REINITIALIZATION_STATE_NONE) {
-            // We're already waiting to release and re-initialize the codec. Since we're now flushing,
-            // there's no need to wait any longer.
-            releaseRenderer();
-            maybeInitRenderer();
-        } else {
-            // We can flush and re-use the existing decoder.
-            codecReceivedBuffers = false;
-        }
+
+        clearInputSamplesQueue();
         if (codecReconfigured && format != null) {
             // Any reconfiguration data that we send shortly before the flush may be discarded. We
             // avoid this issue by sending reconfiguration data following every flush.
@@ -292,8 +271,8 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     }
 
     private synchronized boolean feedInputBuffersQueue() throws ExoPlaybackException {
-        if (!initialized || codecReinitializationState == REINITIALIZATION_STATE_WAIT_END_OF_STREAM
-                || inputStreamEnded || dexmuedInputSamples.size() >= QUEUED_INPUT_SAMPLE_SIZE) {
+        if (!initialized || inputStreamEnded ||
+            dexmuedInputSamples.size() >= QUEUED_INPUT_SAMPLE_SIZE) {
             // We need to reinitialize the codec or the input stream has ended.
             return false;
         }
@@ -302,19 +281,10 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         bufferForRead.data = inputBuffer;
         bufferForRead.clear();
 
-        if (codecReinitializationState == REINITIALIZATION_STATE_SIGNAL_END_OF_STREAM) {
-            // We need to re-initialize the codec. Send an end of stream signal to the existing codec so
-            // that it outputs any remaining buffers before we release it.
-            codecReceivedEos = true;
-            codecReinitializationState = REINITIALIZATION_STATE_WAIT_END_OF_STREAM;
-            return false;
-        }
-
         if (codecNeedsAdaptationWorkaroundBuffer) {
             if (DEBUG) Log.d(TAG, "feedInputBuffersQueue : codecNeedsAdaptationWorkaroundBuffer !!!!!!!!!!!!!!!!!!!!!!! ");
             codecNeedsAdaptationWorkaroundBuffer = false;
             bufferForRead.data.put(ADAPTATION_WORKAROUND_BUFFER);
-            codecReceivedBuffers = true;
             return true;
         }
 
@@ -330,6 +300,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
         int result = readSource(formatHolder, bufferForRead);
         if (result == C.RESULT_NOTHING_READ) {
+            if (DEBUG) Log.d(TAG, "feedInputBuffersQueue : RESULT_NOTHING_READ >>>>>>>>>>");
             return false;
         }
         if (result == C.RESULT_FORMAT_READ) {
@@ -342,7 +313,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             onInputFormatChanged(formatHolder.format);
             return true;
         }
-
+        if (DEBUG) Log.d(TAG, "feedInputBuffersQueue: is EndOfStream : " + bufferForRead.isEndOfStream());
         // We've read a buffer.
         if (bufferForRead.isEndOfStream()) {
             if (codecReconfigurationState == RECONFIGURATION_STATE_QUEUE_PENDING) {
@@ -353,15 +324,6 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                 codecReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
             }
             inputStreamEnded = true;
-            if (!codecReceivedBuffers) {
-                processEndOfStream();
-                return false;
-            }
-            try {
-                codecReceivedEos = true;
-            } catch (MediaCodec.CryptoException e) {
-                throw ExoPlaybackException.createForRenderer(e, getIndex());
-            }
             return false;
         }
         boolean bufferEncrypted = bufferForRead.isEncrypted();
@@ -456,7 +418,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
     @Override
     public boolean isEnded() {
-        return outputStreamEnded;
+        return inputStreamEnded || outputStreamEnded;
     }
 
     public synchronized ConcurrentLinkedQueue<GeckoHlsSample> getQueuedSamples(int number) {
@@ -475,25 +437,6 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             firstSampleStartTime = samples.peek().info.presentationTimeUs;
         }
         return samples;
-    }
-
-    private void processEndOfStream() throws ExoPlaybackException {
-        if (codecReinitializationState == REINITIALIZATION_STATE_WAIT_END_OF_STREAM) {
-            // We're waiting to re-initialize the codec, and have now processed all final buffers.
-            releaseRenderer();
-            maybeInitRenderer();
-        } else {
-            outputStreamEnded = true;
-            onOutputStreamEnded();
-        }
-    }
-
-    private static boolean codecNeedsFlushWorkaround(String name) {
-        return Util.SDK_INT < 18
-                || (Util.SDK_INT == 18
-                && ("OMX.SEC.avc.dec".equals(name) || "OMX.SEC.avc.dec.secure".equals(name)))
-                || (Util.SDK_INT == 19 && Util.MODEL.startsWith("SM-G800")
-                && ("OMX.Exynos.avc.dec".equals(name) || "OMX.Exynos.avc.dec.secure".equals(name)));
     }
 
     private static boolean codecNeedsAdaptationWorkaround(String name) {
@@ -555,7 +498,6 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     protected void onPositionReset(long positionUs, boolean joining) throws ExoPlaybackException {
         inputStreamEnded = false;
         outputStreamEnded = false;
-
         if (initialized) {
             flushRenderer();
         }
@@ -628,14 +570,8 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             codecNeedsAdaptationWorkaroundBuffer = codecNeedsAdaptationWorkaround
                     && format.width == oldFormat.width && format.height == oldFormat.height;
         } else {
-            if (codecReceivedBuffers) {
-                // Signal end of stream and wait for any final output buffers before re-initialization.
-                codecReinitializationState = REINITIALIZATION_STATE_SIGNAL_END_OF_STREAM;
-            } else {
-                // There aren't any final output buffers, so perform re-initialization immediately.
-                releaseRenderer();
-                maybeInitRenderer();
-            }
+            releaseRenderer();
+            maybeInitRenderer();
         }
 
         eventDispatcher.inputFormatChanged(newFormat);

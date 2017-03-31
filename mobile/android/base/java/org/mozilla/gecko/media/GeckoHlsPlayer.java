@@ -441,7 +441,6 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
                 if (r.firstSampleStartTime != null && r.firstSampleStartTime < startTime) {
                     startTime = r.firstSampleStartTime;
                 }
-                r.clearInputSamplesQueue();
             }
 
             player.seekTo(positionMs - startTime / 1000);
