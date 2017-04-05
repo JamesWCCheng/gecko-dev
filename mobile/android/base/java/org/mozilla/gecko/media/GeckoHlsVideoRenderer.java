@@ -40,77 +40,12 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     private ByteBuffer inputBuffer;
     private int QUEUED_INPUT_SAMPLE_SIZE = 100;
 
-    @SuppressWarnings("serial")
-    public static class DecoderInitializationException extends Exception {
-        private static final int CUSTOM_ERROR_CODE_BASE = -50000;
-        private static final int NO_SUITABLE_DECODER_ERROR = CUSTOM_ERROR_CODE_BASE + 1;
-        private static final int DECODER_QUERY_ERROR = CUSTOM_ERROR_CODE_BASE + 2;
-
-        public final String mimeType;
-        public final boolean secureDecoderRequired;
-        public final String decoderName;
-        public final String diagnosticInfo;
-
-        public DecoderInitializationException(Format format, Throwable cause,
-                                              boolean secureDecoderRequired, int errorCode) {
-            super("Decoder init failed: [" + errorCode + "], " + format, cause);
-            this.mimeType = format.sampleMimeType;
-            this.secureDecoderRequired = secureDecoderRequired;
-            this.decoderName = null;
-            this.diagnosticInfo = buildCustomDiagnosticInfo(errorCode);
-        }
-
-        public DecoderInitializationException(Format format, Throwable cause,
-                                              boolean secureDecoderRequired, String decoderName) {
-            super("Decoder init failed: " + decoderName + ", " + format, cause);
-            this.mimeType = format.sampleMimeType;
-            this.secureDecoderRequired = secureDecoderRequired;
-            this.decoderName = decoderName;
-            this.diagnosticInfo = Util.SDK_INT >= 21 ? getDiagnosticInfoV21(cause) : null;
-        }
-
-        @TargetApi(21)
-        private static String getDiagnosticInfoV21(Throwable cause) {
-            if (cause instanceof MediaCodec.CodecException) {
-                return ((MediaCodec.CodecException) cause).getDiagnosticInfo();
-            }
-            return null;
-        }
-
-        private static String buildCustomDiagnosticInfo(int errorCode) {
-            String sign = errorCode < 0 ? "neg_" : "";
-            return "com.google.android.exoplayer.MediaCodecTrackRenderer_" + sign + Math.abs(errorCode);
-        }
-
-    }
-
-    private static final int RECONFIGURATION_STATE_NONE = 0;
-    private static final int RECONFIGURATION_STATE_WRITE_PENDING = 1;
-    private static final int RECONFIGURATION_STATE_QUEUE_PENDING = 2;
-
-    /**
-     * H.264/AVC buffer to queue when using the adaptation workaround (see
-     * {@link #codecNeedsAdaptationWorkaround(String)}. Consists of three NAL units with start codes:
-     * Baseline sequence/picture parameter sets and a 32 * 32 pixel IDR slice. This stream can be
-     * queued to force a resolution change when adapting to a new format.
-     */
-    private static final byte[] ADAPTATION_WORKAROUND_BUFFER = Util.getBytesFromHexString(
-            "0000016742C00BDA259000000168CE0F13200000016588840DCE7118A0002FBF1C31C3275D78");
-
     private final MediaCodecSelector mediaCodecSelector;
     private final FormatHolder formatHolder;
 
     private Format format;
-    private boolean codecIsAdaptive;
-    private boolean codecNeedsDiscardToSpsWorkaround;
-    private boolean codecNeedsAdaptationWorkaround;
-    private boolean codecNeedsAdaptationWorkaroundBuffer;
-    private boolean shouldSkipAdaptationWorkaroundOutputBuffer;
     private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedInputSamples;
     private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedNoDurationSamples;
-
-    private boolean codecReconfigured;
-    private int codecReconfigurationState;
 
     private boolean inputStreamEnded;
     private boolean outputStreamEnded;
@@ -134,7 +69,6 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         initialized = false;
         this.mediaCodecSelector = Assertions.checkNotNull(mediaCodecSelector);
         formatHolder = new FormatHolder();
-        codecReconfigurationState = RECONFIGURATION_STATE_NONE;
 
         playerListener = (GeckoHlsPlayer.ComponentListener)eventListener;
         this.allowedJoiningTimeMs = 5000;
@@ -151,79 +85,70 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     }
 
     @Override
-    public final int supportsMixedMimeTypeAdaptation() throws ExoPlaybackException {
+    public final int supportsMixedMimeTypeAdaptation() {
         return ADAPTIVE_NOT_SEAMLESS;
     }
 
     @Override
-    public final int supportsFormat(Format format) throws ExoPlaybackException {
-        try {
-            return supportsFormat(mediaCodecSelector, format);
-        } catch (MediaCodecUtil.DecoderQueryException e) {
-            throw ExoPlaybackException.createForRenderer(e, getIndex());
+    public final int supportsFormat(Format format) {
+        String mimeType = format.sampleMimeType;
+        if (!MimeTypes.isVideo(mimeType)) {
+            return FORMAT_UNSUPPORTED_TYPE;
         }
+        MediaCodecInfo decoderInfo = null;
+        try {
+            decoderInfo = mediaCodecSelector.getDecoderInfo(mimeType, false);
+        } catch (MediaCodecUtil.DecoderQueryException e) {
+            if (DEBUG) Log.e(TAG, e.getMessage());
+        }
+        if (decoderInfo == null) {
+            return FORMAT_UNSUPPORTED_SUBTYPE;
+        }
+
+        boolean decoderCapable = decoderInfo.isCodecSupported(format.codecs);
+        if (decoderCapable && format.width > 0 && format.height > 0) {
+            if (Util.SDK_INT >= 21) {
+                decoderCapable = decoderInfo.isVideoSizeAndRateSupportedV21(format.width, format.height,
+                        format.frameRate);
+            } else {
+                try {
+                    decoderCapable = format.width * format.height <= MediaCodecUtil.maxH264DecodableFrameSize();
+                } catch (MediaCodecUtil.DecoderQueryException e) {
+                    if (DEBUG) Log.e(TAG, e.getMessage());
+                }
+                if (!decoderCapable) {
+                    if (DEBUG) Log.d(TAG, "FalseCheck [legacyFrameSize, " + format.width + "x" + format.height + "] ["
+                            + Util.DEVICE_DEBUG_INFO + "]");
+                }
+            }
+        }
+
+        int adaptiveSupport = decoderInfo.adaptive ? ADAPTIVE_SEAMLESS : ADAPTIVE_NOT_SEAMLESS;
+        int formatSupport = decoderCapable ? FORMAT_HANDLED : FORMAT_EXCEEDS_CAPABILITIES;
+        return adaptiveSupport | formatSupport;
     }
 
     @SuppressWarnings("deprecation")
-    protected final void maybeInitRenderer() throws ExoPlaybackException {
+    protected final void maybeInitRenderer() {
         if (!shouldInitRenderer()) {
             return;
         }
-
-        MediaCodecInfo decoderInfo = null;
-        try {
-            decoderInfo = mediaCodecSelector.getDecoderInfo(format.sampleMimeType, false);
-        } catch (MediaCodecUtil.DecoderQueryException e) {
-            throwDecoderInitError(new DecoderInitializationException(format, e,
-                    false, DecoderInitializationException.DECODER_QUERY_ERROR));
-        }
-
-        if (decoderInfo == null) {
-            throwDecoderInitError(new DecoderInitializationException(format, null, false,
-                    DecoderInitializationException.NO_SUITABLE_DECODER_ERROR));
-        }
-
-        String codecName = decoderInfo.name;
-        codecIsAdaptive = decoderInfo.adaptive;
-        codecNeedsDiscardToSpsWorkaround = codecNeedsDiscardToSpsWorkaround(codecName, format);
-        codecNeedsAdaptationWorkaround = codecNeedsAdaptationWorkaround(codecName);
-        try {
-            long codecInitializingTimestamp = SystemClock.elapsedRealtime();
-            codecMaxValues = getCodecMaxValues(format, streamFormats);
-            long codecInitializedTimestamp = SystemClock.elapsedRealtime();
-            onCodecInitialized(codecName, codecInitializedTimestamp,
-                    codecInitializedTimestamp - codecInitializingTimestamp);
-        } catch (Exception e) {
-            throwDecoderInitError(new DecoderInitializationException(format, e,
-                    false, codecName));
-        }
+        codecMaxValues = getCodecMaxValues(format, streamFormats);
 
         clearInputSamplesQueue();
         inputBuffer = ByteBuffer.wrap(new byte[codecMaxValues.inputSize]);
         initialized = true;
     }
 
-    private void throwDecoderInitError(DecoderInitializationException e)
-            throws ExoPlaybackException {
-        throw ExoPlaybackException.createForRenderer(e, getIndex());
-    }
-
     protected void releaseRenderer() {
         if (initialized) {
-            codecReconfigured = false;
-            codecIsAdaptive = false;
-            codecNeedsDiscardToSpsWorkaround = false;
-            codecNeedsAdaptationWorkaround = false;
-            codecNeedsAdaptationWorkaroundBuffer = false;
-            shouldSkipAdaptationWorkaroundOutputBuffer = false;
-            codecReconfigurationState = RECONFIGURATION_STATE_NONE;
             inputBuffer = null;
             initialized = false;
         }
     }
 
     @Override
-    public void render(long positionUs, long elapsedRealtimeUs) throws ExoPlaybackException {
+    public void render(long positionUs, long elapsedRealtimeUs) {
         if (DEBUG) Log.d(TAG, "positionUs = " + positionUs +
                               ", elapsedRealtimeUs = "+ elapsedRealtimeUs +
                               ", inputStreamEnded = " + inputStreamEnded +
@@ -244,23 +169,15 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         }
     }
 
-    private void readFormat() throws ExoPlaybackException {
+    private void readFormat() {
         int result = readSource(formatHolder, null);
         if (result == C.RESULT_FORMAT_READ) {
             onInputFormatChanged(formatHolder.format);
         }
     }
 
-    protected void flushRenderer() throws ExoPlaybackException {
-        codecNeedsAdaptationWorkaroundBuffer = false;
-        shouldSkipAdaptationWorkaroundOutputBuffer = false;
-
+    protected void flushRenderer() {
         clearInputSamplesQueue();
-        if (codecReconfigured && format != null) {
-            // Any reconfiguration data that we send shortly before the flush may be discarded. We
-            // avoid this issue by sending reconfiguration data following every flush.
-            codecReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
-        }
     }
 
     @Override
@@ -270,7 +187,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         return true;
     }
 
-    private synchronized boolean feedInputBuffersQueue() throws ExoPlaybackException {
+    private synchronized boolean feedInputBuffersQueue() {
         if (!initialized || inputStreamEnded ||
             dexmuedInputSamples.size() >= QUEUED_INPUT_SAMPLE_SIZE) {
             // We need to reinitialize the codec or the input stream has ended.
@@ -281,82 +198,38 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         bufferForRead.data = inputBuffer;
         bufferForRead.clear();
 
-        if (codecNeedsAdaptationWorkaroundBuffer) {
-            if (DEBUG) Log.d(TAG, "feedInputBuffersQueue : codecNeedsAdaptationWorkaroundBuffer !!!!!!!!!!!!!!!!!!!!!!! ");
-            codecNeedsAdaptationWorkaroundBuffer = false;
-            bufferForRead.data.put(ADAPTATION_WORKAROUND_BUFFER);
-            return true;
-        }
-
-        // For adaptive reconfiguration OMX decoders expect all reconfiguration data to be supplied
-        // at the start of the buffer that also contains the first frame in the new format.
-        if (codecReconfigurationState == RECONFIGURATION_STATE_WRITE_PENDING) {
-            for (int i = 0; i < format.initializationData.size(); i++) {
-                byte[] data = format.initializationData.get(i);
-                bufferForRead.data.put(data);
-            }
-            codecReconfigurationState = RECONFIGURATION_STATE_QUEUE_PENDING;
-        }
-
         int result = readSource(formatHolder, bufferForRead);
         if (result == C.RESULT_NOTHING_READ) {
-            if (DEBUG) Log.d(TAG, "feedInputBuffersQueue : RESULT_NOTHING_READ >>>>>>>>>>");
             return false;
         }
         if (result == C.RESULT_FORMAT_READ) {
-            if (codecReconfigurationState == RECONFIGURATION_STATE_QUEUE_PENDING) {
-                // We received two formats in a row. Clear the current buffer of any reconfiguration data
-                // associated with the first format.
-                bufferForRead.clear();
-                codecReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
-            }
             onInputFormatChanged(formatHolder.format);
             return true;
         }
-        if (DEBUG) Log.d(TAG, "feedInputBuffersQueue: is EndOfStream : " + bufferForRead.isEndOfStream());
         // We've read a buffer.
         if (bufferForRead.isEndOfStream()) {
-            if (codecReconfigurationState == RECONFIGURATION_STATE_QUEUE_PENDING) {
-                // We received a new format immediately before the end of the stream. We need to clear
-                // the corresponding reconfiguration data from the current buffer, but re-write it into
-                // a subsequent buffer if there are any (e.g. if the user seeks backwards).
-                bufferForRead.clear();
-                codecReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
-            }
             inputStreamEnded = true;
             return false;
         }
-        boolean bufferEncrypted = bufferForRead.isEncrypted();
 
-        if (codecNeedsDiscardToSpsWorkaround && !bufferEncrypted) {
-            NalUnitUtil.discardToSps(bufferForRead.data);
-            if (bufferForRead.data.position() == 0) {
-                return true;
-            }
-            codecNeedsDiscardToSpsWorkaround = false;
-        }
-        try {
-            bufferForRead.flip();
-            if (DEBUG) Log.d(TAG, "feedInputBuffersQueue: bufferTimeUs : " + bufferForRead.timeUs + ", queueSize = " + dexmuedInputSamples.size());
+        bufferForRead.flip();
 
-            int size = bufferForRead.data.limit();
-            byte[] realData = new byte[size];
-            bufferForRead.data.get(realData, 0, size);
-            ByteBuffer buffer = ByteBuffer.wrap(realData);
-            inputBuffer.clear();
+        int size = bufferForRead.data.limit();
+        byte[] realData = new byte[size];
+        bufferForRead.data.get(realData, 0, size);
+        ByteBuffer buffer = ByteBuffer.wrap(realData);
+        inputBuffer.clear();
 
-            CryptoInfo cryptoInfo = bufferForRead.isEncrypted() ? bufferForRead.cryptoInfo.getFrameworkCryptoInfoV16() : null;
-            BufferInfo bufferInfo = new BufferInfo();
-            // The flags in DecoderInputBuffer is syned with MediaCodec Buffer flags.
-            int flags = 0;
-            flags |= bufferForRead.isKeyFrame() ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0;
-            flags |= bufferForRead.isEndOfStream() ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0;
-            bufferInfo.set(0, size, bufferForRead.timeUs, flags);
-            GeckoHlsSample sample = GeckoHlsSample.create(buffer, bufferInfo, cryptoInfo);
-            calculatDuration(sample);
-        } catch (MediaCodec.CryptoException e) {
-            throw ExoPlaybackException.createForRenderer(e, getIndex());
-        }
+        CryptoInfo cryptoInfo = bufferForRead.isEncrypted() ? bufferForRead.cryptoInfo.getFrameworkCryptoInfoV16() : null;
+        BufferInfo bufferInfo = new BufferInfo();
+        // The flags in DecoderInputBuffer is syned with MediaCodec Buffer flags.
+        int flags = 0;
+        flags |= bufferForRead.isKeyFrame() ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0;
+        flags |= bufferForRead.isEndOfStream() ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0;
+        bufferInfo.set(0, size, bufferForRead.timeUs, flags);
+
+        GeckoHlsSample sample = GeckoHlsSample.create(buffer, bufferInfo, cryptoInfo);
+        calculatDuration(sample);
 
         if (waitingForData) {
             playerListener.onDataArrived();
@@ -439,53 +312,8 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         return samples;
     }
 
-    private static boolean codecNeedsAdaptationWorkaround(String name) {
-        return Util.SDK_INT < 24
-                && ("OMX.Nvidia.h264.decode".equals(name) || "OMX.Nvidia.h264.decode.secure".equals(name))
-                && ("flounder".equals(Util.DEVICE) || "flounder_lte".equals(Util.DEVICE)
-                || "grouper".equals(Util.DEVICE) || "tilapia".equals(Util.DEVICE));
-    }
-
-    private static boolean codecNeedsDiscardToSpsWorkaround(String name, Format format) {
-        return Util.SDK_INT < 21 && format.initializationData.isEmpty()
-                && "OMX.MTK.VIDEO.DECODER.AVC".equals(name);
-    }
-
-//    ===============================================================================================
-
-    protected int supportsFormat(MediaCodecSelector mediaCodecSelector, Format format)
-            throws MediaCodecUtil.DecoderQueryException {
-        String mimeType = format.sampleMimeType;
-        if (!MimeTypes.isVideo(mimeType)) {
-            return FORMAT_UNSUPPORTED_TYPE;
-        }
-
-        MediaCodecInfo decoderInfo = mediaCodecSelector.getDecoderInfo(mimeType, false);
-        if (decoderInfo == null) {
-            return FORMAT_UNSUPPORTED_SUBTYPE;
-        }
-
-        boolean decoderCapable = decoderInfo.isCodecSupported(format.codecs);
-        if (decoderCapable && format.width > 0 && format.height > 0) {
-            if (Util.SDK_INT >= 21) {
-                decoderCapable = decoderInfo.isVideoSizeAndRateSupportedV21(format.width, format.height,
-                        format.frameRate);
-            } else {
-                decoderCapable = format.width * format.height <= MediaCodecUtil.maxH264DecodableFrameSize();
-                if (!decoderCapable) {
-                    if (DEBUG) Log.d(TAG, "FalseCheck [legacyFrameSize, " + format.width + "x" + format.height + "] ["
-                            + Util.DEVICE_DEBUG_INFO + "]");
-                }
-            }
-        }
-
-        int adaptiveSupport = decoderInfo.adaptive ? ADAPTIVE_SEAMLESS : ADAPTIVE_NOT_SEAMLESS;
-        int formatSupport = decoderCapable ? FORMAT_HANDLED : FORMAT_EXCEEDS_CAPABILITIES;
-        return adaptiveSupport | formatSupport;
-    }
-
     @Override
-    protected void onEnabled(boolean joining) throws ExoPlaybackException {
+    protected void onEnabled(boolean joining) {
     }
 
     @Override
@@ -495,7 +323,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     }
 
     @Override
-    protected void onPositionReset(long positionUs, boolean joining) throws ExoPlaybackException {
+    protected void onPositionReset(long positionUs, boolean joining) {
         inputStreamEnded = false;
         outputStreamEnded = false;
         if (initialized) {
@@ -546,12 +374,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         return !initialized && format != null;
     }
 
-    protected void onCodecInitialized(String name, long initializedTimestampMs,
-                                      long initializationDurationMs) {
-        eventDispatcher.decoderInitialized(name, initializedTimestampMs, initializationDurationMs);
-    }
-
-    protected void onInputFormatChanged(Format newFormat) throws ExoPlaybackException {
+    protected void onInputFormatChanged(Format newFormat) {
         Format oldFormat = format;
         format = newFormat;
 
@@ -563,29 +386,9 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             } else {
             }
         }
-        if (DEBUG) Log.d(TAG, "[onInputFormatChanged] >>>>>>>>>>>>>>>> onInputFormatChanged !!!! initialized : " + initialized);
-        if (initialized && canReconfigureCodec(codecIsAdaptive, oldFormat, format)) {
-            codecReconfigured = true;
-            codecReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
-            codecNeedsAdaptationWorkaroundBuffer = codecNeedsAdaptationWorkaround
-                    && format.width == oldFormat.width && format.height == oldFormat.height;
-        } else {
-            releaseRenderer();
-            maybeInitRenderer();
-        }
-
+        releaseRenderer();
+        maybeInitRenderer();
         eventDispatcher.inputFormatChanged(newFormat);
-    }
-
-    protected boolean canReconfigureCodec(boolean codecIsAdaptive,
-                                          Format oldFormat, Format newFormat) {
-        boolean canReconfig = areAdaptationCompatible(oldFormat, newFormat)
-                                && newFormat.width <= codecMaxValues.width && newFormat.height <= codecMaxValues.height
-                                && newFormat.maxInputSize <= codecMaxValues.inputSize
-                                && (codecIsAdaptive
-                                || (oldFormat.width == newFormat.width && oldFormat.height == newFormat.height));
-        if (DEBUG) Log.d(TAG, "[canReconfigureCodec] >>>>>>>>>>>>>>>> canConfig :" + canReconfig);
-        return canReconfig;
     }
 
     private static CodecMaxValues getCodecMaxValues(Format format, Format[] streamFormats) {
