@@ -534,11 +534,18 @@ RemoteDataDecoder::Decode(MediaRawData* aSample)
     bufferInfo->Set(0, sample->Size(), sample->mTime, flags);
 
     mDrainStatus = DrainStatus::DRAINABLE;
-    return mJavaDecoder->Input(bytes, bufferInfo, GetCryptoInfoFromSample(sample))
-           ? mDecodePromise.Ensure(__func__)
-           : DecodePromise::CreateAndReject(
-               MediaResult(NS_ERROR_OUT_OF_MEMORY, __func__), __func__);
 
+    // TODO : Remove this workaround once Jolin land his solution.
+    if (!mJavaDecoder->Input(bytes, bufferInfo, GetCryptoInfoFromSample(sample))) {
+      return DecodePromise::CreateAndReject(
+               MediaResult(NS_ERROR_OUT_OF_MEMORY, __func__), __func__);
+    }
+
+    RefPtr<DecodePromise> p = mDecodePromise.Ensure(__func__);
+    if (!mDecodedData.IsEmpty()) {
+      ReturnDecodedData();
+    }
+    return p;
   });
 }
 
