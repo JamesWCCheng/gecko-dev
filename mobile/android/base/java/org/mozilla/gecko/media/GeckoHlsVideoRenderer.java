@@ -4,29 +4,23 @@
 
 package org.mozilla.gecko.media;
 
-import android.annotation.TargetApi;
-import android.content.Context;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.CryptoInfo;
-import android.media.MediaCrypto;
-import android.media.MediaFormat;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
 
 import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.FormatHolder;
 import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
 import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
+import com.google.android.exoplayer2.RendererCapabilities;
 import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.MimeTypes;
-import com.google.android.exoplayer2.util.NalUnitUtil;
-import com.google.android.exoplayer2.util.TraceUtil;
 import com.google.android.exoplayer2.util.Util;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
 
@@ -48,7 +42,6 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedNoDurationSamples;
 
     private boolean inputStreamEnded;
-    private boolean outputStreamEnded;
 
     private final VideoRendererEventListener.EventDispatcher eventDispatcher;
     private final long allowedJoiningTimeMs;
@@ -71,17 +64,13 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         formatHolder = new FormatHolder();
 
         playerListener = (GeckoHlsPlayer.ComponentListener)eventListener;
-        this.allowedJoiningTimeMs = 5000;
+        allowedJoiningTimeMs = 5000;
         eventDispatcher = new VideoRendererEventListener.EventDispatcher(eventHandler, eventListener);
         joiningDeadlineMs = C.TIME_UNSET;
         waitingForData = false;
 
         dexmuedInputSamples = new ConcurrentLinkedQueue<>();
         dexmuedNoDurationSamples = new ConcurrentLinkedQueue<>();
-    }
-
-    public void handleMessage(int messageType, Object message) throws ExoPlaybackException {
-        super.handleMessage(messageType, message);
     }
 
     @Override
@@ -93,16 +82,16 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     public final int supportsFormat(Format format) {
         String mimeType = format.sampleMimeType;
         if (!MimeTypes.isVideo(mimeType)) {
-            return FORMAT_UNSUPPORTED_TYPE;
+            return RendererCapabilities.FORMAT_UNSUPPORTED_TYPE;
         }
         MediaCodecInfo decoderInfo = null;
         try {
             decoderInfo = mediaCodecSelector.getDecoderInfo(mimeType, false);
         } catch (MediaCodecUtil.DecoderQueryException e) {
-            if (DEBUG) Log.e(TAG, e.getMessage());
+            Log.e(TAG, e.getMessage());
         }
         if (decoderInfo == null) {
-            return FORMAT_UNSUPPORTED_SUBTYPE;
+            return RendererCapabilities.FORMAT_UNSUPPORTED_SUBTYPE;
         }
 
         boolean decoderCapable = decoderInfo.isCodecSupported(format.codecs);
@@ -114,7 +103,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                 try {
                     decoderCapable = format.width * format.height <= MediaCodecUtil.maxH264DecodableFrameSize();
                 } catch (MediaCodecUtil.DecoderQueryException e) {
-                    if (DEBUG) Log.e(TAG, e.getMessage());
+                    Log.e(TAG, e.getMessage());
                 }
                 if (!decoderCapable) {
                     if (DEBUG) Log.d(TAG, "FalseCheck [legacyFrameSize, " + format.width + "x" + format.height + "] ["
@@ -123,8 +112,12 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             }
         }
 
-        int adaptiveSupport = decoderInfo.adaptive ? ADAPTIVE_SEAMLESS : ADAPTIVE_NOT_SEAMLESS;
-        int formatSupport = decoderCapable ? FORMAT_HANDLED : FORMAT_EXCEEDS_CAPABILITIES;
+        int adaptiveSupport = decoderInfo.adaptive ?
+            RendererCapabilities.ADAPTIVE_SEAMLESS :
+            RendererCapabilities.ADAPTIVE_NOT_SEAMLESS;
+        int formatSupport = decoderCapable ?
+            RendererCapabilities.FORMAT_HANDLED :
+            RendererCapabilities.FORMAT_EXCEEDS_CAPABILITIES;
         return adaptiveSupport | formatSupport;
     }
 
@@ -151,21 +144,17 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     public void render(long positionUs, long elapsedRealtimeUs) {
         if (DEBUG) Log.d(TAG, "positionUs = " + positionUs +
                               ", elapsedRealtimeUs = "+ elapsedRealtimeUs +
-                              ", inputStreamEnded = " + inputStreamEnded +
-                              ", outputStreamEnded = " + outputStreamEnded);
-        if (inputStreamEnded || outputStreamEnded) {
+                              ", inputStreamEnded = " + inputStreamEnded);
+        if (inputStreamEnded) {
             return;
         }
         if (format == null) {
             readFormat();
         }
+
         maybeInitRenderer();
         if (initialized) {
-            TraceUtil.beginSection("drainAndFeed");
             while (feedInputBuffersQueue()) {}
-            TraceUtil.endSection();
-        } else if (format != null) {
-            skipToKeyframeBefore(positionUs);
         }
     }
 
@@ -285,13 +274,9 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         }
     }
 
-    protected void onOutputStreamEnded() {
-        // Do nothing.
-    }
-
     @Override
     public boolean isEnded() {
-        return inputStreamEnded || outputStreamEnded;
+        return inputStreamEnded;
     }
 
     public synchronized ConcurrentLinkedQueue<GeckoHlsSample> getQueuedSamples(int number) {
@@ -317,15 +302,13 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     }
 
     @Override
-    protected void onStreamChanged(Format[] formats) throws ExoPlaybackException {
+    protected void onStreamChanged(Format[] formats) {
         streamFormats = formats;
-        super.onStreamChanged(formats);
     }
 
     @Override
     protected void onPositionReset(long positionUs, boolean joining) {
         inputStreamEnded = false;
-        outputStreamEnded = false;
         if (initialized) {
             flushRenderer();
         }
@@ -350,15 +333,6 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             joiningDeadlineMs = C.TIME_UNSET;
             return false;
         }
-    }
-
-    @Override
-    protected void onStarted() {
-    }
-
-    @Override
-    protected void onStopped() {
-        joiningDeadlineMs = C.TIME_UNSET;
     }
 
     @Override
