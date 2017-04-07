@@ -35,7 +35,6 @@ DIRS += [
     'gmp',
     'gmp-plugin',
     'gmp-plugin-openh264',
-    'hls',
     'imagecapture',
     'ipc',
     'mediasink',
@@ -55,7 +54,10 @@ if CONFIG['MOZ_DIRECTSHOW']:
     DIRS += ['directshow']
 
 if CONFIG['MOZ_ANDROID_OMX']:
-    DIRS += ['android']
+    DIRS += [
+        'android',
+        'hls',
+    ]
 
 if CONFIG['MOZ_FMP4']:
     DIRS += ['fmp4']
