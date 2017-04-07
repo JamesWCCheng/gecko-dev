@@ -35,6 +35,7 @@ public:
 
   ~HLSResource()
   {
+    HLS_DEBUG("HLSResource", "Destructor");
   }
   nsresult Close() override { return NS_OK; }
   void Suspend(bool aCloseImmediately) override { UNIMPLEMENTED(); }
@@ -82,7 +83,9 @@ public:
   bool IsLiveStream() override
   {
     MonitorAutoLock mon(mMonitor);
-    return !mEnded;
+    // TODO: return false and need to know what is that API used for?
+    return false;
+    //return !mEnded;
   }
   void SetEnded(bool aEnded)
   {

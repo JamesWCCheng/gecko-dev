@@ -35,4 +35,13 @@ public class Utils {
             throw new RuntimeException("interrupted", x);
         }
     }
+
+    public static String getCallStack() {
+        String bt = "=========== Callstack ===========\n";
+        for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+            bt += (ste + "\n");
+        }
+        bt += "======================\n";
+        return bt;
+    }
 }

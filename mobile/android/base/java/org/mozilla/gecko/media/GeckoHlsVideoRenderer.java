@@ -198,7 +198,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         // We've read a buffer.
         if (bufferForRead.isEndOfStream()) {
             inputStreamEnded = true;
-            return false;
+            Log.d(TAG, "if (bufferForRead.isEndOfStream()) {");
         }
 
         bufferForRead.flip();
@@ -254,12 +254,11 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             if (DEBUG) Log.d(TAG, "[calculatDuration]:  bufferTimeUs : " + goingToQueue.info.presentationTimeUs + ", duration : " + goingToQueue.duration);
             dexmuedInputSamples.offer(goingToQueue);
         } else if (inputStreamEnded) {
+            if (DEBUG) Log.d(TAG, "inputStreamEnded, meet EOS");
             for (int i = 0; i < sizeOfNoDura; i++) {
                 // Comparing window size.
                 for (int j = -2; j < 4; j++) {
-                    if (inputArray[i+j].info.presentationTimeUs > inputArray[i].info.presentationTimeUs &&
-                        i+j >= 0 &&
-                        i+j < range) {
+                    if (i+j >= 0 && i+j < sizeOfNoDura && inputArray[i+j].info.presentationTimeUs > inputArray[i].info.presentationTimeUs) {
                         inputArray[i].duration =
                             Math.min(inputArray[i].duration,
                                      inputArray[i+j].info.presentationTimeUs - inputArray[i].info.presentationTimeUs);
@@ -268,7 +267,10 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             }
             GeckoHlsSample sample = null;
             for (sample = dexmuedNoDurationSamples.poll(); sample != null; sample = dexmuedNoDurationSamples.poll()) {
-                if (DEBUG) Log.d(TAG, "[calculatDuration]:  bufferTimeUs : " + sample.info.presentationTimeUs + ", duration : " + sample.duration);
+                if (sample.duration == Long.MAX_VALUE) {
+                    sample.duration = totalDurationUs - sample.duration;
+                    if (DEBUG) Log.d(TAG, "[calculatDuration] Adjust the PTS of the last sample to " + sample.duration + " (us)");
+                }
                 dexmuedInputSamples.offer(sample);
             }
         }
@@ -308,6 +310,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
     @Override
     protected void onPositionReset(long positionUs, boolean joining) {
+        if (DEBUG) Log.d(TAG, "onPositionReset positionUs = " + positionUs + "joining = " + joining);
         inputStreamEnded = false;
         if (initialized) {
             flushRenderer();

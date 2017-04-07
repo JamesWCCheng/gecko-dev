@@ -4,11 +4,20 @@
 
 package org.mozilla.gecko.media;
 
+import android.util.Log;
+
 import com.google.android.exoplayer2.BaseRenderer;
 
 // TODO: Extract the identical member function or data from Video/Audio Renderer
 public abstract class GeckoHlsRendererBase extends BaseRenderer {
+    private static boolean DEBUG = true;
+    private static final String TAG = "GeckoHlsRendererBase";
     public GeckoHlsRendererBase(int trackType) { super(trackType); }
     public abstract boolean clearInputSamplesQueue();
+    public void updateTotalDurationUs(long durationUs) {
+        if (DEBUG) Log.d(TAG, "updateTotalDurationUs to " + durationUs + "us.");
+        totalDurationUs = durationUs;
+    }
     public Long firstSampleStartTime = null;
+    protected long totalDurationUs = 0;
 }

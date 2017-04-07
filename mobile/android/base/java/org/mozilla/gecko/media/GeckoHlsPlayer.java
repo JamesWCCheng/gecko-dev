@@ -19,7 +19,6 @@ import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.audio.AudioRendererEventListener;
 import com.google.android.exoplayer2.decoder.DecoderCounters;
-import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.metadata.Metadata;
 import com.google.android.exoplayer2.metadata.MetadataRenderer;
@@ -354,7 +353,10 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
               durationUs = window.getDurationUs();
           }
         }
-        if (DEBUG) Log.d(TAG, "Media duration = " + durationUs + "(us)");
+        if (DEBUG) Log.d(TAG, "Media duration = " + durationUs + "(us)" + " player.getDuration() = " + player.getDuration() + "(ms)");
+        for (GeckoHlsRendererBase r : renderers) {
+            r.updateTotalDurationUs(player.getDuration() * 1000);
+        }
     }
 
     private static String getStateString(int state) {
