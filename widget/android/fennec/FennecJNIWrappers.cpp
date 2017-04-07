@@ -303,6 +303,14 @@ auto GeckoHlsDemuxerWrapper::GetBuffered() const -> int64_t
     return mozilla::jni::Method<GetBuffered_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr);
 }
 
+constexpr char GeckoHlsDemuxerWrapper::GetNextKeyFrameTime_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetNextKeyFrameTime_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetNextKeyFrameTime() const -> int64_t
+{
+    return mozilla::jni::Method<GetNextKeyFrameTime_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr);
+}
+
 constexpr char GeckoHlsDemuxerWrapper::GetNumberOfTracks_t::name[];
 constexpr char GeckoHlsDemuxerWrapper::GetNumberOfTracks_t::signature[];
 

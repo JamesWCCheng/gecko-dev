@@ -58,6 +58,9 @@ public:
 
   MediaDecoder* GetDecoder() { return mDecoder; }
 
+protected:
+  int64_t GetNextKeyFrameTime();
+
 private:
   ~HLSDemuxer();
   RefPtr<MediaDecoder> mDecoder;
@@ -112,8 +115,8 @@ public:
   }
 
 private:
-  // Return the timestamp of the next keyframe after mLastSampleIndex.
-  media::TimeUnit GetNextRandomAccessPoint();
+  // Update the timestamp of the next keyframe if there's one.
+  void UpdateNextKeyFrameTime();
   RefPtr<SeekPromise> DoSeek(const media::TimeUnit& aTime);
   RefPtr<SamplesPromise> DoGetSamples(int32_t aNumSamples);
 
@@ -122,7 +125,7 @@ private:
   TrackInfo::TrackType mType;
   // Monitor protecting members below accessed from multiple threads.
   Monitor mMonitor;
-  media::TimeUnit mNextRandomAccessPoint;
+  Maybe<media::TimeUnit> mNextKeyframeTime;
   Maybe<RefPtr<MediaRawData>> mNextSample;
   // Set to true following a reset. Ensure that the next sample demuxed
   // is available at position 0.

@@ -1022,6 +1022,25 @@ public:
 
     auto GetBuffered() const -> int64_t;
 
+    struct GetNextKeyFrameTime_t {
+        typedef GeckoHlsDemuxerWrapper Owner;
+        typedef int64_t ReturnType;
+        typedef int64_t SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "getNextKeyFrameTime";
+        static constexpr char signature[] =
+                "()J";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto GetNextKeyFrameTime() const -> int64_t;
+
     struct GetNumberOfTracks_t {
         typedef GeckoHlsDemuxerWrapper Owner;
         typedef int32_t ReturnType;

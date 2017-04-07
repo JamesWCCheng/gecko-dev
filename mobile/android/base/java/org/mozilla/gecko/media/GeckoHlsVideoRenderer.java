@@ -28,37 +28,41 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
-    private static final String TAG = "GeckoHlsVideoRenderer";
+    private final String LOGTAG;
     private static boolean DEBUG = true;
-    private boolean initialized;
-    private ByteBuffer inputBuffer;
-    private int QUEUED_INPUT_SAMPLE_SIZE = 100;
-
     private final MediaCodecSelector mediaCodecSelector;
     private final FormatHolder formatHolder;
+    private final VideoRendererEventListener.EventDispatcher eventDispatcher;
+    private final long allowedJoiningTimeMs;
+    private GeckoHlsPlayer.ComponentListener playerListener;
 
+    private int QUEUED_INPUT_SAMPLE_SIZE = 100;
+    private boolean initialized;
+    private boolean inputStreamEnded;
+    private boolean waitingForData;
     private Format format;
+    private Format[] streamFormats;
+    private CodecMaxValues codecMaxValues;
+    private ByteBuffer inputBuffer;
     private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedInputSamples;
     private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedNoDurationSamples;
 
-    private boolean inputStreamEnded;
-
-    private final VideoRendererEventListener.EventDispatcher eventDispatcher;
-    private final long allowedJoiningTimeMs;
-
-    private Format[] streamFormats;
-    private CodecMaxValues codecMaxValues;
-
     private long joiningDeadlineMs;
+    private long nextKeyFrameTime;
 
-    private boolean waitingForData;
-    private GeckoHlsPlayer.ComponentListener playerListener;
+    private static void assertTrue(boolean condition) {
+        if (DEBUG && !condition) {
+            throw new AssertionError("Expected condition to be true");
+        }
+    }
 
     public GeckoHlsVideoRenderer(MediaCodecSelector mediaCodecSelector,
                                  Handler eventHandler, VideoRendererEventListener eventListener) {
         super(C.TRACK_TYPE_VIDEO);
+        LOGTAG = getClass().getSimpleName();
         Assertions.checkState(Util.SDK_INT >= 16);
 
+        nextKeyFrameTime = 0;
         initialized = false;
         this.mediaCodecSelector = Assertions.checkNotNull(mediaCodecSelector);
         formatHolder = new FormatHolder();
@@ -88,7 +92,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         try {
             decoderInfo = mediaCodecSelector.getDecoderInfo(mimeType, false);
         } catch (MediaCodecUtil.DecoderQueryException e) {
-            Log.e(TAG, e.getMessage());
+            Log.e(LOGTAG, e.getMessage());
         }
         if (decoderInfo == null) {
             return RendererCapabilities.FORMAT_UNSUPPORTED_SUBTYPE;
@@ -103,11 +107,11 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                 try {
                     decoderCapable = format.width * format.height <= MediaCodecUtil.maxH264DecodableFrameSize();
                 } catch (MediaCodecUtil.DecoderQueryException e) {
-                    Log.e(TAG, e.getMessage());
+                    Log.e(LOGTAG, e.getMessage());
                 }
                 if (!decoderCapable) {
-                    if (DEBUG) Log.d(TAG, "FalseCheck [legacyFrameSize, " + format.width + "x" + format.height + "] ["
-                            + Util.DEVICE_DEBUG_INFO + "]");
+                    if (DEBUG) Log.d(LOGTAG, "FalseCheck [legacyFrameSize, " + format.width + "x" + format.height + "] ["
+                                     + Util.DEVICE_DEBUG_INFO + "]");
                 }
             }
         }
@@ -133,7 +137,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         initialized = true;
     }
 
-    protected void releaseRenderer() {
+    protected void resetRenderer() {
         if (initialized) {
             inputBuffer = null;
             initialized = false;
@@ -142,9 +146,9 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
     @Override
     public void render(long positionUs, long elapsedRealtimeUs) {
-        if (DEBUG) Log.d(TAG, "positionUs = " + positionUs +
-                              ", elapsedRealtimeUs = "+ elapsedRealtimeUs +
-                              ", inputStreamEnded = " + inputStreamEnded);
+        if (DEBUG) Log.d(LOGTAG, "positionUs = " + positionUs +
+                         ", elapsedRealtimeUs = "+ elapsedRealtimeUs +
+                         ", inputStreamEnded = " + inputStreamEnded);
         if (inputStreamEnded) {
             return;
         }
@@ -163,10 +167,6 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         if (result == C.RESULT_FORMAT_READ) {
             onInputFormatChanged(formatHolder.format);
         }
-    }
-
-    protected void flushRenderer() {
-        clearInputSamplesQueue();
     }
 
     @Override
@@ -198,7 +198,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         // We've read a buffer.
         if (bufferForRead.isEndOfStream()) {
             inputStreamEnded = true;
-            Log.d(TAG, "if (bufferForRead.isEndOfStream()) {");
+            Log.d(LOGTAG, "Now we're at the End Of Stream.");
         }
 
         bufferForRead.flip();
@@ -251,26 +251,31 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                 }
             }
             GeckoHlsSample goingToQueue = dexmuedNoDurationSamples.poll();
-            if (DEBUG) Log.d(TAG, "[calculatDuration]:  bufferTimeUs : " + goingToQueue.info.presentationTimeUs + ", duration : " + goingToQueue.duration);
+            if (DEBUG) Log.d(LOGTAG, "[calculatDuration]:  bufferTimeUs : " + goingToQueue.info.presentationTimeUs + ", duration : " + goingToQueue.duration);
             dexmuedInputSamples.offer(goingToQueue);
         } else if (inputStreamEnded) {
-            if (DEBUG) Log.d(TAG, "inputStreamEnded, meet EOS");
             for (int i = 0; i < sizeOfNoDura; i++) {
                 // Comparing window size.
                 for (int j = -2; j < 4; j++) {
-                    if (i+j >= 0 && i+j < sizeOfNoDura && inputArray[i+j].info.presentationTimeUs > inputArray[i].info.presentationTimeUs) {
+                    if (i+j >= 0 && i+j < sizeOfNoDura &&
+                        inputArray[i+j].info.presentationTimeUs > inputArray[i].info.presentationTimeUs) {
                         inputArray[i].duration =
                             Math.min(inputArray[i].duration,
                                      inputArray[i+j].info.presentationTimeUs - inputArray[i].info.presentationTimeUs);
                     }
                 }
             }
+            // TODO : Workaround, total media duration may still lower than sample PTS.
+            long tmpDuration = 33333;
             GeckoHlsSample sample = null;
             for (sample = dexmuedNoDurationSamples.poll(); sample != null; sample = dexmuedNoDurationSamples.poll()) {
                 if (sample.duration == Long.MAX_VALUE) {
-                    sample.duration = totalDurationUs - sample.duration;
-                    if (DEBUG) Log.d(TAG, "[calculatDuration] Adjust the PTS of the last sample to " + sample.duration + " (us)");
+                    sample.duration = tmpDuration;
+                    if (DEBUG) Log.d(LOGTAG, "[calculatDuration] Adjust the PTS of the last sample to " + sample.duration + " (us)");
                 }
+                tmpDuration = sample.duration;
+                if (DEBUG) Log.d(LOGTAG, "[calculatDuration] last loop to offer samples - PTS : " + sample.info.presentationTimeUs +
+                                         ", Duration : " + sample.duration);
                 dexmuedInputSamples.offer(sample);
             }
         }
@@ -293,10 +298,19 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         }
         if (samples.isEmpty()) {
             waitingForData = true;
-        } else if (firstSampleStartTime == null) {
+        } else if (firstSampleStartTime == 0) {
             firstSampleStartTime = samples.peek().info.presentationTimeUs;
         }
         return samples;
+    }
+
+    public long getNextKeyFrameTime() {
+        for (GeckoHlsSample sample : dexmuedInputSamples) {
+            if ((sample.info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0) {
+                return sample.info.presentationTimeUs;
+            }
+        }
+        return 0;
     }
 
     @Override
@@ -310,10 +324,10 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
     @Override
     protected void onPositionReset(long positionUs, boolean joining) {
-        if (DEBUG) Log.d(TAG, "onPositionReset positionUs = " + positionUs + "joining = " + joining);
+        if (DEBUG) Log.d(LOGTAG, "onPositionReset positionUs = " + positionUs + "joining = " + joining);
         inputStreamEnded = false;
         if (initialized) {
-            flushRenderer();
+            clearInputSamplesQueue();
         }
         joiningDeadlineMs = joining && allowedJoiningTimeMs > 0
                 ? (SystemClock.elapsedRealtime() + allowedJoiningTimeMs) : C.TIME_UNSET;
@@ -342,7 +356,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     protected void onDisabled() {
         try {
             format = null;
-            releaseRenderer();
+            resetRenderer();
         } finally {
         }
     }
@@ -363,7 +377,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             } else {
             }
         }
-        releaseRenderer();
+        resetRenderer();
         maybeInitRenderer();
         eventDispatcher.inputFormatChanged(newFormat);
     }

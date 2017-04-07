@@ -27,8 +27,8 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
+    private final String LOGTAG;
     private static boolean DEBUG = false;
-    private static final String TAG = "GeckoHlsAudioRenderer";
     private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedInputSamples = new ConcurrentLinkedQueue<>();
     private static final int QUEUED_INPUT_SAMPLE_SIZE = 100;
     private boolean initialized = false;
@@ -48,6 +48,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
                                  Handler eventHandler,
                                  AudioRendererEventListener eventListener) {
         super(C.TRACK_TYPE_AUDIO);
+        LOGTAG = getClass().getSimpleName();
         Assertions.checkState(Util.SDK_INT >= 16);
         this.mediaCodecSelector = Assertions.checkNotNull(mediaCodecSelector);
         formatHolder = new FormatHolder();
@@ -67,7 +68,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         try {
             decoderInfo = mediaCodecSelector.getDecoderInfo(mimeType, false);
         } catch (MediaCodecUtil.DecoderQueryException e) {
-            Log.e(TAG, e.getMessage());
+            Log.e(LOGTAG, e.getMessage());
         }
         if (decoderInfo == null) {
             return RendererCapabilities.FORMAT_UNSUPPORTED_SUBTYPE;
@@ -93,7 +94,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
             }
         }
 
-        releaseRenderer();
+        resetRenderer();
         maybeInitRenderer();
         eventDispatcher.inputFormatChanged(newFormat);
     }
@@ -104,7 +105,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
     protected void onPositionReset(long positionUs, boolean joining) {
         inputStreamEnded = false;
         if (initialized) {
-            flushRenderer();
+            clearInputSamplesQueue();
         }
     }
 
@@ -112,7 +113,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
     protected void onDisabled() {
         try {
             format = null;
-            releaseRenderer();
+            resetRenderer();
         } finally {
         }
     }
@@ -132,13 +133,13 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
     }
 
     protected final void maybeInitRenderer() {
-        if(shouldInitRenderer()) {
-            String mimeType = format.sampleMimeType;
-
-            clearInputSamplesQueue();
-            inputBuffer = ByteBuffer.wrap(new byte[22048]);
-            initialized = true;
+        if(!shouldInitRenderer()) {
+            return;
         }
+
+        clearInputSamplesQueue();
+        inputBuffer = ByteBuffer.wrap(new byte[22048]);
+        initialized = true;
     }
 
     private void readFormat() {
@@ -147,16 +148,6 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
             onInputFormatChanged(formatHolder.format);
         }
 
-    }
-
-    protected void flushRenderer() {
-        clearInputSamplesQueue();
-    }
-
-    private void processOutputFormat() {
-    }
-
-    protected void onProcessedOutputBuffer(long presentationTimeUs) {
     }
 
     public synchronized ConcurrentLinkedQueue<GeckoHlsSample> getQueuedSamples(int number) {
@@ -171,7 +162,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         }
         if (samples.isEmpty()) {
             waitingForData = true;
-        } else if (firstSampleStartTime == null) {
+        } else if (firstSampleStartTime == 0) {
             firstSampleStartTime = samples.peek().info.presentationTimeUs;
         }
         return samples;
@@ -210,7 +201,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         boolean bufferEncrypted = bufferForRead.isEncrypted();
 
         bufferForRead.flip();
-        if (DEBUG) Log.d(TAG, "feedInputBuffersQueue: bufferTimeUs : " + bufferForRead.timeUs + ", queueSize = " + dexmuedInputSamples.size());
+        if (DEBUG) Log.d(LOGTAG, "feedInputBuffersQueue: bufferTimeUs : " + bufferForRead.timeUs + ", queueSize = " + dexmuedInputSamples.size());
 
         int size = bufferForRead.data.limit();
         byte[] realData = new byte[size];
@@ -238,9 +229,9 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
     }
 
     public void render(long positionUs, long elapsedRealtimeUs) {
-        if (DEBUG) Log.d(TAG, "positionUs = " + positionUs +
-                              ", elapsedRealtimeUs = "+ elapsedRealtimeUs +
-                              ", inputStreamEnded = " + inputStreamEnded);
+        if (DEBUG) Log.d(LOGTAG, "positionUs = " + positionUs +
+                         ", elapsedRealtimeUs = "+ elapsedRealtimeUs +
+                         ", inputStreamEnded = " + inputStreamEnded);
         if (inputStreamEnded) {
             return;
         }
@@ -254,7 +245,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         }
     }
 
-    protected void releaseRenderer() {
+    protected void resetRenderer() {
         initialized = false;
     }
 }

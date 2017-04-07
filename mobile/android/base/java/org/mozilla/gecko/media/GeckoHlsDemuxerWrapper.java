@@ -194,6 +194,12 @@ public final class GeckoHlsDemuxerWrapper {
         return samples.toArray(new GeckoHlsSample[samples.size()]);
     }
 
+    @WrapForJNI
+    private long getNextKeyFrameTime() {
+        assertTrue(player != null);
+        return player.getNextKeyFrameTime();
+    }
+
     @WrapForJNI // Called when natvie object is destroyed.
     private void destroy() {
         if (DEBUG) Log.d(LOGTAG, "destroy!! Native object is destroyed.");

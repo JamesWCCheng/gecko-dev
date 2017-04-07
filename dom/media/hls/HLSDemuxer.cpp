@@ -272,6 +272,13 @@ HLSDemuxer::GetTrackInfo(TrackType aTrack)
   }
 }
 
+int64_t
+HLSDemuxer::GetNextKeyFrameTime()
+{
+  MOZ_ASSERT(mHlsDemuxerWrapper);
+  return mHlsDemuxerWrapper->GetNextKeyFrameTime();
+}
+
 HLSDemuxer::~HLSDemuxer()
 {
   HLS_DEBUG("HLSDemuxer", "~HLSDemuxer()");
@@ -353,6 +360,7 @@ HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
   if (sampleObjectArray.IsEmpty()) {
     return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_WAITING_FOR_DATA, __func__);
   }
+
   for (auto&& demuxedSample : sampleObjectArray) {
     java::GeckoHlsSample::LocalRef sample(mozilla::Move(demuxedSample));
     java::sdk::BufferInfo::LocalRef info = sample->Info();
@@ -442,6 +450,8 @@ HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
     }
     samples->mSamples.AppendElement(mrd);
   }
+
+  UpdateNextKeyFrameTime();
   return SamplesPromise::CreateAndResolve(samples, __func__);
 }
 
@@ -451,11 +461,28 @@ HLSTrackDemuxer::Reset()
   MOZ_ASSERT(mParent, "Called after BreackCycle()");
 }
 
+void
+HLSTrackDemuxer::UpdateNextKeyFrameTime()
+{
+  MOZ_ASSERT(mParent, "Called after BreackCycle()");
+  int64_t nextKeyFrameTime = mParent->GetNextKeyFrameTime();
+  if (nextKeyFrameTime != mNextKeyframeTime.valueOr(media::TimeUnit::Zero()).ToMicroseconds()) {
+    HLS_DEBUG("HLSTrackDemuxer", "Update nextKeyFrameTime to %lld", nextKeyFrameTime);
+    mNextKeyframeTime.reset();
+    mNextKeyframeTime.emplace(media::TimeUnit::FromMicroseconds(nextKeyFrameTime));
+  }
+}
+
 nsresult
 HLSTrackDemuxer::GetNextRandomAccessPoint(media::TimeUnit* aTime)
 {
-  MonitorAutoLock mon(mMonitor);
-  *aTime = mNextRandomAccessPoint;
+  if (mNextKeyframeTime.isNothing()) {
+    // There's no next key frame.
+    *aTime =
+      media::TimeUnit::FromMicroseconds(std::numeric_limits<int64_t>::max());
+  } else {
+    *aTime = mNextKeyframeTime.value();
+  }
   return NS_OK;
 }
 

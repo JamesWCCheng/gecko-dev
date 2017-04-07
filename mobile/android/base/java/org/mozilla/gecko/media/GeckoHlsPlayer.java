@@ -354,9 +354,6 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
           }
         }
         if (DEBUG) Log.d(TAG, "Media duration = " + durationUs + "(us)" + " player.getDuration() = " + player.getDuration() + "(ms)");
-        for (GeckoHlsRendererBase r : renderers) {
-            r.updateTotalDurationUs(player.getDuration() * 1000);
-        }
     }
 
     private static String getStateString(int state) {
@@ -438,9 +435,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
             Long startTime = Long.MAX_VALUE;
             for (GeckoHlsRendererBase r : renderers) {
                 // Find the min value of the start time
-                if (r.firstSampleStartTime != null && r.firstSampleStartTime < startTime) {
-                    startTime = r.firstSampleStartTime;
-                }
+                startTime = Math.min(startTime, r.firstSampleStartTime);
             }
 
             player.seekTo(positionMs - startTime / 1000);
@@ -448,6 +443,11 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
             return false;
         }
         return true;
+    }
+
+    public long getNextKeyFrameTime() {
+        long nextKeyFrameTime = vRenderer != null ? vRenderer.getNextKeyFrameTime() : 0;
+        return nextKeyFrameTime;
     }
 
     public void release() {
