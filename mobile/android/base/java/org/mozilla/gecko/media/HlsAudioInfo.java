@@ -6,32 +6,15 @@ package org.mozilla.gecko.media;
 
 import org.mozilla.gecko.annotation.WrapForJNI;
 
+@WrapForJNI
 public final class HlsAudioInfo {
-    @WrapForJNI
     public byte[] codecSpecificData = null;
-
-    @WrapForJNI
     public byte[] extraData = null;
-
-    @WrapForJNI
     public int rate = 0;
-
-    @WrapForJNI
     public int channels = 0;
-
-    @WrapForJNI
     public int bitDepth = 0;
-
-    @WrapForJNI
     public int profile = 0;
-
-    @WrapForJNI
     public String mimeType = null;
-
-    @WrapForJNI
     public long duration = 0;
-
-    @WrapForJNI
-    public HlsAudioInfo() {
-    }
+    public HlsAudioInfo() {}
 }

@@ -14,26 +14,39 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public final class GeckoHlsSample {
-    public static final GeckoHlsSample EOS;
-    static {
-        BufferInfo eosInfo = new BufferInfo();
-        eosInfo.set(0, 0, Long.MIN_VALUE, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
-        EOS = new GeckoHlsSample(null, eosInfo, null);
-    }
-
     public byte[] byteArray;
 
     @WrapForJNI
     public long duration;
+
     @WrapForJNI
     public BufferInfo info;
+
     @WrapForJNI
     public CryptoInfo cryptoInfo;
+
     @WrapForJNI
     public void writeToByteBuffer(ByteBuffer dest) throws IOException {
         if (byteArray != null && dest != null && info.size > 0) {
             dest.put(byteArray, info.offset, info.size);
         }
+    }
+
+    @WrapForJNI
+    public boolean isEOS() {
+        return (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0;
+    }
+
+    @WrapForJNI
+    public boolean isKeyFrame() {
+        return (info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0;
+    }
+
+    @WrapForJNI
+    public void dispose() {
+      byteArray = null;
+      info = null;
+      cryptoInfo = null;
     }
 
     public static GeckoHlsSample create(ByteBuffer src, BufferInfo info, CryptoInfo cryptoInfo) {
@@ -47,21 +60,6 @@ public final class GeckoHlsSample {
         byteArray = bytes;
         this.info = info;
         this.cryptoInfo = cryptoInfo;
-    }
-
-    public void dispose() {
-        if (isEOS()) {
-            return;
-        }
-
-        byteArray = null;
-        info = null;
-        cryptoInfo = null;
-    }
-
-    public boolean isEOS() {
-        return (this == EOS) ||
-                ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0);
     }
 
     public static byte[] byteArrayFromBuffer(ByteBuffer buffer, int offset, int size) {

@@ -392,6 +392,30 @@ auto GeckoHlsResourceWrapper::Create(mozilla::jni::String::Param a0) -> GeckoHls
 const char GeckoHlsSample::name[] =
         "org/mozilla/gecko/media/GeckoHlsSample";
 
+constexpr char GeckoHlsSample::Dispose_t::name[];
+constexpr char GeckoHlsSample::Dispose_t::signature[];
+
+auto GeckoHlsSample::Dispose() const -> void
+{
+    return mozilla::jni::Method<Dispose_t>::Call(GeckoHlsSample::mCtx, nullptr);
+}
+
+constexpr char GeckoHlsSample::IsEOS_t::name[];
+constexpr char GeckoHlsSample::IsEOS_t::signature[];
+
+auto GeckoHlsSample::IsEOS() const -> bool
+{
+    return mozilla::jni::Method<IsEOS_t>::Call(GeckoHlsSample::mCtx, nullptr);
+}
+
+constexpr char GeckoHlsSample::IsKeyFrame_t::name[];
+constexpr char GeckoHlsSample::IsKeyFrame_t::signature[];
+
+auto GeckoHlsSample::IsKeyFrame() const -> bool
+{
+    return mozilla::jni::Method<IsKeyFrame_t>::Call(GeckoHlsSample::mCtx, nullptr);
+}
+
 constexpr char GeckoHlsSample::WriteToByteBuffer_t::name[];
 constexpr char GeckoHlsSample::WriteToByteBuffer_t::signature[];
 

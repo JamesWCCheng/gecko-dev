@@ -13,67 +13,37 @@ import android.util.Log;
 
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
-import com.google.android.exoplayer2.FormatHolder;
 import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
 import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
 import com.google.android.exoplayer2.RendererCapabilities;
-import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.MimeTypes;
-import com.google.android.exoplayer2.util.Util;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
-    private final String LOGTAG;
-    private static boolean DEBUG = true;
-    private final MediaCodecSelector mediaCodecSelector;
-    private final FormatHolder formatHolder;
-    private final VideoRendererEventListener.EventDispatcher eventDispatcher;
-    private final long allowedJoiningTimeMs;
-    private GeckoHlsPlayer.ComponentListener playerListener;
+import org.mozilla.gecko.AppConstants.Versions;
 
-    private int QUEUED_INPUT_SAMPLE_SIZE = 100;
-    private boolean initialized;
-    private boolean inputStreamEnded;
-    private boolean waitingForData;
-    private Format format;
+public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
+    private final VideoRendererEventListener.EventDispatcher eventDispatcher;
+
     private Format[] streamFormats;
     private CodecMaxValues codecMaxValues;
-    private ByteBuffer inputBuffer;
-    private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedInputSamples;
     private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedNoDurationSamples;
-
-    private long joiningDeadlineMs;
     private long nextKeyFrameTime;
 
-    private static void assertTrue(boolean condition) {
-        if (DEBUG && !condition) {
-            throw new AssertionError("Expected condition to be true");
-        }
-    }
-
-    public GeckoHlsVideoRenderer(MediaCodecSelector mediaCodecSelector,
-                                 Handler eventHandler, VideoRendererEventListener eventListener) {
-        super(C.TRACK_TYPE_VIDEO);
+    public GeckoHlsVideoRenderer(MediaCodecSelector selector,
+                                 Handler eventHandler,
+                                 VideoRendererEventListener eventListener) {
+        super(C.TRACK_TYPE_VIDEO, selector, (GeckoHlsPlayer.ComponentListener) eventListener);
+        assertTrue(Versions.feature16Plus);
         LOGTAG = getClass().getSimpleName();
-        Assertions.checkState(Util.SDK_INT >= 16);
+        DEBUG = true;
 
-        nextKeyFrameTime = 0;
-        initialized = false;
-        this.mediaCodecSelector = Assertions.checkNotNull(mediaCodecSelector);
-        formatHolder = new FormatHolder();
-
-        playerListener = (GeckoHlsPlayer.ComponentListener)eventListener;
-        allowedJoiningTimeMs = 5000;
         eventDispatcher = new VideoRendererEventListener.EventDispatcher(eventHandler, eventListener);
-        joiningDeadlineMs = C.TIME_UNSET;
-        waitingForData = false;
-
-        dexmuedInputSamples = new ConcurrentLinkedQueue<>();
+        nextKeyFrameTime = 0;
         dexmuedNoDurationSamples = new ConcurrentLinkedQueue<>();
     }
 
@@ -84,10 +54,11 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
     @Override
     public final int supportsFormat(Format format) {
-        String mimeType = format.sampleMimeType;
+        final String mimeType = format.sampleMimeType;
         if (!MimeTypes.isVideo(mimeType)) {
             return RendererCapabilities.FORMAT_UNSUPPORTED_TYPE;
         }
+
         MediaCodecInfo decoderInfo = null;
         try {
             decoderInfo = mediaCodecSelector.getDecoderInfo(mimeType, false);
@@ -100,19 +71,21 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
         boolean decoderCapable = decoderInfo.isCodecSupported(format.codecs);
         if (decoderCapable && format.width > 0 && format.height > 0) {
-            if (Util.SDK_INT >= 21) {
-                decoderCapable = decoderInfo.isVideoSizeAndRateSupportedV21(format.width, format.height,
-                        format.frameRate);
-            } else {
+            if (Versions.preLollipop) {
                 try {
                     decoderCapable = format.width * format.height <= MediaCodecUtil.maxH264DecodableFrameSize();
                 } catch (MediaCodecUtil.DecoderQueryException e) {
                     Log.e(LOGTAG, e.getMessage());
                 }
                 if (!decoderCapable) {
-                    if (DEBUG) Log.d(LOGTAG, "FalseCheck [legacyFrameSize, " + format.width + "x" + format.height + "] ["
-                                     + Util.DEVICE_DEBUG_INFO + "]");
+                    if (DEBUG) Log.d(LOGTAG, "FalseCheck [legacyFrameSize, " +
+                                     format.width + "x" + format.height + "]");
                 }
+            } else {
+                decoderCapable =
+                    decoderInfo.isVideoSizeAndRateSupportedV21(format.width,
+                                                               format.height,
+                                                               format.frameRate);
             }
         }
 
@@ -125,68 +98,41 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         return adaptiveSupport | formatSupport;
     }
 
-    @SuppressWarnings("deprecation")
+    @Override
     protected final void maybeInitRenderer() {
-        if (!shouldInitRenderer()) {
+        if (initialized || format == null) {
             return;
         }
+        // Calculate maximum size which might be used for target format.
         codecMaxValues = getCodecMaxValues(format, streamFormats);
-
-        clearInputSamplesQueue();
+        // Create a buffer with maximal size for reading source.
         inputBuffer = ByteBuffer.wrap(new byte[codecMaxValues.inputSize]);
         initialized = true;
     }
 
+    @Override
     protected void resetRenderer() {
-        if (initialized) {
-            inputBuffer = null;
-            initialized = false;
-        }
+        clearInputSamplesQueue();
+        nextKeyFrameTime = 0;
+        inputBuffer = null;
+        initialized = false;
     }
 
     @Override
-    public void render(long positionUs, long elapsedRealtimeUs) {
-        if (DEBUG) Log.d(LOGTAG, "positionUs = " + positionUs +
-                         ", elapsedRealtimeUs = "+ elapsedRealtimeUs +
-                         ", inputStreamEnded = " + inputStreamEnded);
-        if (inputStreamEnded) {
-            return;
-        }
-        if (format == null) {
-            readFormat();
-        }
-
-        maybeInitRenderer();
-        if (initialized) {
-            while (feedInputBuffersQueue()) {}
-        }
-    }
-
-    private void readFormat() {
-        int result = readSource(formatHolder, null);
-        if (result == C.RESULT_FORMAT_READ) {
-            onInputFormatChanged(formatHolder.format);
-        }
-    }
-
-    @Override
-    public synchronized boolean clearInputSamplesQueue() {
-        dexmuedInputSamples.clear();
-        dexmuedNoDurationSamples.clear();
-        return true;
-    }
-
-    private synchronized boolean feedInputBuffersQueue() {
+    protected boolean feedInputBuffersQueue() {
         if (!initialized || inputStreamEnded ||
             dexmuedInputSamples.size() >= QUEUED_INPUT_SAMPLE_SIZE) {
-            // We need to reinitialize the codec or the input stream has ended.
+            // Need to reinitialize the renderer or the input stream has ended
+            // or we just reached the maximum queue size.
             return false;
         }
 
-        DecoderInputBuffer bufferForRead = new DecoderInputBuffer(DecoderInputBuffer.BUFFER_REPLACEMENT_MODE_DISABLED);
+        DecoderInputBuffer bufferForRead =
+            new DecoderInputBuffer(DecoderInputBuffer.BUFFER_REPLACEMENT_MODE_DISABLED);
         bufferForRead.data = inputBuffer;
         bufferForRead.clear();
 
+        // Read data from HlsMediaSource
         int result = readSource(formatHolder, bufferForRead);
         if (result == C.RESULT_NOTHING_READ) {
             return false;
@@ -195,6 +141,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             onInputFormatChanged(formatHolder.format);
             return true;
         }
+
         // We've read a buffer.
         if (bufferForRead.isEndOfStream()) {
             inputStreamEnded = true;
@@ -211,7 +158,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
         CryptoInfo cryptoInfo = bufferForRead.isEncrypted() ? bufferForRead.cryptoInfo.getFrameworkCryptoInfoV16() : null;
         BufferInfo bufferInfo = new BufferInfo();
-        // The flags in DecoderInputBuffer is syned with MediaCodec Buffer flags.
+        // Flags in DecoderInputBuffer are syned with MediaCodec Buffer flags.
         int flags = 0;
         flags |= bufferForRead.isKeyFrame() ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0;
         flags |= bufferForRead.isEndOfStream() ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0;
@@ -220,24 +167,57 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         GeckoHlsSample sample = GeckoHlsSample.create(buffer, bufferInfo, cryptoInfo);
         calculatDuration(sample);
 
-        if (waitingForData) {
+        if (waitingForData && dexmuedInputSamples.size() > 0) {
             playerListener.onDataArrived();
             waitingForData = false;
         }
         return true;
     }
 
+    @Override
+    protected boolean clearInputSamplesQueue() {
+        dexmuedInputSamples.clear();
+        dexmuedNoDurationSamples.clear();
+        return true;
+    }
+
+    @Override
+    protected void onInputFormatChanged(Format newFormat) {
+        Format oldFormat = format;
+        format = newFormat;
+
+        handleDrmInitChanged(oldFormat, newFormat);
+
+        resetRenderer();
+        maybeInitRenderer();
+        eventDispatcher.inputFormatChanged(newFormat);
+    }
+
     private void calculatDuration(GeckoHlsSample inputSample) {
-        // TODO : Temparary code here, need to refacotr !!
+        /*
+         * NOTE :
+         * Since we customized renderer as a demuxer. Here we're not able to
+         * obtain duration from the DecoderInputBuffer as there's no duration inside.
+         * So we calcualte it by referring to nearby samples' timestamp.
+         * A temporary queue |dexmuedNoDurationSamples| is used to queue demuxed
+         * samples which have no duration information at first.
+         * Considering there're 6 demuxed samples in the queue already,
+         * e.g. |-2|-1|0|1|2|3|...
+         * Once a new demuxed sample A (7th) is put into the temporary queue,
+         * e.g. |-2|-1|0|1|2|3|A|...
+         * we are able to calculate the correct duration for sample 0 by finding
+         * the most closest but greater pts than sample 0 among these 6 samples,
+         * here, let's say sample -2 ~ 3.
+         */
         if (inputSample != null) {
             dexmuedNoDurationSamples.offer(inputSample);
         }
         int sizeOfNoDura = dexmuedNoDurationSamples.size();
         int range = sizeOfNoDura >= 7 ? 7 : sizeOfNoDura;
         GeckoHlsSample[] inputArray =
-                dexmuedNoDurationSamples.toArray(new GeckoHlsSample[sizeOfNoDura]);
+            dexmuedNoDurationSamples.toArray(new GeckoHlsSample[sizeOfNoDura]);
         if (range >= 7 && !inputStreamEnded) {
-            // Calculate the first 'range' elements
+            // Calculate the first 'range' elements.
             for (int i = 0; i < range; i++) {
                 // Comparing window size.
                 for (int j = -2; j < 4; j++) {
@@ -250,12 +230,13 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                     }
                 }
             }
-            GeckoHlsSample goingToQueue = dexmuedNoDurationSamples.poll();
-            if (DEBUG) Log.d(LOGTAG, "[calculatDuration]:  bufferTimeUs : " + goingToQueue.info.presentationTimeUs + ", duration : " + goingToQueue.duration);
-            dexmuedInputSamples.offer(goingToQueue);
+            GeckoHlsSample toQueue = dexmuedNoDurationSamples.poll();
+            if (DEBUG) Log.d(LOGTAG, "Demuxed sample PTS : " +
+                             toQueue.info.presentationTimeUs +
+                             ", duration : " + toQueue.duration);
+            dexmuedInputSamples.offer(toQueue);
         } else if (inputStreamEnded) {
             for (int i = 0; i < sizeOfNoDura; i++) {
-                // Comparing window size.
                 for (int j = -2; j < 4; j++) {
                     if (i+j >= 0 && i+j < sizeOfNoDura &&
                         inputArray[i+j].info.presentationTimeUs > inputArray[i].info.presentationTimeUs) {
@@ -265,43 +246,23 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                     }
                 }
             }
-            // TODO : Workaround, total media duration may still lower than sample PTS.
+            // TODO : We're not able to calculate the duration for the last sample.
+            //        A workaround here is to assign a close duration to it.
             long tmpDuration = 33333;
             GeckoHlsSample sample = null;
             for (sample = dexmuedNoDurationSamples.poll(); sample != null; sample = dexmuedNoDurationSamples.poll()) {
                 if (sample.duration == Long.MAX_VALUE) {
                     sample.duration = tmpDuration;
-                    if (DEBUG) Log.d(LOGTAG, "[calculatDuration] Adjust the PTS of the last sample to " + sample.duration + " (us)");
+                    if (DEBUG) Log.d(LOGTAG, "Adjust the PTS of the last sample to " +
+                                     sample.duration + " (us)");
                 }
                 tmpDuration = sample.duration;
-                if (DEBUG) Log.d(LOGTAG, "[calculatDuration] last loop to offer samples - PTS : " + sample.info.presentationTimeUs +
-                                         ", Duration : " + sample.duration);
+                if (DEBUG) Log.d(LOGTAG, "last loop to offer samples - PTS : " +
+                                 sample.info.presentationTimeUs + ", Duration : " +
+                                 sample.duration);
                 dexmuedInputSamples.offer(sample);
             }
         }
-    }
-
-    @Override
-    public boolean isEnded() {
-        return inputStreamEnded;
-    }
-
-    public synchronized ConcurrentLinkedQueue<GeckoHlsSample> getQueuedSamples(int number) {
-        ConcurrentLinkedQueue<GeckoHlsSample> samples = new ConcurrentLinkedQueue<GeckoHlsSample>();
-        int queuedSize = dexmuedInputSamples.size();
-        for (int i = 0; i < queuedSize; i++) {
-            if (i >= number) {
-                break;
-            }
-            GeckoHlsSample sample = dexmuedInputSamples.poll();
-            samples.offer(sample);
-        }
-        if (samples.isEmpty()) {
-            waitingForData = true;
-        } else if (firstSampleStartTime == 0) {
-            firstSampleStartTime = samples.peek().info.presentationTimeUs;
-        }
-        return samples;
     }
 
     public long getNextKeyFrameTime() {
@@ -314,72 +275,20 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     }
 
     @Override
-    protected void onEnabled(boolean joining) {
-    }
-
-    @Override
     protected void onStreamChanged(Format[] formats) {
         streamFormats = formats;
     }
 
-    @Override
-    protected void onPositionReset(long positionUs, boolean joining) {
-        if (DEBUG) Log.d(LOGTAG, "onPositionReset positionUs = " + positionUs + "joining = " + joining);
-        inputStreamEnded = false;
-        if (initialized) {
-            clearInputSamplesQueue();
-        }
-        joiningDeadlineMs = joining && allowedJoiningTimeMs > 0
-                ? (SystemClock.elapsedRealtime() + allowedJoiningTimeMs) : C.TIME_UNSET;
-    }
+    protected void handleDrmInitChanged(Format oldFormat, Format newFormat) {
+        Object oldDrmInit = oldFormat == null ? null : oldFormat.drmInitData;
+        Object newDrnInit = newFormat.drmInitData;
 
-    @Override
-    public boolean isReady() {
-        if (format != null) {
-            // Ready. If we were joining then we've now joined, so clear the joining deadline.
-            joiningDeadlineMs = C.TIME_UNSET;
-            return true;
-        } else if (joiningDeadlineMs == C.TIME_UNSET) {
-            // Not joining.
-            return false;
-        } else if (SystemClock.elapsedRealtime() < joiningDeadlineMs) {
-            // Joining and still within the joining deadline.
-            return true;
-        } else {
-            // The joining deadline has been exceeded. Give up and clear the deadline.
-            joiningDeadlineMs = C.TIME_UNSET;
-            return false;
-        }
-    }
-
-    @Override
-    protected void onDisabled() {
-        try {
-            format = null;
-            resetRenderer();
-        } finally {
-        }
-    }
-
-    protected boolean shouldInitRenderer() {
-        return !initialized && format != null;
-    }
-
-    protected void onInputFormatChanged(Format newFormat) {
-        Format oldFormat = format;
-        format = newFormat;
-
-        boolean drmInitDataChanged = !Util.areEqual(format.drmInitData, oldFormat == null ? null
-                : oldFormat.drmInitData);
-        if (drmInitDataChanged) {
-            if (format.drmInitData != null) {
-//                TODO: May need to notify reader
+//      TODO: Notify MFR it's encrypted or not.
+        if (newDrnInit != oldDrmInit) {
+            if (newDrnInit != null) {
             } else {
             }
         }
-        resetRenderer();
-        maybeInitRenderer();
-        eventDispatcher.inputFormatChanged(newFormat);
     }
 
     private static CodecMaxValues getCodecMaxValues(Format format, Format[] streamFormats) {
@@ -417,11 +326,6 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                 minCompressionRatio = 2;
                 break;
             case MimeTypes.VIDEO_H264:
-                if ("BRAVIA 4K 2015".equals(Util.MODEL)) {
-                    // The Sony BRAVIA 4k TV has input buffers that are too small for the calculated 4k video
-                    // maximum input size, so use the default value.
-                    return Format.NO_VALUE;
-                }
                 // Round up width/height to an integer number of macroblocks.
                 maxPixels = ((format.width + 15) / 16) * ((format.height + 15) / 16) * 16 * 16;
                 minCompressionRatio = 2;
@@ -446,7 +350,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
     private static boolean areAdaptationCompatible(Format first, Format second) {
         return first.sampleMimeType.equals(second.sampleMimeType)
-                && getRotationDegrees(first) == getRotationDegrees(second);
+               && getRotationDegrees(first) == getRotationDegrees(second);
     }
 
     private static int getRotationDegrees(Format format) {
@@ -454,16 +358,13 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     }
 
     private static final class CodecMaxValues {
-
         public final int width;
         public final int height;
         public final int inputSize;
-
         public CodecMaxValues(int width, int height, int inputSize) {
             this.width = width;
             this.height = height;
             this.inputSize = inputSize;
         }
-
     }
 }

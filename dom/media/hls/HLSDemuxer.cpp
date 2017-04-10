@@ -372,16 +372,14 @@ HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
     bool ok = NS_SUCCEEDED(info->PresentationTimeUs(&presentationTimeUs));
     mrd->mTime = presentationTimeUs;
     mrd->mTimecode = presentationTimeUs;
-    int32_t flags = 0;
-    ok = NS_SUCCEEDED(info->Flags(&flags));
 
-    if ((flags & MediaCodec::BUFFER_FLAG_END_OF_STREAM) == MediaCodec::BUFFER_FLAG_END_OF_STREAM) {
+    if (sample->IsEOS()) {
       // TODO: consider using an elegant way to handle this case.
       HLS_DEBUG("HLSTrackDemuxer", "Met BUFFER_FLAG_END_OF_STREAM.");
       return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_END_OF_STREAM, __func__);
     }
 
-    mrd->mKeyframe = flags & MediaCodec::BUFFER_FLAG_KEY_FRAME;
+    mrd->mKeyframe = sample->IsKeyFrame();
     // TODO : Fix this when we know how to calculate from ExoPlayer.
     mrd->mDuration = (mType == TrackInfo::kVideoTrack) ? (int64_t)sample->Duration() : 0;
 
@@ -449,6 +447,8 @@ HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
       }
     }
     samples->mSamples.AppendElement(mrd);
+
+    sample->Dispose();
   }
 
   UpdateNextKeyFrameTime();

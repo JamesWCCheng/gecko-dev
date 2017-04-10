@@ -12,50 +12,31 @@ import android.util.Log;
 
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
-import com.google.android.exoplayer2.FormatHolder;
 import com.google.android.exoplayer2.RendererCapabilities;
 import com.google.android.exoplayer2.audio.AudioRendererEventListener;
 import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
 import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
-import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.MimeTypes;
-import com.google.android.exoplayer2.util.Util;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.mozilla.gecko.AppConstants.Versions;
+
 public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
-    private final String LOGTAG;
-    private static boolean DEBUG = false;
-    private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedInputSamples = new ConcurrentLinkedQueue<>();
-    private static final int QUEUED_INPUT_SAMPLE_SIZE = 100;
-    private boolean initialized = false;
-    private ByteBuffer inputBuffer = null;
-    private boolean waitingForData;
-    private GeckoHlsPlayer.ComponentListener playerListener;
-
-    private final MediaCodecSelector mediaCodecSelector;
-    private final FormatHolder formatHolder;
-
     private final AudioRendererEventListener.EventDispatcher eventDispatcher;
 
-    private Format format;
-    private boolean inputStreamEnded;
-
-    public GeckoHlsAudioRenderer(MediaCodecSelector mediaCodecSelector,
+    public GeckoHlsAudioRenderer(MediaCodecSelector selector,
                                  Handler eventHandler,
                                  AudioRendererEventListener eventListener) {
-        super(C.TRACK_TYPE_AUDIO);
+        super(C.TRACK_TYPE_AUDIO, selector, (GeckoHlsPlayer.ComponentListener) eventListener);
+        assertTrue(Versions.feature16Plus);
         LOGTAG = getClass().getSimpleName();
-        Assertions.checkState(Util.SDK_INT >= 16);
-        this.mediaCodecSelector = Assertions.checkNotNull(mediaCodecSelector);
-        formatHolder = new FormatHolder();
-        eventDispatcher = new AudioRendererEventListener.EventDispatcher(eventHandler, eventListener);
+        DEBUG = false;
 
-        waitingForData = false;
-        playerListener = (GeckoHlsPlayer.ComponentListener)eventListener;
+        eventDispatcher = new AudioRendererEventListener.EventDispatcher(eventHandler, eventListener);
     }
 
     @Override
@@ -73,7 +54,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         if (decoderInfo == null) {
             return RendererCapabilities.FORMAT_UNSUPPORTED_SUBTYPE;
         }
-        boolean decoderCapable = Util.SDK_INT < 21 ||
+        boolean decoderCapable = Versions.preLollipop ||
                                  (format.sampleRate == -1 ||
                                   decoderInfo.isAudioSampleRateSupportedV21(format.sampleRate)) &&
                                  (format.channelCount == -1 ||
@@ -84,106 +65,49 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         return RendererCapabilities.ADAPTIVE_NOT_SEAMLESS | formatSupport;
     }
 
-    protected void onInputFormatChanged(Format newFormat) {
-        Format oldFormat = format;
-        format = newFormat;
-        boolean drmInitDataChanged = !Util.areEqual(format.drmInitData, oldFormat == null ? null : oldFormat.drmInitData);
-        if (drmInitDataChanged) {
-            if (format.drmInitData != null) {
-                // TODO : Notify encrypted
+    protected void handleDrmInitChanged(Format oldFormat, Format newFormat) {
+        Object oldDrmInit = oldFormat == null ? null : oldFormat.drmInitData;
+        Object newDrnInit = newFormat.drmInitData;
+
+//      TODO: Notify MFR it's encrypted or not.
+        if (newDrnInit != oldDrmInit) {
+            if (newDrnInit != null) {
+            } else {
             }
         }
-
-        resetRenderer();
-        maybeInitRenderer();
-        eventDispatcher.inputFormatChanged(newFormat);
-    }
-
-    protected void onEnabled(boolean joining) {
-    }
-
-    protected void onPositionReset(long positionUs, boolean joining) {
-        inputStreamEnded = false;
-        if (initialized) {
-            clearInputSamplesQueue();
-        }
     }
 
     @Override
-    protected void onDisabled() {
-        try {
-            format = null;
-            resetRenderer();
-        } finally {
-        }
-    }
-
-    @Override
-    public boolean isEnded() {
-        return inputStreamEnded;
-    }
-
-    @Override
-    public boolean isReady() {
-        return format != null;
-    }
-
-    protected boolean shouldInitRenderer() {
-        return !initialized && format != null;
-    }
-
     protected final void maybeInitRenderer() {
-        if(!shouldInitRenderer()) {
+        if(initialized || format == null) {
             return;
         }
 
-        clearInputSamplesQueue();
         inputBuffer = ByteBuffer.wrap(new byte[22048]);
         initialized = true;
     }
 
-    private void readFormat() {
-        int result = readSource(formatHolder, (DecoderInputBuffer)null);
-        if(result == -5) {
-            onInputFormatChanged(formatHolder.format);
-        }
-
-    }
-
-    public synchronized ConcurrentLinkedQueue<GeckoHlsSample> getQueuedSamples(int number) {
-        ConcurrentLinkedQueue<GeckoHlsSample> samples = new ConcurrentLinkedQueue<GeckoHlsSample>();
-        int queuedSize = dexmuedInputSamples.size();
-        for (int i = 0; i < queuedSize; i++) {
-            if (i >= number) {
-                break;
-            }
-            GeckoHlsSample sample = dexmuedInputSamples.poll();
-            samples.offer(sample);
-        }
-        if (samples.isEmpty()) {
-            waitingForData = true;
-        } else if (firstSampleStartTime == 0) {
-            firstSampleStartTime = samples.peek().info.presentationTimeUs;
-        }
-        return samples;
+    @Override
+    protected void resetRenderer() {
+        clearInputSamplesQueue();
+        inputBuffer = null;
+        initialized = false;
     }
 
     @Override
-    public synchronized boolean clearInputSamplesQueue() {
-        dexmuedInputSamples.clear();
-        return true;
-    }
-
-    private synchronized boolean feedInputBuffersQueue() {
+    protected boolean feedInputBuffersQueue() {
         if (!initialized || inputStreamEnded ||
             dexmuedInputSamples.size() >= QUEUED_INPUT_SAMPLE_SIZE) {
-            // We need to reinitialize the codec or the input stream has ended.
+            // Need to reinitialize the renderer or the input stream has ended
+            // or we just reached the maximum queue size.
             return false;
         }
-        DecoderInputBuffer bufferForRead = new DecoderInputBuffer(DecoderInputBuffer.BUFFER_REPLACEMENT_MODE_DISABLED);
+        DecoderInputBuffer bufferForRead =
+            new DecoderInputBuffer(DecoderInputBuffer.BUFFER_REPLACEMENT_MODE_DISABLED);
         bufferForRead.data = inputBuffer;
         bufferForRead.clear();
 
+        // Read data from HlsMediaSource
         int result = readSource(formatHolder, bufferForRead);
         if (result == C.RESULT_NOTHING_READ) {
             return false;
@@ -198,10 +122,10 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
             inputStreamEnded = true;
         }
 
-        boolean bufferEncrypted = bufferForRead.isEncrypted();
-
         bufferForRead.flip();
-        if (DEBUG) Log.d(LOGTAG, "feedInputBuffersQueue: bufferTimeUs : " + bufferForRead.timeUs + ", queueSize = " + dexmuedInputSamples.size());
+        if (DEBUG) Log.d(LOGTAG, "feedInputBuffersQueue: bufferTimeUs : " +
+                         bufferForRead.timeUs + ", queueSize = " +
+                         dexmuedInputSamples.size());
 
         int size = bufferForRead.data.limit();
         byte[] realData = new byte[size];
@@ -209,10 +133,9 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         ByteBuffer buffer = ByteBuffer.wrap(realData);
         inputBuffer.clear();
 
-        // add the demuxed sample buffer into linked list
         CryptoInfo cryptoInfo = bufferForRead.isEncrypted() ? bufferForRead.cryptoInfo.getFrameworkCryptoInfoV16() : null;
         BufferInfo bufferInfo = new BufferInfo();
-        // The flags in DecoderInputBuffer is syned with MediaCodec Buffer flags.
+        // Flags in DecoderInputBuffer are syned with MediaCodec Buffer flags.
         int flags = 0;
         flags |= bufferForRead.isKeyFrame() ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0;
         flags |= bufferForRead.isEndOfStream() ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0;
@@ -220,34 +143,28 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         GeckoHlsSample sample = GeckoHlsSample.create(buffer, bufferInfo, cryptoInfo);
         dexmuedInputSamples.offer(sample);
 
-        if (waitingForData) {
+        if (waitingForData && dexmuedInputSamples.size() > 0) {
             playerListener.onDataArrived();
             waitingForData = false;
         }
-
         return true;
     }
 
-    public void render(long positionUs, long elapsedRealtimeUs) {
-        if (DEBUG) Log.d(LOGTAG, "positionUs = " + positionUs +
-                         ", elapsedRealtimeUs = "+ elapsedRealtimeUs +
-                         ", inputStreamEnded = " + inputStreamEnded);
-        if (inputStreamEnded) {
-            return;
-        }
-        if(format == null) {
-            readFormat();
-        }
-
-        maybeInitRenderer();
-        if (initialized) {
-            while (feedInputBuffersQueue()) {}
-        }
+    @Override
+    protected boolean clearInputSamplesQueue() {
+        dexmuedInputSamples.clear();
+        return true;
     }
 
-    protected void resetRenderer() {
-        initialized = false;
+    @Override
+    protected void onInputFormatChanged(Format newFormat) {
+        Format oldFormat = format;
+        format = newFormat;
+
+        handleDrmInitChanged(oldFormat, newFormat);
+
+        resetRenderer();
+        maybeInitRenderer();
+        eventDispatcher.inputFormatChanged(newFormat);
     }
 }
-
-
