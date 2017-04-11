@@ -555,6 +555,8 @@ StringListContains(const ListString& aList, const ItemString& aItem)
   return false;
 }
 
+bool IsHttpLiveStreamingType(const mozilla::MediaContainerType& aType);
+
 } // end namespace mozilla
 
 #endif

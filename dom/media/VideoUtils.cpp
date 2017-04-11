@@ -522,4 +522,15 @@ CreateTrackInfoWithMIMETypeAndContainerTypeExtraParameters(
   return trackInfo;
 }
 
+bool
+IsHttpLiveStreamingType(const mozilla::MediaContainerType& aType)
+{
+  return // For m3u8.
+         // https://tools.ietf.org/html/draft-pantos-http-live-streaming-19#section-10
+         aType.Type() == MEDIAMIMETYPE("application/vnd.apple.mpegurl")
+         // Some sites serve these as the informal m3u type.
+         || aType.Type() == MEDIAMIMETYPE("application/x-mpegurl")
+         || aType.Type() == MEDIAMIMETYPE("audio/x-mpegurl");
+}
+
 } // end namespace mozilla
