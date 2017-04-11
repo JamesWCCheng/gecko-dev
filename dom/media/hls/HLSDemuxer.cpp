@@ -1,0 +1,525 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include <algorithm>
+#include <limits>
+#include <stdint.h>
+
+#include "GeneratedJNINatives.h"
+#include "GeneratedJNIWrappers.h"
+#include "HLSDemuxer.h"
+#include "HLSResource.h"
+#include "HLSUtils.h"
+#include "MediaCodec.h"
+#include "nsPrintfCString.h"
+#include "mozilla/Unused.h"
+
+using namespace mozilla::java;
+
+namespace mozilla {
+
+//static Atomic<uint32_t> sStreamSourceID(0u);
+
+typedef TrackInfo::TrackType TrackType;
+using media::TimeUnit;
+using media::TimeIntervals;
+using media::TimeInterval;
+
+static
+VideoInfo::Rotation getVideoInfoRotation(int aRotation) {
+  switch (aRotation) {
+    case 0:
+      return VideoInfo::Rotation::kDegree_0;
+    case 90:
+      return VideoInfo::Rotation::kDegree_90;
+    case 180:
+      return VideoInfo::Rotation::kDegree_180;
+    case 270:
+      return VideoInfo::Rotation::kDegree_270;
+    default:
+      return VideoInfo::Rotation::kDegree_0;
+  }
+}
+
+static
+mozilla::StereoMode getStereoMode(int aMode) {
+  switch (aMode) {
+    case 0:
+      return mozilla::StereoMode::MONO;
+    case 1:
+      return mozilla::StereoMode::TOP_BOTTOM;
+    case 2:
+      return mozilla::StereoMode::LEFT_RIGHT;
+    default:
+      return mozilla::StereoMode::MONO;
+  }
+}
+
+class HlsDemuxerCallbacksSupport
+  : public GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::Natives<HlsDemuxerCallbacksSupport>
+{
+public:
+  typedef GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::Natives<HlsDemuxerCallbacksSupport> NativeCallbacks;
+  using NativeCallbacks::DisposeNative;
+  using NativeCallbacks::AttachNative;
+
+  HlsDemuxerCallbacksSupport(HLSDemuxer* aDemuxer) {
+    MOZ_ASSERT(aDemuxer);
+    mDemuxer = aDemuxer;
+  }
+
+  void OnInitialized(bool aHasAudio, bool aHasVideo) {
+    MOZ_ASSERT(mDemuxer);
+    mDemuxer->OnInitialized(aHasAudio, aHasVideo);
+  }
+
+  void OnDemuxerError(int aErrorCode) {}
+
+private:
+  HLSDemuxer* mDemuxer;
+};
+
+HLSDemuxer::HLSDemuxer(MediaResource* aResource)
+  : mResource(aResource)
+  , mTaskQueue(new AutoTaskQueue(GetMediaThreadPool(MediaThreadType::PLAYBACK),
+                                 /* aSupportsTailDispatch = */ false))
+  , mMonitor("HLSDemuxer")
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  HlsDemuxerCallbacksSupport::Init();
+  mJavaCallbacks = GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New();
+  MOZ_ASSERT(mJavaCallbacks);
+
+  HlsDemuxerCallbacksSupport::AttachNative(mJavaCallbacks,
+                                           mozilla::MakeUnique<HlsDemuxerCallbacksSupport>(this));
+
+  auto hlsRes = static_cast<HLSResource*>(aResource);
+  mHlsDemuxerWrapper = GeckoHlsDemuxerWrapper::Create(hlsRes->GetResourceWrapper(), mJavaCallbacks);
+  MOZ_ASSERT(mHlsDemuxerWrapper);
+}
+
+void
+HLSDemuxer::OnInitialized(bool aHasAudio, bool aHasVideo)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  HLS_DEBUG("HLSDemuxer", "OnInitialized");
+
+  if (aHasAudio) {
+    UpdateAudioInfo(0);
+  }
+  if (aHasVideo) {
+    UpdateVideoInfo(0);
+  }
+}
+// Due to inaccuracies in determining buffer end
+// frames (Bug 1065207). This value is based on videos seen in the wild.
+const TimeUnit HLSDemuxer::EOS_FUZZ = media::TimeUnit::FromMicroseconds(500000);
+
+RefPtr<HLSDemuxer::InitPromise>
+HLSDemuxer::Init()
+{
+  HLS_DEBUG("HLSDemuxer", "Init()");
+  RefPtr<HLSDemuxer> self = this;
+  return InvokeAsync(GetTaskQueue(), __func__,
+    [self](){
+      RefPtr<InitPromise> p = self->mInitPromise.Ensure(__func__);
+      return p;
+    });
+}
+
+void HLSDemuxer::NotifyDataArrived()
+{
+  HLS_DEBUG("HLSDemuxer", "NotifyDataArrived()");
+  if (mInitPromise.IsEmpty()) {
+    return;
+  }
+  mInitPromise.ResolveIfExists(NS_OK, __func__);
+}
+
+bool
+HLSDemuxer::HasTrackType(TrackType aType) const
+{
+  MonitorAutoLock mon(mMonitor);
+  HLS_DEBUG("HLSDemuxer", "HasTrackType(%d)", aType);
+  switch (aType) {
+    case TrackType::kAudioTrack:
+      return mInfo.HasAudio();
+    case TrackType::kVideoTrack:
+      return mInfo.HasVideo();
+    default:
+      return false;
+  }
+}
+
+uint32_t
+HLSDemuxer::GetNumberTracks(TrackType aType) const
+{
+  HLS_DEBUG("HLSDemuxer", "GetNumberTracks(%d)", aType);
+  switch (aType) {
+    case TrackType::kAudioTrack:
+      return mHlsDemuxerWrapper->GetNumberOfTracks(1);
+    case TrackType::kVideoTrack:
+      return mHlsDemuxerWrapper->GetNumberOfTracks(2);
+    default:
+      return 0;
+  }
+}
+
+already_AddRefed<MediaTrackDemuxer>
+HLSDemuxer::GetTrackDemuxer(TrackType aType, uint32_t aTrackNumber)
+{
+  HLS_DEBUG("HLSDemuxer", "GetTrackDemuxer(%d)", aType);
+  RefPtr<HLSTrackDemuxer> e = new HLSTrackDemuxer(this, aType);
+  mDemuxers.AppendElement(e);
+  return e.forget();
+}
+
+bool
+HLSDemuxer::IsSeekable() const
+{
+  return true;
+}
+
+UniquePtr<EncryptionInfo>
+HLSDemuxer::GetCrypto()
+{
+  MonitorAutoLock mon(mMonitor);
+  auto crypto = MakeUnique<EncryptionInfo>();
+  *crypto = mInfo.mCrypto;
+  return crypto;
+}
+
+TrackInfo*
+HLSDemuxer::GetTrackInfo(TrackType aTrack)
+{
+  MonitorAutoLock mon(mMonitor);
+  switch (aTrack) {
+    case TrackType::kAudioTrack: {
+      return &mInfo.mAudio;
+    }
+    case TrackType::kVideoTrack: {
+      return &mInfo.mVideo;
+    }
+    default:
+      return nullptr;
+  }
+}
+
+int64_t
+HLSDemuxer::GetNextKeyFrameTime()
+{
+  MOZ_ASSERT(mHlsDemuxerWrapper);
+  return mHlsDemuxerWrapper->GetNextKeyFrameTime();
+}
+
+void
+HLSDemuxer::UpdateAudioInfo(int index)
+{
+  MOZ_ASSERT(mHlsDemuxerWrapper);
+  HLS_DEBUG("HLSDemuxer", "UpdateAudioInfo (%d)", index);
+  jni::Object::LocalRef infoObj = mHlsDemuxerWrapper->GetAudioInfo(index);
+  if (infoObj) {
+    java::HlsAudioInfo::LocalRef audioInfo(mozilla::Move(infoObj));
+    mInfo.mAudio.mRate = audioInfo->Rate();
+    mInfo.mAudio.mChannels = audioInfo->Channels();
+    mInfo.mAudio.mProfile = audioInfo->Profile();
+    mInfo.mAudio.mBitDepth = audioInfo->BitDepth();
+    mInfo.mAudio.mMimeType = NS_ConvertUTF16toUTF8(audioInfo->MimeType()->ToString());
+    mInfo.mAudio.mDuration = TimeUnit::FromMicroseconds(audioInfo->Duration());
+    auto&& csd = audioInfo->CodecSpecificData()->GetElements();
+    mInfo.mAudio.mCodecSpecificConfig->Clear();
+    mInfo.mAudio.mCodecSpecificConfig->AppendElements(reinterpret_cast<uint8_t*>(&csd[0]),
+                                                      csd.Length());
+  }
+}
+
+void
+HLSDemuxer::UpdateVideoInfo(int index)
+{
+  MOZ_ASSERT(mHlsDemuxerWrapper);
+  jni::Object::LocalRef infoObj = mHlsDemuxerWrapper->GetVideoInfo(index);
+  if (infoObj) {
+    java::HlsVideoInfo::LocalRef videoInfo(mozilla::Move(infoObj));
+    mInfo.mVideo.mStereoMode = getStereoMode(videoInfo->StereoMode());
+    mInfo.mVideo.mRotation = getVideoInfoRotation(videoInfo->Rotation());
+    //TODO: Check how to get this information since DecoderInputBuffer did not provide this info.
+    mInfo.mVideo.mImage.width = videoInfo->DisplayX();
+    mInfo.mVideo.mImage.height = videoInfo->DisplayY();
+    mInfo.mVideo.mDisplay.width = videoInfo->DisplayX();
+    mInfo.mVideo.mDisplay.height = videoInfo->DisplayY();
+    mInfo.mVideo.mMimeType = NS_ConvertUTF16toUTF8(videoInfo->MimeType()->ToString());
+    mInfo.mVideo.mDuration = TimeUnit::FromMicroseconds(videoInfo->Duration());
+    // We don't need H264Converter to be involved since MediaCodec accept the sample format we provided.
+    mInfo.mVideo.mNeedConversion = false;
+
+    if (videoInfo->ExtraData()) {
+      auto&& extraData = videoInfo->ExtraData()->GetElements();
+      mInfo.mVideo.mExtraData->Clear();
+      if (extraData.Length() > 0) {
+        mInfo.mVideo.mExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
+                                                extraData.Length());
+      }
+    }
+    HLS_DEBUG("HLSDemuxer", "UpdateVideoInfo (%d) / I(%dx%d) / D(%dx%d)",
+      index, mInfo.mVideo.mImage.width, mInfo.mVideo.mImage.height,
+      mInfo.mVideo.mDisplay.width, mInfo.mVideo.mDisplay.height);
+  }
+}
+
+HLSDemuxer::~HLSDemuxer()
+{
+  HLS_DEBUG("HLSDemuxer", "~HLSDemuxer()");
+  if (mJavaCallbacks) {
+    HlsDemuxerCallbacksSupport::DisposeNative(mJavaCallbacks);
+    mJavaCallbacks = nullptr;
+  }
+  if (mHlsDemuxerWrapper) {
+    mHlsDemuxerWrapper->Destroy();
+    mHlsDemuxerWrapper = nullptr;
+  }
+  mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
+}
+
+HLSTrackDemuxer::HLSTrackDemuxer(HLSDemuxer* aParent, TrackInfo::TrackType aType)
+  : mParent(aParent)
+  , mType(aType)
+  , mMonitor("HLSTrackDemuxer")
+  , mReset(true)
+  , mPreRoll(TimeUnit::FromMicroseconds(0))
+{
+  mExtraData = new MediaByteBuffer;
+}
+
+UniquePtr<TrackInfo>
+HLSTrackDemuxer::GetInfo() const
+{
+  return mParent->GetTrackInfo(mType)->Clone();
+}
+
+RefPtr<HLSTrackDemuxer::SeekPromise>
+HLSTrackDemuxer::Seek(const media::TimeUnit& aTime)
+{
+  MOZ_ASSERT(mParent, "Called after BreackCycle()");
+  return InvokeAsync<media::TimeUnit&&>(
+           mParent->GetTaskQueue(), this, __func__,
+           &HLSTrackDemuxer::DoSeek, aTime);
+}
+
+RefPtr<HLSTrackDemuxer::SeekPromise>
+HLSTrackDemuxer::DoSeek(const media::TimeUnit& aTime)
+{
+  MOZ_ASSERT(mParent, "Called after BreackCycle()");
+  int64_t seekTimeUs = aTime.ToMicroseconds();
+  int64_t seekTimeMs = seekTimeUs / 1000;
+  bool result = mParent->mHlsDemuxerWrapper->Seek(seekTimeMs);
+  if (!result) {
+    return SeekPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_WAITING_FOR_DATA,
+                                        __func__);
+  }
+  TimeUnit seekTime = TimeUnit::FromMicroseconds(seekTimeUs);
+  return SeekPromise::CreateAndResolve(seekTime, __func__);
+}
+
+RefPtr<HLSTrackDemuxer::SamplesPromise>
+HLSTrackDemuxer::GetSamples(int32_t aNumSamples)
+{
+  MOZ_ASSERT(mParent, "Called after BreackCycle()");
+  return InvokeAsync(mParent->GetTaskQueue(), this, __func__,
+                     &HLSTrackDemuxer::DoGetSamples, aNumSamples);
+}
+
+RefPtr<HLSTrackDemuxer::SamplesPromise>
+HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
+{
+  MOZ_ASSERT(mParent, "Called after BreackCycle()");
+  if (!aNumSamples) {
+    return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_DEMUXER_ERR,
+                                           __func__);
+  }
+  RefPtr<SamplesHolder> samples = new SamplesHolder;
+  //TRACK_AUDIO = 1;
+  //TRACK_VIDEO = 2;
+  mozilla::jni::ObjectArray::LocalRef demuxedSamples =
+      (mType == TrackInfo::kAudioTrack) ?
+        mParent->mHlsDemuxerWrapper->GetSamples(1, aNumSamples):
+        mParent->mHlsDemuxerWrapper->GetSamples(2, aNumSamples);
+  nsTArray<jni::Object::LocalRef> sampleObjectArray(demuxedSamples->GetElements());
+
+  if (sampleObjectArray.IsEmpty()) {
+    return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_WAITING_FOR_DATA, __func__);
+  }
+
+  for (auto&& demuxedSample : sampleObjectArray) {
+    java::GeckoHlsSample::LocalRef sample(mozilla::Move(demuxedSample));
+    java::sdk::BufferInfo::LocalRef info = sample->Info();
+    // TODO: Check which is essential material for MediaRawData.
+    // Currently extract PTS, Size and Data without Crypto information.
+    // Transform java Sample into MediaRawData
+    RefPtr<MediaRawData> mrd = new MediaRawData();
+    int64_t presentationTimeUs = 0;
+    bool ok = NS_SUCCEEDED(info->PresentationTimeUs(&presentationTimeUs));
+    mrd->mTime = TimeUnit::FromMicroseconds(presentationTimeUs);
+    mrd->mTimecode = TimeUnit::FromMicroseconds(presentationTimeUs);
+
+    if (sample->IsEOS()) {
+      // TODO: consider using an elegant way to handle this case.
+      HLS_DEBUG("HLSTrackDemuxer", "Met BUFFER_FLAG_END_OF_STREAM.");
+      return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_END_OF_STREAM, __func__);
+    }
+
+    mrd->mKeyframe = sample->IsKeyFrame();
+    // TODO : Fix this when we know how to calculate from ExoPlayer.
+    mrd->mDuration = (mType == TrackInfo::kVideoTrack) ? TimeUnit::FromMicroseconds(sample->Duration()) : TimeUnit::Zero();
+
+    int32_t size = 0;
+    ok &= NS_SUCCEEDED(info->Size(&size));
+    if (!ok) {
+      HLS_DEBUG("HLSTrackDemuxer", "Error occurred during extraction from Sample java object.");
+      return nullptr;
+    }
+
+//    // TODO : Update streamSouceID & videoInfo for MFR.
+//    if (mType == TrackInfo::kVideoTrack) {
+//      auto sampleExtraIndex = sample->ExtraIndex();
+//      if (mLastExtraIndex != sampleExtraIndex) {
+//        mLastExtraIndex = sampleExtraIndex;
+//        mParent->UpdateVideoInfo(mLastExtraIndex);
+//        mrd->mTrackInfo = new TrackInfoSharedPtr(mParent->mInfo.mVideo, ++sStreamSourceID);
+//      }
+//    }
+
+    // Write payload into MediaRawData
+    UniquePtr<MediaRawDataWriter> writer(mrd->CreateWriter());
+    if (!writer->SetSize(size)) {
+      HLS_DEBUG("HLSTrackDemuxer", "Exit failed to allocated media buffer");
+      return nullptr;
+    }
+    jni::ByteBuffer::LocalRef dest =
+        jni::ByteBuffer::New(writer->Data(), writer->Size());
+    sample->WriteToByteBuffer(dest);
+
+    // Write Crypto information
+    java::sdk::CryptoInfo::LocalRef cryptoInfo = sample->CryptoInfo();
+    if (cryptoInfo) {
+      HLS_DEBUG("HLSTrackDemuxer", "Has Crypto Info");
+      writer->mCrypto.mValid = true;
+      int32_t mode = 0;
+      ok &= NS_SUCCEEDED(cryptoInfo->Mode(&mode));
+      writer->mCrypto.mMode = mode;
+      mozilla::jni::ByteArray::LocalRef ivData;
+      ok &= NS_SUCCEEDED(cryptoInfo->Iv(&ivData));
+      // Data in mIV is uint8_t and jbyte is signed char
+      auto&& ivArr= ivData->GetElements();
+      writer->mCrypto.mIV.AppendElements(reinterpret_cast<uint8_t*>(&ivArr[0]),
+                                         ivArr.Length());
+      writer->mCrypto.mIVSize = ivArr.Length();
+      mozilla::jni::ByteArray::LocalRef keyData;
+      ok &= NS_SUCCEEDED(cryptoInfo->Key(&keyData));
+      auto&& keyArr = keyData->GetElements();
+      // Data in mKeyId is uint8_t and jbyte is signed char
+      writer->mCrypto.mKeyId.AppendElements(reinterpret_cast<uint8_t*>(&keyArr[0]),
+                                            keyArr.Length());
+
+      mozilla::jni::IntArray::LocalRef clearData;
+      ok &= NS_SUCCEEDED(cryptoInfo->NumBytesOfClearData(&clearData));
+      // Data in mPlainSizes is uint16_t, NumBytesOfClearData is int32_t
+      // , so need a for loop to copy
+      for (const auto& b : clearData->GetElements()) {
+        writer->mCrypto.mPlainSizes.AppendElement(b);
+      }
+
+      mozilla::jni::IntArray::LocalRef encryptedData;
+      ok &= NS_SUCCEEDED(cryptoInfo->NumBytesOfEncryptedData(&encryptedData));
+      auto&& encryptedArr = encryptedData->GetElements();
+      // Data in mEncryptedSizes is uint32_t, NumBytesOfEncryptedData is int32_t
+      writer->mCrypto.mEncryptedSizes.AppendElements(reinterpret_cast<uint32_t*>(&encryptedArr[0]),
+                                                     encryptedArr.Length());
+      // TODO: Need to validate.
+      // Inverse the work by http://searchfox.org/mozilla-central/rev/ca7015fa45b30b29176fbaa70ba0a36fe9263c38/dom/media/platforms/android/AndroidDecoderModule.cpp#92
+      int subSamplesNum = 0;
+      ok &= NS_SUCCEEDED(cryptoInfo->NumSubSamples(&subSamplesNum));
+      writer->mCrypto.mPlainSizes[0] -= (writer->Size() - subSamplesNum);
+
+      if (!ok) {
+        // TODO: maybe print a warning msg.
+        HLS_DEBUG("HLSTrackDemuxer", "Error occurred during extraction from CryptoInfo java object.");
+      }
+    }
+    samples->mSamples.AppendElement(mrd);
+
+    sample->Dispose();
+  }
+
+  if (mType == TrackInfo::kVideoTrack) {
+    // Only need to find NextKeyFrame for Video
+    UpdateNextKeyFrameTime();
+  }
+
+  return SamplesPromise::CreateAndResolve(samples, __func__);
+}
+
+void
+HLSTrackDemuxer::Reset()
+{
+  MOZ_ASSERT(mParent, "Called after BreackCycle()");
+}
+
+void
+HLSTrackDemuxer::UpdateNextKeyFrameTime()
+{
+  MOZ_ASSERT(mParent, "Called after BreackCycle()");
+  int64_t nextKeyFrameTime = mParent->GetNextKeyFrameTime();
+  if (nextKeyFrameTime != mNextKeyframeTime.valueOr(media::TimeUnit::Zero()).ToMicroseconds()) {
+    HLS_DEBUG("HLSTrackDemuxer", "Update nextKeyFrameTime to %lld", nextKeyFrameTime);
+    mNextKeyframeTime.reset();
+    mNextKeyframeTime.emplace(media::TimeUnit::FromMicroseconds(nextKeyFrameTime));
+  }
+}
+
+nsresult
+HLSTrackDemuxer::GetNextRandomAccessPoint(media::TimeUnit* aTime)
+{
+  if (mNextKeyframeTime.isNothing()) {
+    // There's no next key frame.
+    *aTime =
+      media::TimeUnit::FromMicroseconds(std::numeric_limits<int64_t>::max());
+  } else {
+    *aTime = mNextKeyframeTime.value();
+  }
+  return NS_OK;
+}
+
+RefPtr<HLSTrackDemuxer::SkipAccessPointPromise>
+HLSTrackDemuxer::SkipToNextRandomAccessPoint(const media::TimeUnit& aTimeThreshold)
+{
+  uint32_t parsed = 0;
+  SkipFailureHolder holder(NS_ERROR_DOM_MEDIA_WAITING_FOR_DATA, parsed);
+  return SkipAccessPointPromise::CreateAndReject(holder, __func__);
+}
+
+media::TimeIntervals
+HLSTrackDemuxer::GetBuffered()
+{
+  int64_t bufferedTime = mParent->mHlsDemuxerWrapper->GetBuffered(); //us
+  return TimeIntervals(TimeInterval(TimeUnit(), TimeUnit::FromMicroseconds(bufferedTime)));
+}
+
+void
+HLSTrackDemuxer::BreakCycles()
+{
+  RefPtr<HLSTrackDemuxer> self = this;
+  nsCOMPtr<nsIRunnable> task =
+    NS_NewRunnableFunction([self]() {
+      self->mParent = nullptr;
+    } );
+  mParent->GetTaskQueue()->Dispatch(task.forget());
+}
+
+HLSTrackDemuxer::~HLSTrackDemuxer()
+{
+}
+
+} // namespace mozilla
