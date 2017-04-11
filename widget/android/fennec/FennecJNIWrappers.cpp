@@ -343,10 +343,6 @@ auto GeckoHlsDemuxerWrapper::Seek(int64_t a0) const -> bool
     return mozilla::jni::Method<Seek_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
 }
 
-const char16_t GeckoHlsDemuxerWrapper::AAC[] = u"audio/mp4a-latm";
-
-const char16_t GeckoHlsDemuxerWrapper::AVC[] = u"video/avc";
-
 const char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::name[] =
         "org/mozilla/gecko/media/GeckoHlsDemuxerWrapper$HlsDemuxerCallbacks";
 

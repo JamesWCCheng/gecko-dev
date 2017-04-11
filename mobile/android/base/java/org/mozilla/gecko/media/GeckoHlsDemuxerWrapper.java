@@ -5,27 +5,15 @@
 
 package org.mozilla.gecko.media;
 
-import java.nio.ByteBuffer;
+import android.util.Log;
+
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.Format;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.mozilla.gecko.annotation.WrapForJNI;
-import org.mozilla.gecko.AppConstants;
-import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.mozglue.JNIObject;
-
-import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
-import com.google.android.exoplayer2.Format;
-
-import android.content.Context;
-import android.media.MediaCodec;
-import android.media.MediaCodec.BufferInfo;
-import android.media.MediaCodec.CryptoInfo;
-import android.os.Build;
-import android.util.Log;
-
-import static org.mozilla.gecko.R.id.url;
 
 public final class GeckoHlsDemuxerWrapper {
     private static final String LOGTAG = "GeckoHlsDemuxerWrapper";
@@ -37,26 +25,15 @@ public final class GeckoHlsDemuxerWrapper {
     private static final int TRACK_VIDEO = 2;
     private static final int TRACK_TEXT = 3;
 
-    @WrapForJNI
-    private static final String AAC = "audio/mp4a-latm";
-    @WrapForJNI
-    private static final String AVC = "video/avc";
-
     private GeckoHlsPlayer player = null;
     // A flag to avoid using the native object that has been destroyed.
     private boolean mDestroyed;
 
-    public interface Callbacks {
-        void onAudioFormatChanged();
-        void onVideoFormatChanged();
-        void onTrackInfoChanged(boolean hasAudio, boolean hasVideo);
-        void onDataArrived();
-    }
+    public static class HlsDemuxerCallbacks extends JNIObject
+        implements GeckoHlsPlayer.Callbacks {
 
-    public static class HlsDemuxerCallbacks extends JNIObject implements Callbacks {
         @WrapForJNI(calledFrom = "gecko")
-        HlsDemuxerCallbacks() {
-        }
+        HlsDemuxerCallbacks() {}
 
         @Override
         @WrapForJNI(dispatchTo = "gecko")
@@ -104,7 +81,8 @@ public final class GeckoHlsDemuxerWrapper {
     }
 
     @WrapForJNI(calledFrom = "gecko")
-    public static GeckoHlsDemuxerWrapper create(GeckoHlsResourceWrapper resWrapper, Callbacks callback) {
+    public static GeckoHlsDemuxerWrapper create(GeckoHlsResourceWrapper resWrapper,
+                                                GeckoHlsPlayer.Callbacks callback) {
         GeckoHlsDemuxerWrapper wrapper = new GeckoHlsDemuxerWrapper(resWrapper, callback);
         return wrapper;
     }
@@ -170,8 +148,9 @@ public final class GeckoHlsDemuxerWrapper {
         return player.seek(seekTime);
     }
 
-    GeckoHlsDemuxerWrapper(GeckoHlsResourceWrapper resWrapper, Callbacks callback) {
-        if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper : " + url + ", callback : " + callback);
+    GeckoHlsDemuxerWrapper(GeckoHlsResourceWrapper resWrapper,
+                           GeckoHlsPlayer.Callbacks callback) {
+        if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper - callback : " + callback);
         try {
             player = resWrapper.GetPlayer();
             player.addDemuxerWrapperCallbackListener(callback);

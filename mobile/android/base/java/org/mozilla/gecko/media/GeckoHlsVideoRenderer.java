@@ -40,7 +40,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         super(C.TRACK_TYPE_VIDEO, selector, (GeckoHlsPlayer.ComponentListener) eventListener);
         assertTrue(Versions.feature16Plus);
         LOGTAG = getClass().getSimpleName();
-        DEBUG = true;
+        DEBUG = false;
 
         eventDispatcher = new VideoRendererEventListener.EventDispatcher(eventHandler, eventListener);
         nextKeyFrameTime = 0;

@@ -952,7 +952,7 @@ public:
                 mozilla::jni::Object::Param> Args;
         static constexpr char name[] = "create";
         static constexpr char signature[] =
-                "(Lorg/mozilla/gecko/media/GeckoHlsResourceWrapper;Lorg/mozilla/gecko/media/GeckoHlsDemuxerWrapper$Callbacks;)Lorg/mozilla/gecko/media/GeckoHlsDemuxerWrapper;";
+                "(Lorg/mozilla/gecko/media/GeckoHlsResourceWrapper;Lorg/mozilla/gecko/media/GeckoHlsPlayer$Callbacks;)Lorg/mozilla/gecko/media/GeckoHlsDemuxerWrapper;";
         static const bool isStatic = true;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -1121,10 +1121,6 @@ public:
     };
 
     auto Seek(int64_t) const -> bool;
-
-    static const char16_t AAC[];
-
-    static const char16_t AVC[];
 
     static const mozilla::jni::CallingThread callingThread =
             mozilla::jni::CallingThread::ANY;

@@ -47,7 +47,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     private static final String LOGTAG = "GeckoHlsPlayer";
     private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
     private static final int MAX_TIMELINE_ITEM_LINES = 3;
-    private static boolean DEBUG = true;
+    private static boolean DEBUG = false;
 
     private DataSource.Factory mediaDataSourceFactory;
     private Timeline.Period period;
@@ -75,7 +75,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     private boolean enableA = true;
 
     private boolean isInitDone = false;
-    private GeckoHlsDemuxerWrapper.Callbacks nativeCallbacks;
+    private Callbacks wrapperCallbacks;
 
     protected String userAgent;
 
@@ -84,6 +84,13 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         TRACK_AUDIO,
         TRACK_VIDEO,
         TRACK_TEXT,
+    }
+
+    public interface Callbacks {
+        void onAudioFormatChanged();
+        void onVideoFormatChanged();
+        void onTrackInfoChanged(boolean hasAudio, boolean hasVideo);
+        void onDataArrived();
     }
 
     private static void assertTrue(boolean condition) {
@@ -97,8 +104,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
         // General purpose implementation
         public void onDataArrived() {
-            assertTrue(nativeCallbacks != null);
-            nativeCallbacks.onDataArrived();
+            assertTrue(wrapperCallbacks != null);
+            wrapperCallbacks.onDataArrived();
         }
 
         // VideoRendererEventListener implementation
@@ -115,12 +122,12 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
         @Override
         public void onVideoInputFormatChanged(Format format) {
-            assertTrue(nativeCallbacks != null);
+            assertTrue(wrapperCallbacks != null);
 
             videoFormat = format;
             if (DEBUG) Log.d( LOGTAG, "onVideoInputFormatChanged [" + videoFormat + "]");
             if (DEBUG) Log.d( LOGTAG, "sMimetype [" + videoFormat.sampleMimeType + "], ContainerMIMETYPE:" + videoFormat.containerMimeType);
-            nativeCallbacks.onVideoFormatChanged();
+            wrapperCallbacks.onVideoFormatChanged();
         }
 
         @Override
@@ -163,11 +170,11 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
         @Override
         public void onAudioInputFormatChanged(Format format) {
-            assertTrue(nativeCallbacks != null);
+            assertTrue(wrapperCallbacks != null);
 
             audioFormat = format;
             if (DEBUG) Log.d(LOGTAG, "onAudioInputFormatChanged [" + audioFormat + "]");
-            nativeCallbacks.onAudioFormatChanged();
+            wrapperCallbacks.onAudioFormatChanged();
         }
 
         @Override
@@ -214,9 +221,9 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         if (DEBUG) Log.d(LOGTAG, "GeckoHlsPlayer construct");
     }
 
-    void addDemuxerWrapperCallbackListener(GeckoHlsDemuxerWrapper.Callbacks callback) {
+    void addDemuxerWrapperCallbackListener(Callbacks callback) {
         if (DEBUG) Log.d(LOGTAG, "GeckoHlsPlayer addDemuxerWrapperCallbackListener");
-        nativeCallbacks = callback;
+        wrapperCallbacks = callback;
     }
 
     synchronized void init(String url) {
@@ -316,8 +323,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
             }
         }
         trackGroupUpdated = true;
-        nativeCallbacks.onTrackInfoChanged(numAudioTracks > 0? true : false,
-                                           numVideoTracks > 0? true : false );
+        wrapperCallbacks.onTrackInfoChanged(numAudioTracks > 0? true : false,
+                                            numVideoTracks > 0? true : false );
     }
 
     @Override
@@ -451,7 +458,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
             player.release();
             player = null;
         }
-        nativeCallbacks = null;
+        wrapperCallbacks = null;
         isInitDone = false;
     }
 }
