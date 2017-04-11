@@ -1801,6 +1801,453 @@ constexpr char CodecProxy::NativeCallbacks::OnOutput_t::signature[];
 constexpr char CodecProxy::NativeCallbacks::OnOutputFormatChanged_t::name[];
 constexpr char CodecProxy::NativeCallbacks::OnOutputFormatChanged_t::signature[];
 
+const char GeckoHlsDemuxerWrapper::name[] =
+        "org/mozilla/gecko/media/GeckoHlsDemuxerWrapper";
+
+constexpr char GeckoHlsDemuxerWrapper::Create_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::Create_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::Create(mozilla::jni::Object::Param a0, mozilla::jni::Object::Param a1) -> GeckoHlsDemuxerWrapper::LocalRef
+{
+    return mozilla::jni::Method<Create_t>::Call(GeckoHlsDemuxerWrapper::Context(), nullptr, a0, a1);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::Destroy_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::Destroy_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::Destroy() const -> void
+{
+    return mozilla::jni::Method<Destroy_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::GetAudioInfo_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetAudioInfo_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetAudioInfo(int32_t a0) const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetAudioInfo_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::GetBuffered_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetBuffered_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetBuffered() const -> int64_t
+{
+    return mozilla::jni::Method<GetBuffered_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::GetNextKeyFrameTime_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetNextKeyFrameTime_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetNextKeyFrameTime() const -> int64_t
+{
+    return mozilla::jni::Method<GetNextKeyFrameTime_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::GetNumberOfTracks_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetNumberOfTracks_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetNumberOfTracks(int32_t a0) const -> int32_t
+{
+    return mozilla::jni::Method<GetNumberOfTracks_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::GetSamples_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetSamples_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetSamples(int32_t a0, int32_t a1) const -> mozilla::jni::ObjectArray::LocalRef
+{
+    return mozilla::jni::Method<GetSamples_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0, a1);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::GetVideoInfo_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetVideoInfo_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetVideoInfo(int32_t a0) const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetVideoInfo_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::Seek_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::Seek_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::Seek(int64_t a0) const -> bool
+{
+    return mozilla::jni::Method<Seek_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
+}
+
+const char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::name[] =
+        "org/mozilla/gecko/media/GeckoHlsDemuxerWrapper$HlsDemuxerCallbacks";
+
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New() -> HlsDemuxerCallbacks::LocalRef
+{
+    return mozilla::jni::Constructor<New_t>::Call(HlsDemuxerCallbacks::Context(), nullptr);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnAudioFormatChanged_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnAudioFormatChanged_t::signature[];
+
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnDataArrived_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnDataArrived_t::signature[];
+
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnTrackInfoChanged_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnTrackInfoChanged_t::signature[];
+
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t::signature[];
+
+const char GeckoHlsResourceWrapper::name[] =
+        "org/mozilla/gecko/media/GeckoHlsResourceWrapper";
+
+constexpr char GeckoHlsResourceWrapper::GetPlayer_t::name[];
+constexpr char GeckoHlsResourceWrapper::GetPlayer_t::signature[];
+
+auto GeckoHlsResourceWrapper::GetPlayer() const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetPlayer_t>::Call(GeckoHlsResourceWrapper::mCtx, nullptr);
+}
+
+constexpr char GeckoHlsResourceWrapper::Create_t::name[];
+constexpr char GeckoHlsResourceWrapper::Create_t::signature[];
+
+auto GeckoHlsResourceWrapper::Create(mozilla::jni::String::Param a0) -> GeckoHlsResourceWrapper::LocalRef
+{
+    return mozilla::jni::Method<Create_t>::Call(GeckoHlsResourceWrapper::Context(), nullptr, a0);
+}
+
+const char GeckoHlsSample::name[] =
+        "org/mozilla/gecko/media/GeckoHlsSample";
+
+constexpr char GeckoHlsSample::Dispose_t::name[];
+constexpr char GeckoHlsSample::Dispose_t::signature[];
+
+auto GeckoHlsSample::Dispose() const -> void
+{
+    return mozilla::jni::Method<Dispose_t>::Call(GeckoHlsSample::mCtx, nullptr);
+}
+
+constexpr char GeckoHlsSample::IsEOS_t::name[];
+constexpr char GeckoHlsSample::IsEOS_t::signature[];
+
+auto GeckoHlsSample::IsEOS() const -> bool
+{
+    return mozilla::jni::Method<IsEOS_t>::Call(GeckoHlsSample::mCtx, nullptr);
+}
+
+constexpr char GeckoHlsSample::IsKeyFrame_t::name[];
+constexpr char GeckoHlsSample::IsKeyFrame_t::signature[];
+
+auto GeckoHlsSample::IsKeyFrame() const -> bool
+{
+    return mozilla::jni::Method<IsKeyFrame_t>::Call(GeckoHlsSample::mCtx, nullptr);
+}
+
+constexpr char GeckoHlsSample::WriteToByteBuffer_t::name[];
+constexpr char GeckoHlsSample::WriteToByteBuffer_t::signature[];
+
+auto GeckoHlsSample::WriteToByteBuffer(mozilla::jni::ByteBuffer::Param a0) const -> void
+{
+    return mozilla::jni::Method<WriteToByteBuffer_t>::Call(GeckoHlsSample::mCtx, nullptr, a0);
+}
+
+constexpr char GeckoHlsSample::CryptoInfo_t::name[];
+constexpr char GeckoHlsSample::CryptoInfo_t::signature[];
+
+auto GeckoHlsSample::CryptoInfo() const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Field<CryptoInfo_t>::Get(GeckoHlsSample::mCtx, nullptr);
+}
+
+auto GeckoHlsSample::CryptoInfo(mozilla::jni::Object::Param a0) const -> void
+{
+    return mozilla::jni::Field<CryptoInfo_t>::Set(GeckoHlsSample::mCtx, nullptr, a0);
+}
+
+constexpr char GeckoHlsSample::Duration_t::name[];
+constexpr char GeckoHlsSample::Duration_t::signature[];
+
+auto GeckoHlsSample::Duration() const -> int64_t
+{
+    return mozilla::jni::Field<Duration_t>::Get(GeckoHlsSample::mCtx, nullptr);
+}
+
+auto GeckoHlsSample::Duration(int64_t a0) const -> void
+{
+    return mozilla::jni::Field<Duration_t>::Set(GeckoHlsSample::mCtx, nullptr, a0);
+}
+
+constexpr char GeckoHlsSample::Info_t::name[];
+constexpr char GeckoHlsSample::Info_t::signature[];
+
+auto GeckoHlsSample::Info() const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Field<Info_t>::Get(GeckoHlsSample::mCtx, nullptr);
+}
+
+auto GeckoHlsSample::Info(mozilla::jni::Object::Param a0) const -> void
+{
+    return mozilla::jni::Field<Info_t>::Set(GeckoHlsSample::mCtx, nullptr, a0);
+}
+
+const char HlsAudioInfo::name[] =
+        "org/mozilla/gecko/media/HlsAudioInfo";
+
+constexpr char HlsAudioInfo::New_t::name[];
+constexpr char HlsAudioInfo::New_t::signature[];
+
+auto HlsAudioInfo::New() -> HlsAudioInfo::LocalRef
+{
+    return mozilla::jni::Constructor<New_t>::Call(HlsAudioInfo::Context(), nullptr);
+}
+
+constexpr char HlsAudioInfo::BitDepth_t::name[];
+constexpr char HlsAudioInfo::BitDepth_t::signature[];
+
+auto HlsAudioInfo::BitDepth() const -> int32_t
+{
+    return mozilla::jni::Field<BitDepth_t>::Get(HlsAudioInfo::mCtx, nullptr);
+}
+
+auto HlsAudioInfo::BitDepth(int32_t a0) const -> void
+{
+    return mozilla::jni::Field<BitDepth_t>::Set(HlsAudioInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsAudioInfo::Channels_t::name[];
+constexpr char HlsAudioInfo::Channels_t::signature[];
+
+auto HlsAudioInfo::Channels() const -> int32_t
+{
+    return mozilla::jni::Field<Channels_t>::Get(HlsAudioInfo::mCtx, nullptr);
+}
+
+auto HlsAudioInfo::Channels(int32_t a0) const -> void
+{
+    return mozilla::jni::Field<Channels_t>::Set(HlsAudioInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsAudioInfo::CodecSpecificData_t::name[];
+constexpr char HlsAudioInfo::CodecSpecificData_t::signature[];
+
+auto HlsAudioInfo::CodecSpecificData() const -> mozilla::jni::ByteArray::LocalRef
+{
+    return mozilla::jni::Field<CodecSpecificData_t>::Get(HlsAudioInfo::mCtx, nullptr);
+}
+
+auto HlsAudioInfo::CodecSpecificData(mozilla::jni::ByteArray::Param a0) const -> void
+{
+    return mozilla::jni::Field<CodecSpecificData_t>::Set(HlsAudioInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsAudioInfo::Duration_t::name[];
+constexpr char HlsAudioInfo::Duration_t::signature[];
+
+auto HlsAudioInfo::Duration() const -> int64_t
+{
+    return mozilla::jni::Field<Duration_t>::Get(HlsAudioInfo::mCtx, nullptr);
+}
+
+auto HlsAudioInfo::Duration(int64_t a0) const -> void
+{
+    return mozilla::jni::Field<Duration_t>::Set(HlsAudioInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsAudioInfo::ExtraData_t::name[];
+constexpr char HlsAudioInfo::ExtraData_t::signature[];
+
+auto HlsAudioInfo::ExtraData() const -> mozilla::jni::ByteArray::LocalRef
+{
+    return mozilla::jni::Field<ExtraData_t>::Get(HlsAudioInfo::mCtx, nullptr);
+}
+
+auto HlsAudioInfo::ExtraData(mozilla::jni::ByteArray::Param a0) const -> void
+{
+    return mozilla::jni::Field<ExtraData_t>::Set(HlsAudioInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsAudioInfo::MimeType_t::name[];
+constexpr char HlsAudioInfo::MimeType_t::signature[];
+
+auto HlsAudioInfo::MimeType() const -> mozilla::jni::String::LocalRef
+{
+    return mozilla::jni::Field<MimeType_t>::Get(HlsAudioInfo::mCtx, nullptr);
+}
+
+auto HlsAudioInfo::MimeType(mozilla::jni::String::Param a0) const -> void
+{
+    return mozilla::jni::Field<MimeType_t>::Set(HlsAudioInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsAudioInfo::Profile_t::name[];
+constexpr char HlsAudioInfo::Profile_t::signature[];
+
+auto HlsAudioInfo::Profile() const -> int32_t
+{
+    return mozilla::jni::Field<Profile_t>::Get(HlsAudioInfo::mCtx, nullptr);
+}
+
+auto HlsAudioInfo::Profile(int32_t a0) const -> void
+{
+    return mozilla::jni::Field<Profile_t>::Set(HlsAudioInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsAudioInfo::Rate_t::name[];
+constexpr char HlsAudioInfo::Rate_t::signature[];
+
+auto HlsAudioInfo::Rate() const -> int32_t
+{
+    return mozilla::jni::Field<Rate_t>::Get(HlsAudioInfo::mCtx, nullptr);
+}
+
+auto HlsAudioInfo::Rate(int32_t a0) const -> void
+{
+    return mozilla::jni::Field<Rate_t>::Set(HlsAudioInfo::mCtx, nullptr, a0);
+}
+
+const char HlsVideoInfo::name[] =
+        "org/mozilla/gecko/media/HlsVideoInfo";
+
+constexpr char HlsVideoInfo::New_t::name[];
+constexpr char HlsVideoInfo::New_t::signature[];
+
+auto HlsVideoInfo::New() -> HlsVideoInfo::LocalRef
+{
+    return mozilla::jni::Constructor<New_t>::Call(HlsVideoInfo::Context(), nullptr);
+}
+
+constexpr char HlsVideoInfo::CodecSpecificData_t::name[];
+constexpr char HlsVideoInfo::CodecSpecificData_t::signature[];
+
+auto HlsVideoInfo::CodecSpecificData() const -> mozilla::jni::ByteArray::LocalRef
+{
+    return mozilla::jni::Field<CodecSpecificData_t>::Get(HlsVideoInfo::mCtx, nullptr);
+}
+
+auto HlsVideoInfo::CodecSpecificData(mozilla::jni::ByteArray::Param a0) const -> void
+{
+    return mozilla::jni::Field<CodecSpecificData_t>::Set(HlsVideoInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsVideoInfo::DisplayX_t::name[];
+constexpr char HlsVideoInfo::DisplayX_t::signature[];
+
+auto HlsVideoInfo::DisplayX() const -> int32_t
+{
+    return mozilla::jni::Field<DisplayX_t>::Get(HlsVideoInfo::mCtx, nullptr);
+}
+
+auto HlsVideoInfo::DisplayX(int32_t a0) const -> void
+{
+    return mozilla::jni::Field<DisplayX_t>::Set(HlsVideoInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsVideoInfo::DisplayY_t::name[];
+constexpr char HlsVideoInfo::DisplayY_t::signature[];
+
+auto HlsVideoInfo::DisplayY() const -> int32_t
+{
+    return mozilla::jni::Field<DisplayY_t>::Get(HlsVideoInfo::mCtx, nullptr);
+}
+
+auto HlsVideoInfo::DisplayY(int32_t a0) const -> void
+{
+    return mozilla::jni::Field<DisplayY_t>::Set(HlsVideoInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsVideoInfo::Duration_t::name[];
+constexpr char HlsVideoInfo::Duration_t::signature[];
+
+auto HlsVideoInfo::Duration() const -> int64_t
+{
+    return mozilla::jni::Field<Duration_t>::Get(HlsVideoInfo::mCtx, nullptr);
+}
+
+auto HlsVideoInfo::Duration(int64_t a0) const -> void
+{
+    return mozilla::jni::Field<Duration_t>::Set(HlsVideoInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsVideoInfo::ExtraData_t::name[];
+constexpr char HlsVideoInfo::ExtraData_t::signature[];
+
+auto HlsVideoInfo::ExtraData() const -> mozilla::jni::ByteArray::LocalRef
+{
+    return mozilla::jni::Field<ExtraData_t>::Get(HlsVideoInfo::mCtx, nullptr);
+}
+
+auto HlsVideoInfo::ExtraData(mozilla::jni::ByteArray::Param a0) const -> void
+{
+    return mozilla::jni::Field<ExtraData_t>::Set(HlsVideoInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsVideoInfo::MimeType_t::name[];
+constexpr char HlsVideoInfo::MimeType_t::signature[];
+
+auto HlsVideoInfo::MimeType() const -> mozilla::jni::String::LocalRef
+{
+    return mozilla::jni::Field<MimeType_t>::Get(HlsVideoInfo::mCtx, nullptr);
+}
+
+auto HlsVideoInfo::MimeType(mozilla::jni::String::Param a0) const -> void
+{
+    return mozilla::jni::Field<MimeType_t>::Set(HlsVideoInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsVideoInfo::PictureX_t::name[];
+constexpr char HlsVideoInfo::PictureX_t::signature[];
+
+auto HlsVideoInfo::PictureX() const -> int32_t
+{
+    return mozilla::jni::Field<PictureX_t>::Get(HlsVideoInfo::mCtx, nullptr);
+}
+
+auto HlsVideoInfo::PictureX(int32_t a0) const -> void
+{
+    return mozilla::jni::Field<PictureX_t>::Set(HlsVideoInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsVideoInfo::PictureY_t::name[];
+constexpr char HlsVideoInfo::PictureY_t::signature[];
+
+auto HlsVideoInfo::PictureY() const -> int32_t
+{
+    return mozilla::jni::Field<PictureY_t>::Get(HlsVideoInfo::mCtx, nullptr);
+}
+
+auto HlsVideoInfo::PictureY(int32_t a0) const -> void
+{
+    return mozilla::jni::Field<PictureY_t>::Set(HlsVideoInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsVideoInfo::Rotation_t::name[];
+constexpr char HlsVideoInfo::Rotation_t::signature[];
+
+auto HlsVideoInfo::Rotation() const -> int32_t
+{
+    return mozilla::jni::Field<Rotation_t>::Get(HlsVideoInfo::mCtx, nullptr);
+}
+
+auto HlsVideoInfo::Rotation(int32_t a0) const -> void
+{
+    return mozilla::jni::Field<Rotation_t>::Set(HlsVideoInfo::mCtx, nullptr, a0);
+}
+
+constexpr char HlsVideoInfo::StereoMode_t::name[];
+constexpr char HlsVideoInfo::StereoMode_t::signature[];
+
+auto HlsVideoInfo::StereoMode() const -> int32_t
+{
+    return mozilla::jni::Field<StereoMode_t>::Get(HlsVideoInfo::mCtx, nullptr);
+}
+
+auto HlsVideoInfo::StereoMode(int32_t a0) const -> void
+{
+    return mozilla::jni::Field<StereoMode_t>::Set(HlsVideoInfo::mCtx, nullptr, a0);
+}
+
 const char MediaDrmProxy::name[] =
         "org/mozilla/gecko/media/MediaDrmProxy";
 

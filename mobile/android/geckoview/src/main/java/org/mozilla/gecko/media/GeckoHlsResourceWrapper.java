@@ -1,0 +1,40 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.gecko.media;
+
+import android.util.Log;
+
+import org.mozilla.gecko.annotation.WrapForJNI;
+
+public class GeckoHlsResourceWrapper {
+    private static final String LOGTAG = "GeckoHlsResourceWrapper";
+    private static final boolean DEBUG = true;
+    private GeckoHlsPlayer mPlayer = null;
+
+    private GeckoHlsResourceWrapper(String url) {
+        if (DEBUG) Log.d(LOGTAG, "GeckoHlsResourceWrapper created with url = " + url);
+        mPlayer = new GeckoHlsPlayer();
+        mPlayer.init(url);
+    }
+
+    @WrapForJNI(calledFrom = "gecko")
+    public static GeckoHlsResourceWrapper create(String url) {
+        GeckoHlsResourceWrapper wrapper = new GeckoHlsResourceWrapper(url);
+        return wrapper;
+    }
+
+    @WrapForJNI(calledFrom = "gecko")
+    public GeckoHlsPlayer GetPlayer() {
+        // GeckoHlsResourceWrapper should always be created before others
+        assertTrue(mPlayer != null);
+        return mPlayer;
+    }
+
+    private static void assertTrue(boolean condition) {
+        if (DEBUG && !condition) {
+            throw new AssertionError("Expected condition to be true");
+        }
+    }
+}
