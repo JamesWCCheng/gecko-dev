@@ -59,9 +59,11 @@ H264Converter::Decode(MediaRawData* aSample)
                      && !mInitPromiseRequest.Exists(),
                      "Can't request a new decode until previous one completed");
 
-  if (!mp4_demuxer::AnnexB::ConvertSampleToAVCC(aSample)) {
+  if (!mp4_demuxer::AnnexB::IsAnnexB(aSample) &&
+      !mp4_demuxer::AnnexB::ConvertSampleToAVCC(aSample)) {
     // We need AVCC content to be able to later parse the SPS.
     // This is a no-op if the data is already AVCC.
+    printf_stderr("[H264Decoder::Decoder]  NS_ERROR_OUT_OF_MEMORY \n");
     return DecodePromise::CreateAndReject(
       MediaResult(NS_ERROR_OUT_OF_MEMORY, RESULT_DETAIL("ConvertSampleToAVCC")),
       __func__);
@@ -76,6 +78,7 @@ H264Converter::Decode(MediaRawData* aSample)
     if (rv == NS_ERROR_NOT_INITIALIZED) {
       // We are missing the required SPS to create the decoder.
       // Ignore for the time being, the MediaRawData will be dropped.
+      printf_stderr("[H264Decoder::Decoder]  NS_ERROR_NOT_INITIALIZED \n");
       return DecodePromise::CreateAndResolve(DecodedData(), __func__);
     }
   } else {
@@ -85,6 +88,7 @@ H264Converter::Decode(MediaRawData* aSample)
   if (rv == NS_ERROR_DOM_MEDIA_INITIALIZING_DECODER) {
     // The decoder is pending initialization.
     RefPtr<DecodePromise> p = mDecodePromise.Ensure(__func__);
+    printf_stderr("[H264Decoder::Decoder]  NS_ERROR_DOM_MEDIA_INITIALIZING_DECODER \n");
     return p;
   }
 
@@ -180,10 +184,12 @@ H264Converter::SetSeekThreshold(const media::TimeUnit& aTime)
 
 nsresult
 H264Converter::CreateDecoder(const VideoInfo& aConfig,
-                             DecoderDoctorDiagnostics* aDiagnostics)
+                             DecoderDoctorDiagnostics* aDiagnostics,
+                             bool isAnnexB)
 {
-  if (!mp4_demuxer::AnnexB::HasSPS(aConfig.mExtraData)) {
+  if (!isAnnexB && !mp4_demuxer::AnnexB::HasSPS(aConfig.mExtraData)) {
     // nothing found yet, will try again later
+    printf_stderr("[H264Decoder::CreateDecoder]  NS_ERROR_NOT_INITIALIZED \n");
     return NS_ERROR_NOT_INITIALIZED;
   }
   UpdateConfigFromExtraData(aConfig.mExtraData);
@@ -198,11 +204,13 @@ H264Converter::CreateDecoder(const VideoInfo& aConfig,
       if (aDiagnostics) {
         aDiagnostics->SetVideoNotSupported();
       }
+      printf_stderr("[H264Decoder::CreateDecoder]  NS_ERROR_FAILURE \n");
       return NS_ERROR_FAILURE;
     }
-  } else {
+  } else if (!isAnnexB) {
     // SPS was invalid.
     mLastError = NS_ERROR_FAILURE;
+    printf_stderr("[H264Decoder::CreateDecoder] isAnnexB,  NS_ERROR_FAILURE \n");
     return NS_ERROR_FAILURE;
   }
 
@@ -231,15 +239,17 @@ H264Converter::CreateDecoder(const VideoInfo& aConfig,
 nsresult
 H264Converter::CreateDecoderAndInit(MediaRawData* aSample)
 {
+  bool isAnnex = mp4_demuxer::AnnexB::IsAnnexB(aSample);
   RefPtr<MediaByteBuffer> extra_data =
     mp4_demuxer::AnnexB::ExtractExtraData(aSample);
-  if (!mp4_demuxer::AnnexB::HasSPS(extra_data)) {
+  if (!isAnnex && !mp4_demuxer::AnnexB::HasSPS(extra_data)) {
+    printf_stderr("[H264Decoder::CreateDecoderAndInit]  NS_ERROR_NOT_INITIALIZED \n");
     return NS_ERROR_NOT_INITIALIZED;
   }
   UpdateConfigFromExtraData(extra_data);
 
   nsresult rv =
-    CreateDecoder(mCurrentConfig, /* DecoderDoctorDiagnostics* */ nullptr);
+    CreateDecoder(mCurrentConfig, /* DecoderDoctorDiagnostics* */ nullptr, isAnnex);
 
   if (NS_SUCCEEDED(rv)) {
     // Queue the incoming sample.
@@ -325,8 +335,8 @@ H264Converter::CheckForSPSChange(MediaRawData* aSample)
   if (!mp4_demuxer::AnnexB::HasSPS(extra_data)
       || mp4_demuxer::AnnexB::CompareExtraData(extra_data,
                                                mCurrentConfig.mExtraData)) {
-        return NS_OK;
-      }
+    return NS_OK;
+  }
 
   RefPtr<MediaRawData> sample = aSample;
 
