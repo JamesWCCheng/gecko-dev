@@ -201,26 +201,26 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
          * So we calcualte it by referring to nearby samples' timestamp.
          * A temporary queue |dexmuedNoDurationSamples| is used to queue demuxed
          * samples which have no duration information at first.
-         * Considering there're 6 demuxed samples in the queue already,
-         * e.g. |-2|-1|0|1|2|3|...
-         * Once a new demuxed sample A (7th) is put into the temporary queue,
-         * e.g. |-2|-1|0|1|2|3|A|...
+         * Considering there're 9 demuxed samples in the queue already,
+         * e.g. |-2|-1|0|1|2|3|4|5|6|...
+         * Once a new demuxed sample A (10th) is put into the temporary queue,
+         * e.g. |-2|-1|0|1|2|3|4|5|6|A|...
          * we are able to calculate the correct duration for sample 0 by finding
-         * the most closest but greater pts than sample 0 among these 6 samples,
-         * here, let's say sample -2 ~ 3.
+         * the most closest but greater pts than sample 0 among these 9 samples,
+         * here, let's say sample -2 ~ 6.
          */
         if (inputSample != null) {
             dexmuedNoDurationSamples.offer(inputSample);
         }
         int sizeOfNoDura = dexmuedNoDurationSamples.size();
-        int range = sizeOfNoDura >= 7 ? 7 : sizeOfNoDura;
+        int range = sizeOfNoDura >= 10 ? 10 : sizeOfNoDura;
         GeckoHlsSample[] inputArray =
             dexmuedNoDurationSamples.toArray(new GeckoHlsSample[sizeOfNoDura]);
-        if (range >= 7 && !inputStreamEnded) {
+        if (range >= 10 && !inputStreamEnded) {
             // Calculate the first 'range' elements.
             for (int i = 0; i < range; i++) {
                 // Comparing window size.
-                for (int j = -2; j < 4; j++) {
+                for (int j = -2; j < 7; j++) {
                     if (i+j >= 0 &&
                         i+j < range &&
                         inputArray[i+j].info.presentationTimeUs > inputArray[i].info.presentationTimeUs) {
@@ -237,7 +237,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             dexmuedInputSamples.offer(toQueue);
         } else if (inputStreamEnded) {
             for (int i = 0; i < sizeOfNoDura; i++) {
-                for (int j = -2; j < 4; j++) {
+                for (int j = -2; j < 7; j++) {
                     if (i+j >= 0 && i+j < sizeOfNoDura &&
                         inputArray[i+j].info.presentationTimeUs > inputArray[i].info.presentationTimeUs) {
                         inputArray[i].duration =
