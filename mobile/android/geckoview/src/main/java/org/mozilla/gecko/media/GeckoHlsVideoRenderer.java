@@ -29,6 +29,12 @@ import org.mozilla.gecko.AppConstants.Versions;
 public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     private final VideoRendererEventListener.EventDispatcher eventDispatcher;
 
+    private static final int RECONFIGURATION_STATE_NONE = 0;
+    private static final int RECONFIGURATION_STATE_WRITE_PENDING = 1;
+    private static final int RECONFIGURATION_STATE_QUEUE_PENDING = 2;
+    private boolean rendererReconfigured;
+    private int rendererReconfigurationState;
+
     private Format[] streamFormats;
     private CodecMaxValues codecMaxValues;
     private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedNoDurationSamples;
@@ -40,8 +46,9 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         super(C.TRACK_TYPE_VIDEO, selector, (GeckoHlsPlayer.ComponentListener) eventListener);
         assertTrue(Versions.feature16Plus);
         LOGTAG = getClass().getSimpleName();
-        DEBUG = false;
+        DEBUG = true;
 
+        rendererReconfigurationState = RECONFIGURATION_STATE_NONE;
         eventDispatcher = new VideoRendererEventListener.EventDispatcher(eventHandler, eventListener);
         nextKeyFrameTime = 0;
         dexmuedNoDurationSamples = new ConcurrentLinkedQueue<>();
@@ -112,10 +119,14 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
     @Override
     protected void resetRenderer() {
-        clearInputSamplesQueue();
-        nextKeyFrameTime = 0;
-        inputBuffer = null;
-        initialized = false;
+        if (initialized) {
+            rendererReconfigured = false;
+            rendererReconfigurationState = RECONFIGURATION_STATE_NONE;
+            nextKeyFrameTime = 0;
+            clearInputSamplesQueue();
+            inputBuffer = null;
+            initialized = false;
+        }
     }
 
     @Override
@@ -132,18 +143,42 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         bufferForRead.data = inputBuffer;
         bufferForRead.clear();
 
+        // For adaptive reconfiguration OMX decoders expect all reconfiguration
+        // data to be supplied at the start of the buffer that also contains
+        // the first frame in the new format.
+        if (rendererReconfigurationState == RECONFIGURATION_STATE_WRITE_PENDING) {
+            for (int i = 0; i < format.initializationData.size(); i++) {
+                byte[] data = format.initializationData.get(i);
+                bufferForRead.data.put(data);
+            }
+            rendererReconfigurationState = RECONFIGURATION_STATE_QUEUE_PENDING;
+        }
+
         // Read data from HlsMediaSource
         int result = readSource(formatHolder, bufferForRead);
         if (result == C.RESULT_NOTHING_READ) {
             return false;
         }
         if (result == C.RESULT_FORMAT_READ) {
+            if (rendererReconfigurationState == RECONFIGURATION_STATE_QUEUE_PENDING) {
+                // We received two formats in a row. Clear the current buffer of any reconfiguration data
+                // associated with the first format.
+                bufferForRead.clear();
+                rendererReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
+            }
             onInputFormatChanged(formatHolder.format);
             return true;
         }
 
         // We've read a buffer.
         if (bufferForRead.isEndOfStream()) {
+            if (rendererReconfigurationState == RECONFIGURATION_STATE_QUEUE_PENDING) {
+                // We received a new format immediately before the end of the stream. We need to clear
+                // the corresponding reconfiguration data from the current buffer, but re-write it into
+                // a subsequent buffer if there are any (e.g. if the user seeks backwards).
+                bufferForRead.clear();
+                rendererReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
+            }
             inputStreamEnded = true;
             Log.d(LOGTAG, "Now we're at the End Of Stream.");
         }
@@ -175,6 +210,17 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     }
 
     @Override
+    protected void onPositionReset(long positionUs, boolean joining) {
+        super.onPositionReset(positionUs, joining);
+        if (initialized && rendererReconfigured && format != null) {
+            // Any reconfiguration data that we send shortly before the reset 
+            // may be discarded. We avoid this issue by sending reconfiguration
+            // data following every position reset.
+            rendererReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
+        }
+    }
+
+    @Override
     protected boolean clearInputSamplesQueue() {
         dexmuedInputSamples.clear();
         dexmuedNoDurationSamples.clear();
@@ -188,9 +234,23 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
         handleDrmInitChanged(oldFormat, newFormat);
 
-        resetRenderer();
-        maybeInitRenderer();
+        if (initialized && canReconfigure(oldFormat, format)) {
+            clearInputSamplesQueue();
+            rendererReconfigured = true;
+            rendererReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
+        } else {
+            resetRenderer();
+            maybeInitRenderer();
+        }
         eventDispatcher.inputFormatChanged(newFormat);
+    }
+
+    protected boolean canReconfigure(Format oldFormat, Format newFormat) {
+        boolean canReconfig = areAdaptationCompatible(oldFormat, newFormat)
+          && newFormat.width <= codecMaxValues.width && newFormat.height <= codecMaxValues.height
+          && newFormat.maxInputSize <= codecMaxValues.inputSize;
+        if (DEBUG) Log.d(LOGTAG, "[canReconfigure] : " + canReconfig);
+        return canReconfig;
     }
 
     private void calculatDuration(GeckoHlsSample inputSample) {
