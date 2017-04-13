@@ -7,21 +7,42 @@ package org.mozilla.gecko.media;
 import android.util.Log;
 
 import org.mozilla.gecko.annotation.WrapForJNI;
+import org.mozilla.gecko.mozglue.JNIObject;
 
 public class GeckoHlsResourceWrapper {
     private static final String LOGTAG = "GeckoHlsResourceWrapper";
     private static final boolean DEBUG = true;
     private GeckoHlsPlayer mPlayer = null;
 
-    private GeckoHlsResourceWrapper(String url) {
+    public static class HlsResourceCallbacks extends JNIObject
+    implements GeckoHlsPlayer.ResourceCallbacks {
+        @WrapForJNI(calledFrom = "gecko")
+        HlsResourceCallbacks() {}
+
+        @Override
+        @WrapForJNI(dispatchTo = "gecko")
+        public native void onDataArrived();
+
+        @Override // JNIObject
+        protected void disposeNative() {
+            throw new UnsupportedOperationException();
+        }
+    } // HlsResourceCallbacks
+
+    private GeckoHlsResourceWrapper(String url,
+                                    GeckoHlsPlayer.ResourceCallbacks callback) {
         if (DEBUG) Log.d(LOGTAG, "GeckoHlsResourceWrapper created with url = " + url);
+        assertTrue(callback != null);
+
         mPlayer = new GeckoHlsPlayer();
         mPlayer.init(url);
+        mPlayer.addResourceWrapperCallbackListener(callback);
     }
 
     @WrapForJNI(calledFrom = "gecko")
-    public static GeckoHlsResourceWrapper create(String url) {
-        GeckoHlsResourceWrapper wrapper = new GeckoHlsResourceWrapper(url);
+    public static GeckoHlsResourceWrapper create(String url,
+                                                 GeckoHlsPlayer.ResourceCallbacks callback) {
+        GeckoHlsResourceWrapper wrapper = new GeckoHlsResourceWrapper(url, callback);
         return wrapper;
     }
 

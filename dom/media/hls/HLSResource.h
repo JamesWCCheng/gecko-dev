@@ -7,36 +7,42 @@
 #ifndef HLSResource_h_
 #define HLSResource_h_
 
+#include "GeneratedJNINatives.h"
 #include "GeneratedJNIWrappers.h"
 #include "HLSUtils.h"
 #include "nsContentUtils.h"
 
 #define UNIMPLEMENTED() HLS_DEBUG("HLSResource", "UNIMPLEMENTED FUNCTION")
 
+using namespace mozilla::java;
+
 namespace mozilla {
+
+class HLSResource;
+
+class HlsResourceCallbacksSupport
+  : public GeckoHlsResourceWrapper::HlsResourceCallbacks::Natives<HlsResourceCallbacksSupport>
+{
+public:
+  typedef GeckoHlsResourceWrapper::HlsResourceCallbacks::Natives<HlsResourceCallbacksSupport> NativeCallbacks;
+  using NativeCallbacks::DisposeNative;
+  using NativeCallbacks::AttachNative;
+
+  HlsResourceCallbacksSupport(HLSResource* aResource);
+  void OnDataArrived();
+
+private:
+  HLSResource* mResource;
+};
+
 class HLSResource final : public BaseMediaResource
 {
 public:
   HLSResource(MediaResourceCallback* aCallback,
               nsIChannel* aChannel,
               nsIURI* aURI,
-              const MediaContainerType& aContainerType) :
-    BaseMediaResource(aCallback, aChannel, aURI, aContainerType)
-    , mMonitor("HLSResource")
-    , mEnded(false)
-  {
-    nsCString spec;
-    nsresult rv = aURI->GetSpec(spec);
-    (void)rv;
-    HLS_DEBUG("HLSResource", "aContainerType = %s, aURI->GetSpec = %s", aContainerType.OriginalString().Data(), spec.get());
-    mHlsResourceWrapper = java::GeckoHlsResourceWrapper::Create(NS_ConvertUTF8toUTF16(spec));
-    MOZ_ASSERT(mHlsResourceWrapper);
-  }
-
-  ~HLSResource()
-  {
-    HLS_DEBUG("HLSResource", "Destructor");
-  }
+              const MediaContainerType& aContainerType);
+  ~HLSResource();
   nsresult Close() override { return NS_OK; }
   void Suspend(bool aCloseImmediately) override { UNIMPLEMENTED(); }
   void Resume() override { UNIMPLEMENTED(); }
@@ -106,6 +112,10 @@ public:
   }
 
 private:
+  friend class HlsResourceCallbacksSupport;
+
+  void onDataAvaiable();
+
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     size_t size = MediaResource::SizeOfExcludingThis(aMallocSizeOf);
@@ -122,6 +132,7 @@ private:
   Monitor mMonitor;
   bool mEnded; // protected by mMonitor
   java::GeckoHlsResourceWrapper::GlobalRef mHlsResourceWrapper;
+  java::GeckoHlsResourceWrapper::HlsResourceCallbacks::GlobalRef mJavaCallbacks;
 };
 
 } // namespace mozilla

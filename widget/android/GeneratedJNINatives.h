@@ -491,7 +491,7 @@ template<class Impl>
 class GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::Natives : public mozilla::jni::NativeImpl<HlsDemuxerCallbacks, Impl>
 {
 public:
-    static const JNINativeMethod methods[4];
+    static const JNINativeMethod methods[3];
 };
 
 template<class Impl>
@@ -501,10 +501,6 @@ const JNINativeMethod GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::Natives<Impl>
             mozilla::jni::NativeStub<GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnAudioFormatChanged_t, Impl>
             ::template Wrap<&Impl::OnAudioFormatChanged>),
 
-    mozilla::jni::MakeNativeMethod<GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnDataArrived_t>(
-            mozilla::jni::NativeStub<GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnDataArrived_t, Impl>
-            ::template Wrap<&Impl::OnDataArrived>),
-
     mozilla::jni::MakeNativeMethod<GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnTrackInfoChanged_t>(
             mozilla::jni::NativeStub<GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnTrackInfoChanged_t, Impl>
             ::template Wrap<&Impl::OnTrackInfoChanged>),
@@ -512,6 +508,21 @@ const JNINativeMethod GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::Natives<Impl>
     mozilla::jni::MakeNativeMethod<GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t>(
             mozilla::jni::NativeStub<GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t, Impl>
             ::template Wrap<&Impl::OnVideoFormatChanged>)
+};
+
+template<class Impl>
+class GeckoHlsResourceWrapper::HlsResourceCallbacks::Natives : public mozilla::jni::NativeImpl<HlsResourceCallbacks, Impl>
+{
+public:
+    static const JNINativeMethod methods[1];
+};
+
+template<class Impl>
+const JNINativeMethod GeckoHlsResourceWrapper::HlsResourceCallbacks::Natives<Impl>::methods[] = {
+
+    mozilla::jni::MakeNativeMethod<GeckoHlsResourceWrapper::HlsResourceCallbacks::OnDataArrived_t>(
+            mozilla::jni::NativeStub<GeckoHlsResourceWrapper::HlsResourceCallbacks::OnDataArrived_t, Impl>
+            ::template Wrap<&Impl::OnDataArrived>)
 };
 
 template<class Impl>

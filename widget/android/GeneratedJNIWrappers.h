@@ -5243,7 +5243,7 @@ public:
                 mozilla::jni::Object::Param> Args;
         static constexpr char name[] = "create";
         static constexpr char signature[] =
-                "(Lorg/mozilla/gecko/media/GeckoHlsResourceWrapper;Lorg/mozilla/gecko/media/GeckoHlsPlayer$Callbacks;)Lorg/mozilla/gecko/media/GeckoHlsDemuxerWrapper;";
+                "(Lorg/mozilla/gecko/media/GeckoHlsResourceWrapper;Lorg/mozilla/gecko/media/GeckoHlsPlayer$DemuxerCallbacks;)Lorg/mozilla/gecko/media/GeckoHlsDemuxerWrapper;";
         static const bool isStatic = true;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -5461,23 +5461,6 @@ public:
                 mozilla::jni::DispatchTarget::GECKO;
     };
 
-    struct OnDataArrived_t {
-        typedef HlsDemuxerCallbacks Owner;
-        typedef void ReturnType;
-        typedef void SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "onDataArrived";
-        static constexpr char signature[] =
-                "()V";
-        static const bool isStatic = false;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::GECKO;
-    };
-
     struct OnTrackInfoChanged_t {
         typedef HlsDemuxerCallbacks Owner;
         typedef void ReturnType;
@@ -5527,6 +5510,8 @@ public:
 
     explicit GeckoHlsResourceWrapper(const Context& ctx) : ObjectBase<GeckoHlsResourceWrapper>(ctx) {}
 
+    class HlsResourceCallbacks;
+
     struct GetPlayer_t {
         typedef GeckoHlsResourceWrapper Owner;
         typedef mozilla::jni::Object::LocalRef ReturnType;
@@ -5551,10 +5536,11 @@ public:
         typedef GeckoHlsResourceWrapper::LocalRef ReturnType;
         typedef GeckoHlsResourceWrapper::Param SetterType;
         typedef mozilla::jni::Args<
-                mozilla::jni::String::Param> Args;
+                mozilla::jni::String::Param,
+                mozilla::jni::Object::Param> Args;
         static constexpr char name[] = "create";
         static constexpr char signature[] =
-                "(Ljava/lang/String;)Lorg/mozilla/gecko/media/GeckoHlsResourceWrapper;";
+                "(Ljava/lang/String;Lorg/mozilla/gecko/media/GeckoHlsPlayer$ResourceCallbacks;)Lorg/mozilla/gecko/media/GeckoHlsResourceWrapper;";
         static const bool isStatic = true;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -5564,11 +5550,60 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    static auto Create(mozilla::jni::String::Param) -> GeckoHlsResourceWrapper::LocalRef;
+    static auto Create(mozilla::jni::String::Param, mozilla::jni::Object::Param) -> GeckoHlsResourceWrapper::LocalRef;
 
     static const mozilla::jni::CallingThread callingThread =
             mozilla::jni::CallingThread::GECKO;
 
+};
+
+class GeckoHlsResourceWrapper::HlsResourceCallbacks : public mozilla::jni::ObjectBase<HlsResourceCallbacks>
+{
+public:
+    static const char name[];
+
+    explicit HlsResourceCallbacks(const Context& ctx) : ObjectBase<HlsResourceCallbacks>(ctx) {}
+
+    struct New_t {
+        typedef HlsResourceCallbacks Owner;
+        typedef HlsResourceCallbacks::LocalRef ReturnType;
+        typedef HlsResourceCallbacks::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "<init>";
+        static constexpr char signature[] =
+                "()V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::GECKO;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    static auto New() -> HlsResourceCallbacks::LocalRef;
+
+    struct OnDataArrived_t {
+        typedef HlsResourceCallbacks Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "onDataArrived";
+        static constexpr char signature[] =
+                "()V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::GECKO;
+    };
+
+    static const mozilla::jni::CallingThread callingThread =
+            mozilla::jni::CallingThread::ANY;
+
+    template<class Impl> class Natives;
 };
 
 class GeckoHlsSample : public mozilla::jni::ObjectBase<GeckoHlsSample>

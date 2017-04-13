@@ -30,7 +30,7 @@ public final class GeckoHlsDemuxerWrapper {
     private boolean mDestroyed;
 
     public static class HlsDemuxerCallbacks extends JNIObject
-        implements GeckoHlsPlayer.Callbacks {
+        implements GeckoHlsPlayer.DemuxerCallbacks {
 
         @WrapForJNI(calledFrom = "gecko")
         HlsDemuxerCallbacks() {}
@@ -46,10 +46,6 @@ public final class GeckoHlsDemuxerWrapper {
         @Override
         @WrapForJNI(dispatchTo = "gecko")
         public native void onTrackInfoChanged(boolean hasAudio, boolean hasVideo);
-
-        @Override
-        @WrapForJNI(dispatchTo = "gecko")
-        public native void onDataArrived();
 
         @Override // JNIObject
         protected void disposeNative() {
@@ -82,7 +78,7 @@ public final class GeckoHlsDemuxerWrapper {
 
     @WrapForJNI(calledFrom = "gecko")
     public static GeckoHlsDemuxerWrapper create(GeckoHlsResourceWrapper resWrapper,
-                                                GeckoHlsPlayer.Callbacks callback) {
+                                                GeckoHlsPlayer.DemuxerCallbacks callback) {
         GeckoHlsDemuxerWrapper wrapper = new GeckoHlsDemuxerWrapper(resWrapper, callback);
         return wrapper;
     }
@@ -149,7 +145,7 @@ public final class GeckoHlsDemuxerWrapper {
     }
 
     GeckoHlsDemuxerWrapper(GeckoHlsResourceWrapper resWrapper,
-                           GeckoHlsPlayer.Callbacks callback) {
+                           GeckoHlsPlayer.DemuxerCallbacks callback) {
         if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper - callback : " + callback);
         try {
             player = resWrapper.GetPlayer();

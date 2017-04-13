@@ -18,7 +18,6 @@
 #include "mozilla/Unused.h"
 
 using namespace mozilla::java;
-using namespace mozilla::java::sdk;
 
 namespace mozilla {
 
@@ -86,20 +85,13 @@ public:
     mDemuxer->OnTrackInfoChanged(aHasAudio, aHasVideo);
   }
 
-  void OnDataArrived() {
-    MOZ_ASSERT(mDemuxer);
-    mDemuxer->GetDecoder()->NotifyDataArrived();
-  }
-
 private:
   HLSDemuxer* mDemuxer;
 };
 
-HLSDemuxer::HLSDemuxer(MediaDecoder* aDecoder,
-                       MediaResource* aResource,
+HLSDemuxer::HLSDemuxer(MediaResource* aResource,
                        AbstractThread* aAbstractMainThread)
-  : mDecoder(aDecoder)
-  , mResource(aResource)
+  : mResource(aResource)
   , mTaskQueue(new AutoTaskQueue(GetMediaThreadPool(MediaThreadType::PLAYBACK),
                                  /* aSupportsTailDispatch = */ false))
   , mMonitor("HLSDemuxer")
@@ -373,7 +365,7 @@ HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
     bool ok = NS_SUCCEEDED(info->PresentationTimeUs(&presentationTimeUs));
     mrd->mTime = presentationTimeUs;
     mrd->mTimecode = presentationTimeUs;
-    HLS_DEBUG("HLSTrackDemuxer", "mrd->mTime = %lld", mrd->mTime);
+
     if (sample->IsEOS()) {
       // TODO: consider using an elegant way to handle this case.
       HLS_DEBUG("HLSTrackDemuxer", "Met BUFFER_FLAG_END_OF_STREAM.");

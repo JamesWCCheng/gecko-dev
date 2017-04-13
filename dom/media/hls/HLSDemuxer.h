@@ -26,8 +26,7 @@ class HLSTrackDemuxer;
 class HLSDemuxer : public MediaDataDemuxer
 {
 public:
-  explicit HLSDemuxer(MediaDecoder* aParent,
-                      MediaResource* aResource,
+  explicit HLSDemuxer(MediaResource* aResource,
                       AbstractThread* aAbstractMainThread);
 
   RefPtr<InitPromise> Init() override;
@@ -56,14 +55,11 @@ public:
   void OnTrackInfoChanged(bool aHasAudio, bool aHasVideo);
   void OnCheckInitDone();
 
-  MediaDecoder* GetDecoder() { return mDecoder; }
-
 protected:
   int64_t GetNextKeyFrameTime();
 
 private:
   ~HLSDemuxer();
-  RefPtr<MediaDecoder> mDecoder;
   RefPtr<MediaResource> mResource;
   friend class HLSTrackDemuxer;
   TrackInfo* GetTrackInfo(TrackInfo::TrackType);

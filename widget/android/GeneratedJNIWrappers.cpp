@@ -1890,9 +1890,6 @@ auto GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New() -> HlsDemuxerCallbacks::
 constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnAudioFormatChanged_t::name[];
 constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnAudioFormatChanged_t::signature[];
 
-constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnDataArrived_t::name[];
-constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnDataArrived_t::signature[];
-
 constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnTrackInfoChanged_t::name[];
 constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnTrackInfoChanged_t::signature[];
 
@@ -1913,10 +1910,24 @@ auto GeckoHlsResourceWrapper::GetPlayer() const -> mozilla::jni::Object::LocalRe
 constexpr char GeckoHlsResourceWrapper::Create_t::name[];
 constexpr char GeckoHlsResourceWrapper::Create_t::signature[];
 
-auto GeckoHlsResourceWrapper::Create(mozilla::jni::String::Param a0) -> GeckoHlsResourceWrapper::LocalRef
+auto GeckoHlsResourceWrapper::Create(mozilla::jni::String::Param a0, mozilla::jni::Object::Param a1) -> GeckoHlsResourceWrapper::LocalRef
 {
-    return mozilla::jni::Method<Create_t>::Call(GeckoHlsResourceWrapper::Context(), nullptr, a0);
+    return mozilla::jni::Method<Create_t>::Call(GeckoHlsResourceWrapper::Context(), nullptr, a0, a1);
 }
+
+const char GeckoHlsResourceWrapper::HlsResourceCallbacks::name[] =
+        "org/mozilla/gecko/media/GeckoHlsResourceWrapper$HlsResourceCallbacks";
+
+constexpr char GeckoHlsResourceWrapper::HlsResourceCallbacks::New_t::name[];
+constexpr char GeckoHlsResourceWrapper::HlsResourceCallbacks::New_t::signature[];
+
+auto GeckoHlsResourceWrapper::HlsResourceCallbacks::New() -> HlsResourceCallbacks::LocalRef
+{
+    return mozilla::jni::Constructor<New_t>::Call(HlsResourceCallbacks::Context(), nullptr);
+}
+
+constexpr char GeckoHlsResourceWrapper::HlsResourceCallbacks::OnDataArrived_t::name[];
+constexpr char GeckoHlsResourceWrapper::HlsResourceCallbacks::OnDataArrived_t::signature[];
 
 const char GeckoHlsSample::name[] =
         "org/mozilla/gecko/media/GeckoHlsSample";

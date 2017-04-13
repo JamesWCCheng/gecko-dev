@@ -17,6 +17,7 @@ EXPORTS.mozilla.dom += [
 UNIFIED_SOURCES += [
     'HLSDecoder.cpp',
     'HLSDemuxer.cpp',
+    'HLSResource.cpp',
     'HLSUtils.cpp',
 ]
 

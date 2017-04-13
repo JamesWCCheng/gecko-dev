@@ -75,7 +75,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     private boolean enableA = true;
 
     private boolean isInitDone = false;
-    private Callbacks wrapperCallbacks;
+    private DemuxerCallbacks demuxerCallbacks;
+    private ResourceCallbacks resourceCallbacks;
 
     protected String userAgent;
 
@@ -86,10 +87,13 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         TRACK_TEXT,
     }
 
-    public interface Callbacks {
+    public interface DemuxerCallbacks {
         void onAudioFormatChanged();
         void onVideoFormatChanged();
         void onTrackInfoChanged(boolean hasAudio, boolean hasVideo);
+    }
+
+    public interface ResourceCallbacks {
         void onDataArrived();
     }
 
@@ -104,8 +108,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
         // General purpose implementation
         public void onDataArrived() {
-            assertTrue(wrapperCallbacks != null);
-            wrapperCallbacks.onDataArrived();
+            assertTrue(resourceCallbacks != null);
+            resourceCallbacks.onDataArrived();
         }
 
         // VideoRendererEventListener implementation
@@ -122,12 +126,12 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
         @Override
         public void onVideoInputFormatChanged(Format format) {
-            assertTrue(wrapperCallbacks != null);
+            assertTrue(demuxerCallbacks != null);
 
             videoFormat = format;
             if (DEBUG) Log.d( LOGTAG, "onVideoInputFormatChanged [" + videoFormat + "]");
             if (DEBUG) Log.d( LOGTAG, "sMimetype [" + videoFormat.sampleMimeType + "], ContainerMIMETYPE:" + videoFormat.containerMimeType);
-            wrapperCallbacks.onVideoFormatChanged();
+            demuxerCallbacks.onVideoFormatChanged();
         }
 
         @Override
@@ -170,11 +174,11 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
         @Override
         public void onAudioInputFormatChanged(Format format) {
-            assertTrue(wrapperCallbacks != null);
+            assertTrue(demuxerCallbacks != null);
 
             audioFormat = format;
             if (DEBUG) Log.d(LOGTAG, "onAudioInputFormatChanged [" + audioFormat + "]");
-            wrapperCallbacks.onAudioFormatChanged();
+            demuxerCallbacks.onAudioFormatChanged();
         }
 
         @Override
@@ -218,16 +222,21 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     }
 
     GeckoHlsPlayer() {
-        if (DEBUG) Log.d(LOGTAG, "GeckoHlsPlayer construct");
+        if (DEBUG) Log.d(LOGTAG, " construct");
     }
 
-    void addDemuxerWrapperCallbackListener(Callbacks callback) {
-        if (DEBUG) Log.d(LOGTAG, "GeckoHlsPlayer addDemuxerWrapperCallbackListener");
-        wrapperCallbacks = callback;
+    void addResourceWrapperCallbackListener(ResourceCallbacks callback) {
+        if (DEBUG) Log.d(LOGTAG, " >> addResourceWrapperCallbackListener");
+        resourceCallbacks = callback;
+    }
+
+    void addDemuxerWrapperCallbackListener(DemuxerCallbacks callback) {
+        if (DEBUG) Log.d(LOGTAG, " >> addDemuxerWrapperCallbackListener");
+        demuxerCallbacks = callback;
     }
 
     synchronized void init(String url) {
-        if (DEBUG) Log.d(LOGTAG, "GeckoHlsPlayer init");
+        if (DEBUG) Log.d(LOGTAG, " init");
         if (isInitDone == true) {
             return;
         }
@@ -323,7 +332,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
             }
         }
         trackGroupUpdated = true;
-        wrapperCallbacks.onTrackInfoChanged(numAudioTracks > 0? true : false,
+        demuxerCallbacks.onTrackInfoChanged(numAudioTracks > 0? true : false,
                                             numVideoTracks > 0? true : false );
     }
 
@@ -458,7 +467,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
             player.release();
             player = null;
         }
-        wrapperCallbacks = null;
+        demuxerCallbacks = null;
+        resourceCallbacks = null;
         isInitDone = false;
     }
 }
