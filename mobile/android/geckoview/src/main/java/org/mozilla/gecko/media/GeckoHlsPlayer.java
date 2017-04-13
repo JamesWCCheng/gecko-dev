@@ -47,7 +47,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     private static final String LOGTAG = "GeckoHlsPlayer";
     private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
     private static final int MAX_TIMELINE_ITEM_LINES = 3;
-    private static boolean DEBUG = false;
+    private static boolean DEBUG = true;
 
     private DataSource.Factory mediaDataSourceFactory;
     private Timeline.Period period;

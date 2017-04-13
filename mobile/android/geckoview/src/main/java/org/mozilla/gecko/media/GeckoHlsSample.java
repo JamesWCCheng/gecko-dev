@@ -52,7 +52,7 @@ public final class GeckoHlsSample {
     public static GeckoHlsSample create(ByteBuffer src, BufferInfo info, CryptoInfo cryptoInfo) {
         BufferInfo bufferInfo = new BufferInfo();
         bufferInfo.set(0, info.size, info.presentationTimeUs, info.flags);
-        return new GeckoHlsSample(byteArrayFromBuffer(src, info.offset, info.size), bufferInfo, cryptoInfo);
+        return new GeckoHlsSample(byteArrayFromBuffer(src, info.offset, info.size), info, cryptoInfo);
     }
 
     private GeckoHlsSample(byte[] bytes, BufferInfo info, CryptoInfo cryptoInfo) {

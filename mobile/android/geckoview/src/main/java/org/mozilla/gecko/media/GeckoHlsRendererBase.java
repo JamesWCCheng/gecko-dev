@@ -18,12 +18,24 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 // TODO: Extract the identical member function or data from Video/Audio Renderer
 public abstract class GeckoHlsRendererBase extends BaseRenderer {
-    protected static final int QUEUED_INPUT_SAMPLE_SIZE = 100;
+    protected static final int QUEUED_INPUT_SAMPLE_DURATION_THRESHOLD = 5000000; //5sec
     protected final MediaCodecSelector mediaCodecSelector;
     protected final FormatHolder formatHolder;
     protected boolean DEBUG;
     protected String LOGTAG;
     protected GeckoHlsPlayer.ComponentListener playerListener;
+    protected boolean isQueuedEnoughData() {
+        if (dexmuedInputSamples.isEmpty()) {
+            return false;
+        }
+        int size = dexmuedInputSamples.size();
+        GeckoHlsSample[] queuedSamples =
+                dexmuedInputSamples.toArray(new GeckoHlsSample[size]);
+        return Math.abs(queuedSamples[size - 1].info.presentationTimeUs -
+                queuedSamples[0].info.presentationTimeUs) >
+                    QUEUED_INPUT_SAMPLE_DURATION_THRESHOLD? true : false;
+    }
+
     protected ConcurrentLinkedQueue<GeckoHlsSample> dexmuedInputSamples;
 
     protected ByteBuffer inputBuffer = null;
@@ -59,7 +71,7 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
 
     public long getFirstSamplePTS() { return firstSampleStartTime; }
 
-    public ConcurrentLinkedQueue<GeckoHlsSample> getQueuedSamples(int number) {
+    public synchronized ConcurrentLinkedQueue<GeckoHlsSample> getQueuedSamples(int number) {
         ConcurrentLinkedQueue<GeckoHlsSample> samples =
             new ConcurrentLinkedQueue<GeckoHlsSample>();
 
@@ -73,8 +85,10 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
         }
         if (samples.isEmpty()) {
             waitingForData = true;
+            Log.d(LOGTAG, "getQueuedSamples isEmpty.");
         } else if (firstSampleStartTime == 0) {
             firstSampleStartTime = samples.peek().info.presentationTimeUs;
+            Log.d(LOGTAG, "firstSampleStartTime = " + firstSampleStartTime);
         }
         return samples;
     }

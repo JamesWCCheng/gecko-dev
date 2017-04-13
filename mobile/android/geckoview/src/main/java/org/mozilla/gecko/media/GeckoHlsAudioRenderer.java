@@ -34,7 +34,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         super(C.TRACK_TYPE_AUDIO, selector, (GeckoHlsPlayer.ComponentListener) eventListener);
         assertTrue(Versions.feature16Plus);
         LOGTAG = getClass().getSimpleName();
-        DEBUG = false;
+        DEBUG = true;
 
         eventDispatcher = new AudioRendererEventListener.EventDispatcher(eventHandler, eventListener);
     }
@@ -95,9 +95,8 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
     }
 
     @Override
-    protected boolean feedInputBuffersQueue() {
-        if (!initialized || inputStreamEnded ||
-            dexmuedInputSamples.size() >= QUEUED_INPUT_SAMPLE_SIZE) {
+    protected synchronized boolean feedInputBuffersQueue() {
+        if (!initialized || inputStreamEnded || isQueuedEnoughData()) {
             // Need to reinitialize the renderer or the input stream has ended
             // or we just reached the maximum queue size.
             return false;
@@ -120,6 +119,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         // We've read a buffer.
         if (bufferForRead.isEndOfStream()) {
             inputStreamEnded = true;
+            Log.d(LOGTAG, "Now we're at the End Of Stream.");
         }
 
         bufferForRead.flip();
@@ -143,7 +143,8 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         GeckoHlsSample sample = GeckoHlsSample.create(buffer, bufferInfo, cryptoInfo);
         dexmuedInputSamples.offer(sample);
 
-        if (waitingForData && dexmuedInputSamples.size() > 0) {
+        if (waitingForData && isQueuedEnoughData()) {
+            if (DEBUG) Log.d(LOGTAG, "onDataArrived");
             playerListener.onDataArrived();
             waitingForData = false;
         }
@@ -152,6 +153,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
 
     @Override
     protected boolean clearInputSamplesQueue() {
+        if (DEBUG) Log.d(LOGTAG, "clearInputSamplesQueue");
         dexmuedInputSamples.clear();
         return true;
     }
