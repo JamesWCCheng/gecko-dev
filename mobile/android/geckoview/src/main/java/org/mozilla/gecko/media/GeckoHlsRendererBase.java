@@ -16,7 +16,6 @@ import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-// TODO: Extract the identical member function or data from Video/Audio Renderer
 public abstract class GeckoHlsRendererBase extends BaseRenderer {
     protected static final int QUEUED_INPUT_SAMPLE_DURATION_THRESHOLD = 5000000; //5sec
     protected final MediaCodecSelector mediaCodecSelector;
@@ -24,17 +23,6 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
     protected boolean DEBUG;
     protected String LOGTAG;
     protected GeckoHlsPlayer.ComponentListener playerListener;
-    protected boolean isQueuedEnoughData() {
-        if (dexmuedInputSamples.isEmpty()) {
-            return false;
-        }
-        int size = dexmuedInputSamples.size();
-        GeckoHlsSample[] queuedSamples =
-                dexmuedInputSamples.toArray(new GeckoHlsSample[size]);
-        return Math.abs(queuedSamples[size - 1].info.presentationTimeUs -
-                queuedSamples[0].info.presentationTimeUs) >
-                    QUEUED_INPUT_SAMPLE_DURATION_THRESHOLD? true : false;
-    }
 
     protected ConcurrentLinkedQueue<GeckoHlsSample> dexmuedInputSamples;
 
@@ -69,6 +57,18 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
         dexmuedInputSamples = new ConcurrentLinkedQueue<>();
     }
 
+    protected boolean isQueuedEnoughData() {
+        if (dexmuedInputSamples.isEmpty()) {
+            return false;
+        }
+        int size = dexmuedInputSamples.size();
+        GeckoHlsSample[] queuedSamples =
+                dexmuedInputSamples.toArray(new GeckoHlsSample[size]);
+        return Math.abs(queuedSamples[size - 1].info.presentationTimeUs -
+                queuedSamples[0].info.presentationTimeUs) >
+                    QUEUED_INPUT_SAMPLE_DURATION_THRESHOLD? true : false;
+    }
+
     public long getFirstSamplePTS() { return firstSampleStartTime; }
 
     public synchronized ConcurrentLinkedQueue<GeckoHlsSample> getQueuedSamples(int number) {
@@ -84,11 +84,11 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
             samples.offer(sample);
         }
         if (samples.isEmpty()) {
+            if (DEBUG) Log.d(LOGTAG, "getQueuedSamples isEmpty, waitingForData = true !");
             waitingForData = true;
-            Log.d(LOGTAG, "getQueuedSamples isEmpty.");
         } else if (firstSampleStartTime == 0) {
             firstSampleStartTime = samples.peek().info.presentationTimeUs;
-            Log.d(LOGTAG, "firstSampleStartTime = " + firstSampleStartTime);
+            if (DEBUG) Log.d(LOGTAG, "firstSampleStartTime = " + firstSampleStartTime);
         }
         return samples;
     }
@@ -138,7 +138,6 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
     @Override
     public void render(long positionUs, long elapsedRealtimeUs) {
         if (DEBUG) Log.d(LOGTAG, "positionUs = " + positionUs +
-                         ", elapsedRealtimeUs = "+ elapsedRealtimeUs +
                          ", inputStreamEnded = " + inputStreamEnded);
         if (inputStreamEnded) {
             return;

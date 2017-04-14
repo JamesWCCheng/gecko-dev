@@ -129,8 +129,10 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
             assertTrue(demuxerCallbacks != null);
 
             videoFormat = format;
-            if (DEBUG) Log.d( LOGTAG, "onVideoInputFormatChanged [" + videoFormat + "]");
-            if (DEBUG) Log.d( LOGTAG, "sMimetype [" + videoFormat.sampleMimeType + "], ContainerMIMETYPE:" + videoFormat.containerMimeType);
+            if (DEBUG) Log.d(LOGTAG, "onVideoInputFormatChanged [" + videoFormat + "]");
+            if (DEBUG) Log.d(LOGTAG, "SampleMIMEType [" +
+                             videoFormat.sampleMimeType + "], ContainerMIMEType [" +
+                             videoFormat.containerMimeType + "]");
             demuxerCallbacks.onVideoFormatChanged();
         }
 
@@ -434,16 +436,18 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     public boolean seek(long positionMs) {
         // positionMs : milliseconds.
         // NOTE : It's not possible to seek media by tracktype via ExoPlayer Interface.
-        if (DEBUG) Log.d(LOGTAG, "seeking  : " + positionMs + " (Ms)");
         try {
             // TODO : Gather Timeline Period / Window information to develop
             //        complete timeilne, and seekTime should be inside the duration.
             Long startTime = Long.MAX_VALUE;
             for (GeckoHlsRendererBase r : renderers) {
+                if (r == vRenderer  && enableV || r == aRenderer  && enableA) {
                 // Find the min value of the start time
-                startTime = Math.min(startTime, r.getFirstSamplePTS());
+                    startTime = Math.min(startTime, r.getFirstSamplePTS());
+                }
             }
-
+            if (DEBUG) Log.d(LOGTAG, "seeking  : " + positionMs / 1000 +
+                    " (s); startTime : " + startTime);
             player.seekTo(positionMs - startTime / 1000);
         } catch (Exception e) {
             return false;
@@ -465,6 +469,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
             player.removeListener(this);
             player.stop();
             player.release();
+            vRenderer = null;
+            aRenderer = null;
             player = null;
         }
         demuxerCallbacks = null;

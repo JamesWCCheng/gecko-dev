@@ -14,6 +14,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public final class GeckoHlsSample {
+    public static final GeckoHlsSample EOS;
+    static {
+        BufferInfo eosInfo = new BufferInfo();
+        eosInfo.set(0, 0, Long.MIN_VALUE, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
+        EOS = new GeckoHlsSample(null, eosInfo, null);
+    }
     public byte[] byteArray;
 
     @WrapForJNI

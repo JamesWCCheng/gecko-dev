@@ -121,6 +121,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     protected void resetRenderer() {
         if (initialized) {
             rendererReconfigured = false;
+            if (DEBUG) Log.d(LOGTAG, "[resetRenderer] RECONFIGURATION_STATE_NONE");
             rendererReconfigurationState = RECONFIGURATION_STATE_NONE;
             nextKeyFrameTime = 0;
             clearInputSamplesQueue();
@@ -134,6 +135,9 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         if (!initialized || inputStreamEnded || isQueuedEnoughData()) {
             // Need to reinitialize the renderer or the input stream has ended
             // or we just reached the maximum queue size.
+            if (DEBUG) Log.d(LOGTAG, "[feedInput] Bye ! initialized(" + initialized +
+                             "), inputStreamEnded(" + inputStreamEnded +
+                             "), isQueuedEnoughData(" + isQueuedEnoughData() + ")");
             return false;
         }
 
@@ -146,6 +150,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         // data to be supplied at the start of the buffer that also contains
         // the first frame in the new format.
         if (rendererReconfigurationState == RECONFIGURATION_STATE_WRITE_PENDING) {
+            if (DEBUG) Log.d(LOGTAG, "[feedInput] put initialization data : RECONFIGURATION_STATE_QUEUE_PENDING");
             for (int i = 0; i < format.initializationData.size(); i++) {
                 byte[] data = format.initializationData.get(i);
                 bufferForRead.data.put(data);
@@ -160,6 +165,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         }
         if (result == C.RESULT_FORMAT_READ) {
             if (rendererReconfigurationState == RECONFIGURATION_STATE_QUEUE_PENDING) {
+                if (DEBUG) Log.d(LOGTAG, "[feedInput] 2 formats in a row : RECONFIGURATION_STATE_WRITE_PENDING");
                 // We received two formats in a row. Clear the current buffer of any reconfiguration data
                 // associated with the first format.
                 bufferForRead.clear();
@@ -171,7 +177,9 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
         // We've read a buffer.
         if (bufferForRead.isEndOfStream()) {
+            if (DEBUG) Log.d(LOGTAG, "Now we're at the End Of Stream.");
             if (rendererReconfigurationState == RECONFIGURATION_STATE_QUEUE_PENDING) {
+                if (DEBUG) Log.d(LOGTAG, "[feedInput] isEndOfStream : RECONFIGURATION_STATE_WRITE_PENDING");
                 // We received a new format immediately before the end of the stream. We need to clear
                 // the corresponding reconfiguration data from the current buffer, but re-write it into
                 // a subsequent buffer if there are any (e.g. if the user seeks backwards).
@@ -179,7 +187,9 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                 rendererReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
             }
             inputStreamEnded = true;
-            Log.d(LOGTAG, "Now we're at the End Of Stream.");
+            GeckoHlsSample sample = GeckoHlsSample.EOS;
+            calculatDuration(sample);
+            return false;
         }
 
         bufferForRead.flip();
@@ -213,6 +223,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     protected void onPositionReset(long positionUs, boolean joining) {
         super.onPositionReset(positionUs, joining);
         if (initialized && rendererReconfigured && format != null) {
+            if (DEBUG) Log.d(LOGTAG, "[onPositionReset] RECONFIGURATION_STATE_WRITE_PENDING");
             // Any reconfiguration data that we send shortly before the reset 
             // may be discarded. We avoid this issue by sending reconfiguration
             // data following every position reset.
@@ -236,6 +247,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         handleDrmInitChanged(oldFormat, newFormat);
 
         if (initialized && canReconfigure(oldFormat, format)) {
+            if (DEBUG) Log.d(LOGTAG, "[onInputFormatChanged] RECONFIGURATION_STATE_WRITE_PENDING");
             clearInputSamplesQueue();
             rendererReconfigured = true;
             rendererReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
@@ -294,8 +306,11 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             GeckoHlsSample toQueue = dexmuedNoDurationSamples.poll();
             dexmuedInputSamples.offer(toQueue);
             if (DEBUG) Log.d(LOGTAG, "Demuxed sample PTS : " +
-                    toQueue.info.presentationTimeUs +
-                    ", duration : " + toQueue.duration + " , queue size : " + dexmuedInputSamples.size());
+                             toQueue.info.presentationTimeUs + ", duration :" +
+                             toQueue.duration + ", isKeyFrame(" +
+                             toQueue.isKeyFrame() + "), queue size : " +
+                             dexmuedInputSamples.size() + ", NoDuQueue size : " +
+                             dexmuedNoDurationSamples.size());
         } else if (inputStreamEnded) {
             for (int i = 0; i < sizeOfNoDura; i++) {
                 for (int j = -2; j < 7; j++) {

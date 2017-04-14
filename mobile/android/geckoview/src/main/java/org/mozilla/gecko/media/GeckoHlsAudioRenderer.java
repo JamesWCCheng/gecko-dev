@@ -118,8 +118,10 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
 
         // We've read a buffer.
         if (bufferForRead.isEndOfStream()) {
+            if (DEBUG) Log.d(LOGTAG, "Now we're at the End Of Stream.");
             inputStreamEnded = true;
-            Log.d(LOGTAG, "Now we're at the End Of Stream.");
+            dexmuedInputSamples.offer(GeckoHlsSample.EOS);
+            return false;
         }
 
         bufferForRead.flip();
