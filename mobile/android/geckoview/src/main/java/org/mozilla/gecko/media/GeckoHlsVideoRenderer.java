@@ -124,7 +124,6 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             if (DEBUG) Log.d(LOGTAG, "[resetRenderer] RECONFIGURATION_STATE_NONE");
             rendererReconfigurationState = RECONFIGURATION_STATE_NONE;
             nextKeyFrameTime = 0;
-            clearInputSamplesQueue();
             inputBuffer = null;
             initialized = false;
         }
@@ -210,7 +209,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
         GeckoHlsSample sample = GeckoHlsSample.create(buffer, bufferInfo, cryptoInfo);
         calculatDuration(sample);
-
+        rendererReconfigurationState = RECONFIGURATION_STATE_NONE;
         if (waitingForData && isQueuedEnoughData()) {
             if (DEBUG) Log.d(LOGTAG, "onDataArrived");
             playerListener.onDataArrived();
@@ -248,12 +247,13 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
         if (initialized && canReconfigure(oldFormat, format)) {
             if (DEBUG) Log.d(LOGTAG, "[onInputFormatChanged] RECONFIGURATION_STATE_WRITE_PENDING");
-            clearInputSamplesQueue();
             rendererReconfigured = true;
             rendererReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
         } else {
             resetRenderer();
             maybeInitRenderer();
+            rendererReconfigured = true;
+            rendererReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
         }
         eventDispatcher.inputFormatChanged(newFormat);
     }

@@ -89,7 +89,6 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
 
     @Override
     protected void resetRenderer() {
-        clearInputSamplesQueue();
         inputBuffer = null;
         initialized = false;
     }
