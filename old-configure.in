@@ -2848,6 +2848,10 @@ if test -n "$MOZ_ANDROID_OMX"; then
   AC_DEFINE(MOZ_ANDROID_OMX)
 fi
 
+if test -n "$MOZ_ANDROID_HLS_SUPPORT"; then
+  AC_DEFINE(MOZ_ANDROID_HLS_SUPPORT)
+fi
+
 dnl ========================================================
 dnl = Enable building OMX media plugin (B2G or Android)
 dnl ========================================================
@@ -5002,6 +5006,8 @@ AC_SUBST(MOZ_FIX_LINK_PATHS)
 
 AC_SUBST(MOZ_POST_PROGRAM_COMMAND)
 AC_SUBST(MOZ_LINKER_EXTRACT)
+
+AC_SUBST(MOZ_ANDROID_HLS_SUPPORT)
 
 if test -n "$MOZ_BINARY_EXTENSIONS"; then
   AC_DEFINE(MOZ_BINARY_EXTENSIONS)

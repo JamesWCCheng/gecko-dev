@@ -32,7 +32,7 @@
 #include "nsProxyRelease.h"
 #include "nsIContentPolicy.h"
 
-#ifdef MOZ_ANDROID_OMX
+#ifdef MOZ_ANDROID_HLS_SUPPORT
 #include "HLSUtils.h"
 #include "HLSResource.h"
 #endif
@@ -1525,7 +1525,7 @@ MediaResource::Create(MediaResourceCallback* aCallback,
 
   RefPtr<MediaResource> resource;
 
-#ifdef MOZ_ANDROID_OMX
+#ifdef MOZ_ANDROID_HLS_SUPPORT
   HLS_DEBUG_NON_MEMBER("MediaResource", "contentTypeString = %s , containerType = %s", contentTypeString.get(), containerType.value().OriginalString().Data());
   if (IsHttpLiveStreamingType(containerType.value())) {
     resource = new HLSResource(aCallback, aChannel, uri, *containerType);

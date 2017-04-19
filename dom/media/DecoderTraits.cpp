@@ -21,6 +21,8 @@
 #include "AndroidMediaDecoder.h"
 #include "AndroidMediaReader.h"
 #include "AndroidMediaPluginHost.h"
+#endif
+#ifdef MOZ_ANDROID_HLS_SUPPORT
 #include "HLSDecoder.h"
 #include "HLSUtils.h"
 #endif
@@ -144,6 +146,8 @@ CanHandleCodecsType(const MediaContainerType& aType,
   if (MediaDecoder::IsAndroidMediaPluginEnabled()) {
     EnsureAndroidMediaPluginHost()->FindDecoder(aType, &supportedCodecs);
   }
+#endif
+#ifdef MOZ_ANDROID_HLS_SUPPORT
   if (HLSDecoder::IsSupportedType(mimeType)) {
     if (HLSDecoder::IsSupportedType(aType)) {
       HLS_DEBUG_NON_MEMBER("DecoderTraits::", "mimeType = %s", mimeType.OriginalString().Data());
@@ -176,7 +180,8 @@ CanHandleMediaType(const MediaContainerType& aType,
   if (IsHttpLiveStreamingType(aType)) {
     Telemetry::Accumulate(Telemetry::MEDIA_HLS_CANPLAY_REQUESTED, true);
   }
-#else
+#endif
+#ifdef MOZ_ANDROID_HLS_SUPPORT
   if (HLSDecoder::IsSupportedType(aType)) {
     Telemetry::Accumulate(Telemetry::MEDIA_HLS_CANPLAY_REQUESTED, true);
     HLS_DEBUG_NON_MEMBER("DecoderTraits::", "aType = %s", aType.OriginalString().Data());
@@ -336,7 +341,8 @@ InstantiateDecoder(const MediaContainerType& aType,
     // We don't have an HLS decoder.
     Telemetry::Accumulate(Telemetry::MEDIA_HLS_DECODER_SUCCESS, false);
   }
-#else
+#endif
+#ifdef MOZ_ANDROID_HLS_SUPPORT
   if (HLSDecoder::IsSupportedType(aType)) {
     HLS_DEBUG_NON_MEMBER("DecoderTraits::", "aType = %s", aType.OriginalString().Data());
     Telemetry::Accumulate(Telemetry::MEDIA_HLS_DECODER_SUCCESS, true);

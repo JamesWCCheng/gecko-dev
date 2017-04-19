@@ -56,6 +56,10 @@ if CONFIG['MOZ_DIRECTSHOW']:
 if CONFIG['MOZ_ANDROID_OMX']:
     DIRS += [
         'android',
+    ]
+
+if CONFIG['MOZ_ANDROID_HLS_SUPPORT']:
+    DIRS += [
         'hls',
     ]
 
