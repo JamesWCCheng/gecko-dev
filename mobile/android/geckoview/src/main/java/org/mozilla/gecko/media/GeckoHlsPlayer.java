@@ -278,7 +278,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
         Uri[] uris = new Uri[]{Uri.parse(url)};
         userAgent = Util.getUserAgent(ctx, "RemoteDecoder");
-        mediaDataSourceFactory = buildDataSourceFactory(ctx, null);
+        mediaDataSourceFactory = buildDataSourceFactory(ctx, BANDWIDTH_METER);
 
         MediaSource[] mediaSources = new MediaSource[1];
         mediaSources[0] = buildMediaSource(uris[0], null);
