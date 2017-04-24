@@ -240,7 +240,7 @@ HLSDemuxer::GetTrackInfo(TrackType aTrack)
       mInfo.mAudio.mProfile = audioInfo->Profile();
       mInfo.mAudio.mBitDepth = audioInfo->BitDepth();
       mInfo.mAudio.mMimeType = NS_ConvertUTF16toUTF8(audioInfo->MimeType()->ToString());
-      mInfo.mAudio.mDuration = audioInfo->Duration();
+      mInfo.mAudio.mDuration = TimeUnit::FromMicroseconds(audioInfo->Duration());
       auto&& csd = audioInfo->CodecSpecificData()->GetElements();
       mInfo.mAudio.mCodecSpecificConfig->AppendElements(reinterpret_cast<uint8_t*>(&csd[0]),
                                                         csd.Length());
@@ -257,7 +257,7 @@ HLSDemuxer::GetTrackInfo(TrackType aTrack)
       mInfo.mVideo.mDisplay.width = videoInfo->DisplayX();
       mInfo.mVideo.mDisplay.height = videoInfo->DisplayY();
       mInfo.mVideo.mMimeType = NS_ConvertUTF16toUTF8(videoInfo->MimeType()->ToString());
-      mInfo.mVideo.mDuration = videoInfo->Duration();
+      mInfo.mVideo.mDuration = TimeUnit::FromMicroseconds(videoInfo->Duration());
       return &mInfo.mVideo;
     }
     default:
@@ -363,8 +363,8 @@ HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
     RefPtr<MediaRawData> mrd = new MediaRawData();
     int64_t presentationTimeUs = 0;
     bool ok = NS_SUCCEEDED(info->PresentationTimeUs(&presentationTimeUs));
-    mrd->mTime = presentationTimeUs;
-    mrd->mTimecode = presentationTimeUs;
+    mrd->mTime = TimeUnit::FromMicroseconds(presentationTimeUs);
+    mrd->mTimecode = TimeUnit::FromMicroseconds(presentationTimeUs);
 
     if (sample->IsEOS()) {
       // TODO: consider using an elegant way to handle this case.
@@ -374,7 +374,7 @@ HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
 
     mrd->mKeyframe = sample->IsKeyFrame();
     // TODO : Fix this when we know how to calculate from ExoPlayer.
-    mrd->mDuration = (mType == TrackInfo::kVideoTrack) ? (int64_t)sample->Duration() : 0;
+    mrd->mDuration = (mType == TrackInfo::kVideoTrack) ? TimeUnit::FromMicroseconds(sample->Duration()) : TimeUnit::Zero();
 
     int32_t size = 0;
     ok &= NS_SUCCEEDED(info->Size(&size));
