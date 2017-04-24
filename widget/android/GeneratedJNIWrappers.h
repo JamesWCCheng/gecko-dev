@@ -5444,33 +5444,15 @@ public:
 
     static auto New() -> HlsDemuxerCallbacks::LocalRef;
 
-    struct OnAudioFormatChanged_t {
-        typedef HlsDemuxerCallbacks Owner;
-        typedef void ReturnType;
-        typedef void SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "onAudioFormatChanged";
-        static constexpr char signature[] =
-                "()V";
-        static const bool isStatic = false;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::GECKO;
-    };
-
-    struct OnTrackInfoChanged_t {
+    struct OnDemuxerError_t {
         typedef HlsDemuxerCallbacks Owner;
         typedef void ReturnType;
         typedef void SetterType;
         typedef mozilla::jni::Args<
-                bool,
-                bool> Args;
-        static constexpr char name[] = "onTrackInfoChanged";
+                int32_t> Args;
+        static constexpr char name[] = "onDemuxerError";
         static constexpr char signature[] =
-                "(ZZ)V";
+                "(I)V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -5480,12 +5462,12 @@ public:
                 mozilla::jni::DispatchTarget::GECKO;
     };
 
-    struct OnVideoFormatChanged_t {
+    struct OnInitialized_t {
         typedef HlsDemuxerCallbacks Owner;
         typedef void ReturnType;
         typedef void SetterType;
         typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "onVideoFormatChanged";
+        static constexpr char name[] = "onInitialized";
         static constexpr char signature[] =
                 "()V";
         static const bool isStatic = false;
@@ -5591,6 +5573,24 @@ public:
         static constexpr char name[] = "onDataArrived";
         static constexpr char signature[] =
                 "()V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::GECKO;
+    };
+
+    struct OnResourceError_t {
+        typedef HlsResourceCallbacks Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<
+                int32_t> Args;
+        static constexpr char name[] = "onResourceError";
+        static constexpr char signature[] =
+                "(I)V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -5731,6 +5731,27 @@ public:
     auto Duration() const -> int64_t;
 
     auto Duration(int64_t) const -> void;
+
+    struct ExtraIndex_t {
+        typedef GeckoHlsSample Owner;
+        typedef int32_t ReturnType;
+        typedef int32_t SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "extraIndex";
+        static constexpr char signature[] =
+                "I";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto ExtraIndex() const -> int32_t;
+
+    auto ExtraIndex(int32_t) const -> void;
 
     struct Info_t {
         typedef GeckoHlsSample Owner;

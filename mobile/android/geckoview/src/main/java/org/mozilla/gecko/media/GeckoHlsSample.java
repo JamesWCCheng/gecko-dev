@@ -20,6 +20,10 @@ public final class GeckoHlsSample {
         eosInfo.set(0, 0, Long.MIN_VALUE, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
         EOS = new GeckoHlsSample(null, eosInfo, null);
     }
+
+    @WrapForJNI
+    public int extraIndex;
+
     public byte[] byteArray;
 
     @WrapForJNI
@@ -62,6 +66,7 @@ public final class GeckoHlsSample {
     }
 
     private GeckoHlsSample(byte[] bytes, BufferInfo info, CryptoInfo cryptoInfo) {
+        extraIndex = 0;
         duration = Long.MAX_VALUE;
         byteArray = bytes;
         this.info = info;

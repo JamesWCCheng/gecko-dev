@@ -50,13 +50,13 @@ public:
   static const media::TimeUnit EOS_FUZZ;
 
   AutoTaskQueue* GetTaskQueue() { return mTaskQueue; }
-  void OnAudioFormatChanged();
-  void OnVideoFormatChanged();
-  void OnTrackInfoChanged(bool aHasAudio, bool aHasVideo);
-  void OnCheckInitDone();
+  void OnInitialized();
 
 protected:
   int64_t GetNextKeyFrameTime();
+  void UpdateVideoInfo(int index);
+  void UpdateAudioInfo(int index);
+
 
 private:
   ~HLSDemuxer();
@@ -75,11 +75,6 @@ private:
 
   java::GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::GlobalRef mJavaCallbacks;
   java::GeckoHlsDemuxerWrapper::GlobalRef mHlsDemuxerWrapper;
-
-  bool mHasAudio;
-  bool mHasVideo;
-  bool mAudioInfoUpdated;
-  bool mVideoInfoUpdated;
 };
 
 class HLSTrackDemuxer : public MediaTrackDemuxer

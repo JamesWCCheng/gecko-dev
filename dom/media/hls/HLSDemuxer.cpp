@@ -68,22 +68,12 @@ public:
     mDemuxer = aDemuxer;
   }
 
-  void OnAudioFormatChanged() {
+  void OnInitialized() {
     MOZ_ASSERT(mDemuxer);
-    mDemuxer->OnAudioFormatChanged();
-    mDemuxer->OnCheckInitDone();
+    mDemuxer->OnInitialized();
   }
 
-  void OnVideoFormatChanged() {
-    MOZ_ASSERT(mDemuxer);
-    mDemuxer->OnVideoFormatChanged();
-    mDemuxer->OnCheckInitDone();
-  }
-
-  void OnTrackInfoChanged(bool aHasAudio, bool aHasVideo) {
-    MOZ_ASSERT(mDemuxer);
-    mDemuxer->OnTrackInfoChanged(aHasAudio, aHasVideo);
-  }
+  void OnDemuxerError(int aErrorCode) {}
 
 private:
   HLSDemuxer* mDemuxer;
@@ -95,10 +85,6 @@ HLSDemuxer::HLSDemuxer(MediaResource* aResource,
   , mTaskQueue(new AutoTaskQueue(GetMediaThreadPool(MediaThreadType::PLAYBACK),
                                  /* aSupportsTailDispatch = */ false))
   , mMonitor("HLSDemuxer")
-  , mHasAudio(false)
-  , mHasVideo(false)
-  , mAudioInfoUpdated(false)
-  , mVideoInfoUpdated(false)
 {
   MOZ_ASSERT(NS_IsMainThread());
   HlsDemuxerCallbacksSupport::Init();
@@ -114,45 +100,15 @@ HLSDemuxer::HLSDemuxer(MediaResource* aResource,
 }
 
 void
-HLSDemuxer::OnAudioFormatChanged()
+HLSDemuxer::OnInitialized()
 {
   MOZ_ASSERT(NS_IsMainThread());
-  HLS_DEBUG("HLSDemuxer", "onAudioFormatChanged");
-  mAudioInfoUpdated = true;
-}
+  HLS_DEBUG("HLSDemuxer", "OnInitialized");
 
-void
-HLSDemuxer::OnVideoFormatChanged()
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  HLS_DEBUG("HLSDemuxer", "onVideoFormatChanged");
-  mVideoInfoUpdated = true;
+  UpdateVideoInfo(0);
+  UpdateAudioInfo(0);
+  mInitPromise.ResolveIfExists(NS_OK, __func__);
 }
-
-void
-HLSDemuxer::OnTrackInfoChanged(bool aHasAudio, bool aHasVideo)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  HLS_DEBUG("HLSDemuxer", "onTrackInfoChanged");
-  mHasAudio = aHasAudio;
-  mHasVideo = aHasVideo;
-}
-
-void
-HLSDemuxer::OnCheckInitDone()
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  HLS_DEBUG("HLSDemuxer", "onCheckInitDone");
-  if (mInitPromise.IsEmpty()) {
-    return;
-  }
-  bool aDone = mHasAudio ? mAudioInfoUpdated : true;
-  bool vDone = mHasVideo ? mVideoInfoUpdated : true;
-  if (aDone && vDone) {
-    mInitPromise.ResolveIfExists(NS_OK, __func__);
-  }
-}
-
 // Due to inaccuracies in determining buffer end
 // frames (Bug 1065207). This value is based on videos seen in the wild.
 const TimeUnit HLSDemuxer::EOS_FUZZ = media::TimeUnit::FromMicroseconds(500000);
@@ -233,31 +189,9 @@ HLSDemuxer::GetTrackInfo(TrackType aTrack)
   MonitorAutoLock mon(mMonitor);
   switch (aTrack) {
     case TrackType::kAudioTrack: {
-      jni::Object::LocalRef infoObj = mHlsDemuxerWrapper->GetAudioInfo(0);
-      java::HlsAudioInfo::LocalRef audioInfo(mozilla::Move(infoObj));
-      mInfo.mAudio.mRate = audioInfo->Rate();
-      mInfo.mAudio.mChannels = audioInfo->Channels();
-      mInfo.mAudio.mProfile = audioInfo->Profile();
-      mInfo.mAudio.mBitDepth = audioInfo->BitDepth();
-      mInfo.mAudio.mMimeType = NS_ConvertUTF16toUTF8(audioInfo->MimeType()->ToString());
-      mInfo.mAudio.mDuration = TimeUnit::FromMicroseconds(audioInfo->Duration());
-      auto&& csd = audioInfo->CodecSpecificData()->GetElements();
-      mInfo.mAudio.mCodecSpecificConfig->AppendElements(reinterpret_cast<uint8_t*>(&csd[0]),
-                                                        csd.Length());
       return &mInfo.mAudio;
     }
     case TrackType::kVideoTrack: {
-      jni::Object::LocalRef infoObj = mHlsDemuxerWrapper->GetVideoInfo(0);
-      java::HlsVideoInfo::LocalRef videoInfo(mozilla::Move(infoObj));
-      mInfo.mVideo.mStereoMode = getStereoMode(videoInfo->StereoMode());
-      mInfo.mVideo.mRotation = getVideoInfoRotation(videoInfo->Rotation());
-      //TODO: Check how to get this information since DecoderInputBuffer did not provide this info.
-      mInfo.mVideo.mImage.width = videoInfo->DisplayX();
-      mInfo.mVideo.mImage.height = videoInfo->DisplayY();
-      mInfo.mVideo.mDisplay.width = videoInfo->DisplayX();
-      mInfo.mVideo.mDisplay.height = videoInfo->DisplayY();
-      mInfo.mVideo.mMimeType = NS_ConvertUTF16toUTF8(videoInfo->MimeType()->ToString());
-      mInfo.mVideo.mDuration = TimeUnit::FromMicroseconds(videoInfo->Duration());
       return &mInfo.mVideo;
     }
     default:
@@ -270,6 +204,53 @@ HLSDemuxer::GetNextKeyFrameTime()
 {
   MOZ_ASSERT(mHlsDemuxerWrapper);
   return mHlsDemuxerWrapper->GetNextKeyFrameTime();
+}
+
+void
+HLSDemuxer::UpdateAudioInfo(int index)
+{
+  MOZ_ASSERT(mHlsDemuxerWrapper);
+  HLS_DEBUG("HLSDemuxer", "UpdateAudioInfo (%d)", index);
+  jni::Object::LocalRef infoObj = mHlsDemuxerWrapper->GetAudioInfo(index);
+  if (infoObj) {
+    java::HlsAudioInfo::LocalRef audioInfo(mozilla::Move(infoObj));
+    mInfo.mAudio.mRate = audioInfo->Rate();
+    mInfo.mAudio.mChannels = audioInfo->Channels();
+    mInfo.mAudio.mProfile = audioInfo->Profile();
+    mInfo.mAudio.mBitDepth = audioInfo->BitDepth();
+    mInfo.mAudio.mMimeType = NS_ConvertUTF16toUTF8(audioInfo->MimeType()->ToString());
+    mInfo.mAudio.mDuration = TimeUnit::FromMicroseconds(audioInfo->Duration());
+    auto&& csd = audioInfo->CodecSpecificData()->GetElements();
+    mInfo.mAudio.mCodecSpecificConfig->Clear();
+    mInfo.mAudio.mCodecSpecificConfig->AppendElements(reinterpret_cast<uint8_t*>(&csd[0]),
+                                                      csd.Length());
+  }
+}
+
+void
+HLSDemuxer::UpdateVideoInfo(int index)
+{
+  MOZ_ASSERT(mHlsDemuxerWrapper);
+  jni::Object::LocalRef infoObj = mHlsDemuxerWrapper->GetVideoInfo(index);
+  if (infoObj) {
+    java::HlsVideoInfo::LocalRef videoInfo(mozilla::Move(infoObj));
+    mInfo.mVideo.mStereoMode = getStereoMode(videoInfo->StereoMode());
+    mInfo.mVideo.mRotation = getVideoInfoRotation(videoInfo->Rotation());
+    //TODO: Check how to get this information since DecoderInputBuffer did not provide this info.
+    mInfo.mVideo.mImage.width = videoInfo->DisplayX();
+    mInfo.mVideo.mImage.height = videoInfo->DisplayY();
+    mInfo.mVideo.mDisplay.width = videoInfo->DisplayX();
+    mInfo.mVideo.mDisplay.height = videoInfo->DisplayY();
+    mInfo.mVideo.mMimeType = NS_ConvertUTF16toUTF8(videoInfo->MimeType()->ToString());
+    mInfo.mVideo.mDuration = TimeUnit::FromMicroseconds(videoInfo->Duration());
+    auto&& extraData = videoInfo->ExtraData()->GetElements();
+    mInfo.mVideo.mExtraData->Clear();
+    mInfo.mVideo.mExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
+                                            extraData.Length());
+    HLS_DEBUG("HLSDemuxer", "UpdateVideoInfo (%d) / I(%dx%d) / D(%dx%d)",
+      index, mInfo.mVideo.mImage.width, mInfo.mVideo.mImage.height,
+      mInfo.mVideo.mDisplay.width, mInfo.mVideo.mDisplay.height);
+  }
 }
 
 HLSDemuxer::~HLSDemuxer()
@@ -382,6 +363,7 @@ HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
       HLS_DEBUG("HLSTrackDemuxer", "Error occurred during extraction from Sample java object.");
       return nullptr;
     }
+
     // Write payload into MediaRawData
     UniquePtr<MediaRawDataWriter> writer(mrd->CreateWriter());
     if (!writer->SetSize(size)) {

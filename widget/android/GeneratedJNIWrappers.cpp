@@ -1887,14 +1887,11 @@ auto GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New() -> HlsDemuxerCallbacks::
     return mozilla::jni::Constructor<New_t>::Call(HlsDemuxerCallbacks::Context(), nullptr);
 }
 
-constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnAudioFormatChanged_t::name[];
-constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnAudioFormatChanged_t::signature[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnDemuxerError_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnDemuxerError_t::signature[];
 
-constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnTrackInfoChanged_t::name[];
-constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnTrackInfoChanged_t::signature[];
-
-constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t::name[];
-constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnVideoFormatChanged_t::signature[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnInitialized_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnInitialized_t::signature[];
 
 const char GeckoHlsResourceWrapper::name[] =
         "org/mozilla/gecko/media/GeckoHlsResourceWrapper";
@@ -1928,6 +1925,9 @@ auto GeckoHlsResourceWrapper::HlsResourceCallbacks::New() -> HlsResourceCallback
 
 constexpr char GeckoHlsResourceWrapper::HlsResourceCallbacks::OnDataArrived_t::name[];
 constexpr char GeckoHlsResourceWrapper::HlsResourceCallbacks::OnDataArrived_t::signature[];
+
+constexpr char GeckoHlsResourceWrapper::HlsResourceCallbacks::OnResourceError_t::name[];
+constexpr char GeckoHlsResourceWrapper::HlsResourceCallbacks::OnResourceError_t::signature[];
 
 const char GeckoHlsSample::name[] =
         "org/mozilla/gecko/media/GeckoHlsSample";
@@ -1988,6 +1988,19 @@ auto GeckoHlsSample::Duration() const -> int64_t
 auto GeckoHlsSample::Duration(int64_t a0) const -> void
 {
     return mozilla::jni::Field<Duration_t>::Set(GeckoHlsSample::mCtx, nullptr, a0);
+}
+
+constexpr char GeckoHlsSample::ExtraIndex_t::name[];
+constexpr char GeckoHlsSample::ExtraIndex_t::signature[];
+
+auto GeckoHlsSample::ExtraIndex() const -> int32_t
+{
+    return mozilla::jni::Field<ExtraIndex_t>::Get(GeckoHlsSample::mCtx, nullptr);
+}
+
+auto GeckoHlsSample::ExtraIndex(int32_t a0) const -> void
+{
+    return mozilla::jni::Field<ExtraIndex_t>::Set(GeckoHlsSample::mCtx, nullptr, a0);
 }
 
 constexpr char GeckoHlsSample::Info_t::name[];

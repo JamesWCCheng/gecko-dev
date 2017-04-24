@@ -30,6 +30,7 @@ public:
 
   HlsResourceCallbacksSupport(HLSResource* aResource);
   void OnDataArrived();
+  void OnResourceError(int aErrorCode);
 
 private:
   HLSResource* mResource;

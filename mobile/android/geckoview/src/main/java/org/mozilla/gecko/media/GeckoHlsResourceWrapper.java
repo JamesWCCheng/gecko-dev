@@ -23,6 +23,10 @@ public class GeckoHlsResourceWrapper {
         @WrapForJNI(dispatchTo = "gecko")
         public native void onDataArrived();
 
+        @Override
+        @WrapForJNI(dispatchTo = "gecko")
+        public native void onResourceError(int errorCode);
+
         @Override // JNIObject
         protected void disposeNative() {
             throw new UnsupportedOperationException();

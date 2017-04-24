@@ -21,6 +21,8 @@ import com.google.android.exoplayer2.RendererCapabilities;
 import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
 
+import java.util.Arrays;
+import java.util.ArrayList;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -39,6 +41,29 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     private CodecMaxValues codecMaxValues;
     private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedNoDurationSamples;
     private long nextKeyFrameTime;
+
+    private ArrayList<byte[]> extraDataList = new ArrayList<byte[]>();
+
+    private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
+    public static String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for ( int j = 0; j < bytes.length; j++ ) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+
+    @Override
+    public byte[] getExtraData(int index) {
+        assertTrue(index >= 0);
+        assertTrue(index < extraDataList.size());
+        if (DEBUG) Log.d(LOGTAG, "getExtraData >>>> index = " + index);
+        byte[] temp = extraDataList.get(index);
+        if (DEBUG) Log.d(LOGTAG, "getExtraData >>>> [" + bytesToHex(temp) + "]");
+        return extraDataList.get(index);
+    }
 
     public GeckoHlsVideoRenderer(MediaCodecSelector selector,
                                  Handler eventHandler,
@@ -110,6 +135,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         if (initialized || format == null) {
             return;
         }
+        if (DEBUG) Log.d(LOGTAG, "[maybeInitRenderer] initializing ... ");
         // Calculate maximum size which might be used for target format.
         codecMaxValues = getCodecMaxValues(format, streamFormats);
         // Create a buffer with maximal size for reading source.
@@ -134,9 +160,6 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         if (!initialized || inputStreamEnded || isQueuedEnoughData()) {
             // Need to reinitialize the renderer or the input stream has ended
             // or we just reached the maximum queue size.
-            if (DEBUG) Log.d(LOGTAG, "[feedInput] Bye ! initialized(" + initialized +
-                             "), inputStreamEnded(" + inputStreamEnded +
-                             "), isQueuedEnoughData(" + isQueuedEnoughData() + ")");
             return false;
         }
 
@@ -208,6 +231,9 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         bufferInfo.set(0, size, bufferForRead.timeUs, flags);
 
         GeckoHlsSample sample = GeckoHlsSample.create(buffer, bufferInfo, cryptoInfo);
+
+        assertTrue(extraDataList.size() >= 1);
+        sample.extraIndex = extraDataList.size()-1;
         calculatDuration(sample);
         rendererReconfigurationState = RECONFIGURATION_STATE_NONE;
         if (waitingForData && isQueuedEnoughData()) {
@@ -242,14 +268,18 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     protected void onInputFormatChanged(Format newFormat) {
         Format oldFormat = format;
         format = newFormat;
-
+        if (DEBUG) Log.d(LOGTAG, "[onInputFormatChanged] old : " + oldFormat +
+                         " => new : " + format);
         handleDrmInitChanged(oldFormat, newFormat);
 
+        updateExtraData(format);
         if (initialized && canReconfigure(oldFormat, format)) {
             if (DEBUG) Log.d(LOGTAG, "[onInputFormatChanged] RECONFIGURATION_STATE_WRITE_PENDING");
             rendererReconfigured = true;
             rendererReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
         } else {
+            // The begining of demuxing
+            if (DEBUG) Log.d(LOGTAG, "[onInputFormatChanged] reset & maybeInit & RECONFIGURATION_STATE_WRITE_PENDING");
             resetRenderer();
             maybeInitRenderer();
             rendererReconfigured = true;
@@ -442,5 +472,65 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             this.height = height;
             this.inputSize = inputSize;
         }
+    }
+
+    private void updateExtraData(Format format) {
+        int totalSize = 0;
+        byte[] sps = null;
+        byte[] pps = null;
+        for (int i = 0; i < format.initializationData.size(); i++) {
+            byte[] data = format.initializationData.get(i);
+            if (i == 0) {
+                sps = Arrays.copyOfRange(data, 4, data.length);
+            } else if (i == 1) {
+                pps = Arrays.copyOfRange(data, 4, data.length);
+            }
+            totalSize += format.initializationData.get(i).length;
+            if (DEBUG) Log.d(LOGTAG, "updateExtraData init size [" +
+                             format.initializationData.get(i).length + "]");
+        }
+
+        byte[] version = {0x01};
+        byte[] profile = {sps[0]};
+        byte[] compatibility = {sps[1]};
+        byte[] level = {sps[2]};
+        // It's annex.
+        byte[] nauLength = {0x03};
+        byte[] sizeOfSPS = ByteBuffer.allocate(4).putInt(sps.length).array();
+        byte[] sizeOfPPS = ByteBuffer.allocate(4).putInt(pps.length).array();
+        byte[] spsLength = Arrays.copyOfRange(sizeOfSPS, 2, sizeOfSPS.length);
+        byte[] ppsLength = Arrays.copyOfRange(sizeOfPPS, 2, sizeOfPPS.length);
+
+        byte[] numOfSPS = {0x01};
+        byte[] numOfPPS = {0x01};
+
+        if (DEBUG) Log.d(LOGTAG, "version [" + bytesToHex(version) + "]");
+        if (DEBUG) Log.d(LOGTAG, "profile [" + bytesToHex(profile) + "]");
+        if (DEBUG) Log.d(LOGTAG, "compatibility [" + bytesToHex(compatibility) + "]");
+        if (DEBUG) Log.d(LOGTAG, "level [" + bytesToHex(level) + "]");
+        if (DEBUG) Log.d(LOGTAG, "nauLength [" + bytesToHex(nauLength) + "]");
+        if (DEBUG) Log.d(LOGTAG, "sps [" + bytesToHex(sps) + "]");
+        if (DEBUG) Log.d(LOGTAG, "pps [" + bytesToHex(pps) + "]");
+        if (DEBUG) Log.d(LOGTAG, "spsLength [" + bytesToHex(spsLength) + "]");
+        if (DEBUG) Log.d(LOGTAG, "ppsLength [" + bytesToHex(ppsLength) + "]");
+
+        totalSize = version.length + profile.length + compatibility.length + level.length + nauLength.length +
+                    numOfSPS.length + spsLength.length + sps.length +
+                    numOfPPS.length + ppsLength.length + pps.length;
+
+        byte[] videoExtraData = new byte[totalSize];
+        ByteBuffer target = ByteBuffer.wrap(videoExtraData);
+        target.put(version);
+        target.put(profile);
+        target.put(compatibility);
+        target.put(level);
+        target.put(nauLength);
+        target.put(numOfSPS);
+        target.put(spsLength);
+        target.put(sps);
+        target.put((numOfPPS);
+        target.put(ppsLength);
+        target.put(pps);
+        extraDataList.add(videoExtraData);
     }
 }

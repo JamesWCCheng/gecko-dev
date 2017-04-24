@@ -65,8 +65,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     private boolean trackGroupUpdated = false;
     private long bufferedPosition;
-    private Format audioFormat;
-    private Format videoFormat;
+
     private int numVideoTracks = 0;
     private int numAudioTracks = 0;
     private GeckoHlsVideoRenderer vRenderer = null;
@@ -74,7 +73,10 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     private boolean enableV = true;
     private boolean enableA = true;
 
-    private boolean isInitDone = false;
+    private boolean videoInfoUpdated = false;
+    private boolean audioInfoUpdated = false;
+    private boolean isPlayerInitDone = false;
+    private boolean isDemuxerInitDone = false;
     private DemuxerCallbacks demuxerCallbacks;
     private ResourceCallbacks resourceCallbacks;
 
@@ -88,19 +90,35 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     }
 
     public interface DemuxerCallbacks {
-        void onAudioFormatChanged();
-        void onVideoFormatChanged();
-        void onTrackInfoChanged(boolean hasAudio, boolean hasVideo);
+        void onInitialized();
+        void onDemuxerError(int errorCode);
     }
 
     public interface ResourceCallbacks {
         void onDataArrived();
+        void onResourceError(int errorCode);
     }
 
     private static void assertTrue(boolean condition) {
       if (DEBUG && !condition) {
         throw new AssertionError("Expected condition to be true");
       }
+    }
+
+    public void checkInitDone() {
+        assertTrue(demuxerCallbacks != null);
+        if (isDemuxerInitDone) {
+            return;
+        }
+        boolean hasVideo =numVideoTracks > 0? true : false;
+        boolean hasAudio =numAudioTracks > 0? true : false;
+
+        boolean vDone = hasVideo ? videoInfoUpdated : true;
+        boolean aDone = hasAudio ? audioInfoUpdated : true;
+
+        if (vDone && aDone) {
+            demuxerCallbacks.onInitialized();
+        }
     }
 
     public final class ComponentListener implements VideoRendererEventListener,
@@ -127,13 +145,12 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         @Override
         public void onVideoInputFormatChanged(Format format) {
             assertTrue(demuxerCallbacks != null);
-
-            videoFormat = format;
-            if (DEBUG) Log.d(LOGTAG, "onVideoInputFormatChanged [" + videoFormat + "]");
-            if (DEBUG) Log.d(LOGTAG, "SampleMIMEType [" +
-                             videoFormat.sampleMimeType + "], ContainerMIMEType [" +
-                             videoFormat.containerMimeType + "]");
-            demuxerCallbacks.onVideoFormatChanged();
+            if (DEBUG) Log.d(LOGTAG, "[CB] onVideoInputFormatChanged [" + format + "]");
+            if (DEBUG) Log.d(LOGTAG, "[CB] SampleMIMEType [" +
+                             format.sampleMimeType + "], ContainerMIMEType [" +
+                             format.containerMimeType + "]");
+            videoInfoUpdated = true;
+            checkInitDone();
         }
 
         @Override
@@ -153,9 +170,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         }
 
         @Override
-        public void onVideoDisabled(DecoderCounters counters) {
-            videoFormat = null;
-        }
+        public void onVideoDisabled(DecoderCounters counters) {}
 
         // AudioRendererEventListener implementation
         @Override
@@ -177,10 +192,9 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         @Override
         public void onAudioInputFormatChanged(Format format) {
             assertTrue(demuxerCallbacks != null);
-
-            audioFormat = format;
-            if (DEBUG) Log.d(LOGTAG, "onAudioInputFormatChanged [" + audioFormat + "]");
-            demuxerCallbacks.onAudioFormatChanged();
+            if (DEBUG) Log.d(LOGTAG, "[CB] onAudioInputFormatChanged [" + format + "]");
+            audioInfoUpdated = true;
+            checkInitDone();
         }
 
         @Override
@@ -190,9 +204,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         }
 
         @Override
-        public void onAudioDisabled(DecoderCounters counters) {
-            audioFormat = null;
-        }
+        public void onAudioDisabled(DecoderCounters counters) {}
 
         // MetadataRenderer.Output implementation
         @Override
@@ -239,7 +251,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     synchronized void init(String url) {
         if (DEBUG) Log.d(LOGTAG, " init");
-        if (isInitDone == true) {
+        if (isPlayerInitDone == true) {
             return;
         }
         Context ctx = GeckoAppShell.getApplicationContext();
@@ -285,7 +297,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         mediaSource = mediaSources[0];
 
         player.prepare(mediaSource);
-        isInitDone = true;
+        isPlayerInitDone = true;
     }
 
     @Override
@@ -334,8 +346,6 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
             }
         }
         trackGroupUpdated = true;
-        demuxerCallbacks.onTrackInfoChanged(numAudioTracks > 0? true : false,
-                                            numVideoTracks > 0? true : false );
     }
 
     @Override
@@ -425,12 +435,14 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     public Format getVideoTrackFormat() {
         if (DEBUG) Log.d(LOGTAG, "getVideoTrackFormat");
-        return videoFormat;
+        assertTrue(vRenderer != null);
+        return vRenderer.getFormat();
     }
 
     public Format getAudioTrackFormat() {
         if (DEBUG) Log.d(LOGTAG, "getAudioTrackFormat");
-        return audioFormat;
+        assertTrue(aRenderer != null);
+        return aRenderer.getFormat();
     }
 
     public boolean seek(long positionMs) {
@@ -460,6 +472,15 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         return nextKeyFrameTime;
     }
 
+    public byte[] getExtraData(Track_Type type, int index) {
+        if (type == Track_Type.TRACK_VIDEO && vRenderer != null) {
+            return vRenderer.getExtraData(index);
+        } else if (type == Track_Type.TRACK_AUDIO && aRenderer != null) {
+            return aRenderer.getExtraData(index);
+        }
+        return null;
+    }
+
     public void release() {
         if (DEBUG) Log.d(LOGTAG, "releasing  ...");
         if (player != null) {
@@ -475,6 +496,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         }
         demuxerCallbacks = null;
         resourceCallbacks = null;
-        isInitDone = false;
+        isPlayerInitDone = false;
+        isDemuxerInitDone = false;
     }
 }

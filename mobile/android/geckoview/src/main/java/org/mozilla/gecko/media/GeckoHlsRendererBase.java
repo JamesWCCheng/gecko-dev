@@ -69,6 +69,10 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
                     QUEUED_INPUT_SAMPLE_DURATION_THRESHOLD? true : false;
     }
 
+    public byte[] getExtraData(int index) { return null; }
+
+    public Format getFormat() { return format; }
+
     public long getFirstSamplePTS() { return firstSampleStartTime; }
 
     public synchronized ConcurrentLinkedQueue<GeckoHlsSample> getQueuedSamples(int number) {

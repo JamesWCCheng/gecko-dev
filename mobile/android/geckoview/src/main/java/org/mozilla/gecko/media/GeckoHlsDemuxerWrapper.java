@@ -37,15 +37,11 @@ public final class GeckoHlsDemuxerWrapper {
 
         @Override
         @WrapForJNI(dispatchTo = "gecko")
-        public native void onAudioFormatChanged();
+        public native void onInitialized();
 
         @Override
         @WrapForJNI(dispatchTo = "gecko")
-        public native void onVideoFormatChanged();
-
-        @Override
-        @WrapForJNI(dispatchTo = "gecko")
-        public native void onTrackInfoChanged(boolean hasAudio, boolean hasVideo);
+        public native void onDemuxerError(int errorCode);
 
         @Override // JNIObject
         protected void disposeNative() {
@@ -116,10 +112,10 @@ public final class GeckoHlsDemuxerWrapper {
     }
 
     @WrapForJNI
-    public HlsVideoInfo getVideoInfo(int trackNumber) {
+    public HlsVideoInfo getVideoInfo(int index) {
         assertTrue(player != null);
 
-        if (DEBUG) Log.d(LOGTAG, "[getVideoInfo]");
+        if (DEBUG) Log.d(LOGTAG, "[getVideoInfo] extraIndex : " + index);
         Format fmt = player.getVideoTrackFormat();
         long vDuration = player.getDuration();
         HlsVideoInfo vInfo = new HlsVideoInfo();
@@ -132,6 +128,8 @@ public final class GeckoHlsDemuxerWrapper {
             vInfo.rotation = fmt.rotationDegrees;
             vInfo.mimeType = fmt.sampleMimeType;
             vInfo.duration = vDuration;
+            vInfo.extraData = player.getExtraData(GeckoHlsPlayer.Track_Type.TRACK_VIDEO,
+                                                  index);
         }
         return vInfo;
     }

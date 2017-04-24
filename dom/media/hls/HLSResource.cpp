@@ -24,6 +24,12 @@ HlsResourceCallbacksSupport::OnDataArrived()
   mResource->onDataAvaiable();
 }
 
+void
+HlsResourceCallbacksSupport::OnResourceError(int aErrorCode)
+{
+  MOZ_ASSERT(mResource);
+}
+
 HLSResource::HLSResource(MediaResourceCallback* aCallback,
                          nsIChannel* aChannel,
                          nsIURI* aURI,
