@@ -44,24 +44,13 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
     private ArrayList<byte[]> extraDataList = new ArrayList<byte[]>();
 
-    private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
-    public static String bytesToHex(byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-        for ( int j = 0; j < bytes.length; j++ ) {
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = hexArray[v >>> 4];
-            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-        }
-        return new String(hexChars);
-    }
-
     @Override
     public byte[] getExtraData(int index) {
         assertTrue(index >= 0);
         assertTrue(index < extraDataList.size());
         if (DEBUG) Log.d(LOGTAG, "getExtraData >>>> index = " + index);
         byte[] temp = extraDataList.get(index);
-        if (DEBUG) Log.d(LOGTAG, "getExtraData >>>> [" + bytesToHex(temp) + "]");
+        if (DEBUG) Log.d(LOGTAG, "getExtraData >>>> [" + Utils.bytesToHex(temp) + "]");
         return extraDataList.get(index);
     }
 
@@ -480,10 +469,20 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         byte[] pps = null;
         for (int i = 0; i < format.initializationData.size(); i++) {
             byte[] data = format.initializationData.get(i);
+            if (data.length <= 4) {
+                return;
+            }
+            int offset = data[2] == 0x01 ? 3 : 0;
+            offset = data[3] == 0x01 && offset == 0 ? 4 : offset;
+            if (DEBUG) Log.d(LOGTAG, "RAW initialization (" + i + "), [" + Utils.bytesToHex(data) + 
+                             "], offset = " + offset);
+            if (offset == 0) {
+                return;
+            }
             if (i == 0) {
-                sps = Arrays.copyOfRange(data, 4, data.length);
+                sps = Arrays.copyOfRange(data, offset, data.length);
             } else if (i == 1) {
-                pps = Arrays.copyOfRange(data, 4, data.length);
+                pps = Arrays.copyOfRange(data, offset, data.length);
             }
             totalSize += format.initializationData.get(i).length;
             if (DEBUG) Log.d(LOGTAG, "updateExtraData init size [" +
@@ -504,15 +503,15 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         byte[] numOfSPS = {0x01};
         byte[] numOfPPS = {0x01};
 
-        if (DEBUG) Log.d(LOGTAG, "version [" + bytesToHex(version) + "]");
-        if (DEBUG) Log.d(LOGTAG, "profile [" + bytesToHex(profile) + "]");
-        if (DEBUG) Log.d(LOGTAG, "compatibility [" + bytesToHex(compatibility) + "]");
-        if (DEBUG) Log.d(LOGTAG, "level [" + bytesToHex(level) + "]");
-        if (DEBUG) Log.d(LOGTAG, "nauLength [" + bytesToHex(nauLength) + "]");
-        if (DEBUG) Log.d(LOGTAG, "sps [" + bytesToHex(sps) + "]");
-        if (DEBUG) Log.d(LOGTAG, "pps [" + bytesToHex(pps) + "]");
-        if (DEBUG) Log.d(LOGTAG, "spsLength [" + bytesToHex(spsLength) + "]");
-        if (DEBUG) Log.d(LOGTAG, "ppsLength [" + bytesToHex(ppsLength) + "]");
+        if (DEBUG) Log.d(LOGTAG, "version [" + Utils.bytesToHex(version) + "]");
+        if (DEBUG) Log.d(LOGTAG, "profile [" + Utils.bytesToHex(profile) + "]");
+        if (DEBUG) Log.d(LOGTAG, "compatibility [" + Utils.bytesToHex(compatibility) + "]");
+        if (DEBUG) Log.d(LOGTAG, "level [" + Utils.bytesToHex(level) + "]");
+        if (DEBUG) Log.d(LOGTAG, "nauLength [" + Utils.bytesToHex(nauLength) + "]");
+        if (DEBUG) Log.d(LOGTAG, "sps [" + Utils.bytesToHex(sps) + "]");
+        if (DEBUG) Log.d(LOGTAG, "pps [" + Utils.bytesToHex(pps) + "]");
+        if (DEBUG) Log.d(LOGTAG, "spsLength [" + Utils.bytesToHex(spsLength) + "]");
+        if (DEBUG) Log.d(LOGTAG, "ppsLength [" + Utils.bytesToHex(ppsLength) + "]");
 
         totalSize = version.length + profile.length + compatibility.length + level.length + nauLength.length +
                     numOfSPS.length + spsLength.length + sps.length +
@@ -528,7 +527,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         target.put(numOfSPS);
         target.put(spsLength);
         target.put(sps);
-        target.put((numOfPPS);
+        target.put(numOfPPS);
         target.put(ppsLength);
         target.put(pps);
         extraDataList.add(videoExtraData);
