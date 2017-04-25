@@ -5466,10 +5466,12 @@ public:
         typedef HlsDemuxerCallbacks Owner;
         typedef void ReturnType;
         typedef void SetterType;
-        typedef mozilla::jni::Args<> Args;
+        typedef mozilla::jni::Args<
+                bool,
+                bool> Args;
         static constexpr char name[] = "onInitialized";
         static constexpr char signature[] =
-                "()V";
+                "(ZZ)V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;

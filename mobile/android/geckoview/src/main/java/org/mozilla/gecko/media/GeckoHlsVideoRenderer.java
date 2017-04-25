@@ -327,7 +327,8 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             if (DEBUG) Log.d(LOGTAG, "Demuxed sample PTS : " +
                              toQueue.info.presentationTimeUs + ", duration :" +
                              toQueue.duration + ", isKeyFrame(" +
-                             toQueue.isKeyFrame() + "), queue size : " +
+                             toQueue.isKeyFrame() + ", extraIndex(" +
+                             toQueue.extraIndex + "), queue size : " +
                              dexmuedInputSamples.size() + ", NoDuQueue size : " +
                              dexmuedNoDurationSamples.size());
         } else if (inputStreamEnded) {

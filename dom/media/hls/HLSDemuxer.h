@@ -50,13 +50,14 @@ public:
   static const media::TimeUnit EOS_FUZZ;
 
   AutoTaskQueue* GetTaskQueue() { return mTaskQueue; }
-  void OnInitialized();
+  void OnInitialized(bool aHasAudio, bool aHasVideo);
 
 protected:
   int64_t GetNextKeyFrameTime();
   void UpdateVideoInfo(int index);
   void UpdateAudioInfo(int index);
-
+  void UpdateVideoExtraData(int index, RefPtr<MediaByteBuffer>& aExtraData);
+  void UpdateAudioExtraData(int index, RefPtr<MediaByteBuffer>& aExtraData);
 
 private:
   ~HLSDemuxer();
@@ -125,6 +126,8 @@ private:
   // Amount of pre-roll time when seeking.
   // Set to 80ms if track is Opus.
   const media::TimeUnit mPreRoll;
+  int32_t mLastExtraIndex = 0;
+  RefPtr<MediaByteBuffer> mExtraData;
 };
 
 } // namespace mozilla

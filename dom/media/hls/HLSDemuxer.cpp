@@ -68,9 +68,9 @@ public:
     mDemuxer = aDemuxer;
   }
 
-  void OnInitialized() {
+  void OnInitialized(bool aHasAudio, bool aHasVideo) {
     MOZ_ASSERT(mDemuxer);
-    mDemuxer->OnInitialized();
+    mDemuxer->OnInitialized(aHasAudio, aHasVideo);
   }
 
   void OnDemuxerError(int aErrorCode) {}
@@ -100,13 +100,19 @@ HLSDemuxer::HLSDemuxer(MediaResource* aResource,
 }
 
 void
-HLSDemuxer::OnInitialized()
+HLSDemuxer::OnInitialized(bool aHasAudio, bool aHasVideo)
 {
   MOZ_ASSERT(NS_IsMainThread());
   HLS_DEBUG("HLSDemuxer", "OnInitialized");
-
-  UpdateVideoInfo(0);
-  UpdateAudioInfo(0);
+  if (mInitPromise.IsEmpty()) {
+    return;
+  }
+  if (aHasAudio) {
+    UpdateAudioInfo(0);
+  }
+  if (aHasVideo) {
+    UpdateVideoInfo(0);
+  }
   mInitPromise.ResolveIfExists(NS_OK, __func__);
 }
 // Due to inaccuracies in determining buffer end
@@ -244,12 +250,43 @@ HLSDemuxer::UpdateVideoInfo(int index)
     mInfo.mVideo.mMimeType = NS_ConvertUTF16toUTF8(videoInfo->MimeType()->ToString());
     mInfo.mVideo.mDuration = TimeUnit::FromMicroseconds(videoInfo->Duration());
     auto&& extraData = videoInfo->ExtraData()->GetElements();
-    mInfo.mVideo.mExtraData->Clear();
-    mInfo.mVideo.mExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
-                                            extraData.Length());
+//    mInfo.mVideo.mExtraData->Clear();
+//    mInfo.mVideo.mExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
+//                                            extraData.Length());
     HLS_DEBUG("HLSDemuxer", "UpdateVideoInfo (%d) / I(%dx%d) / D(%dx%d)",
       index, mInfo.mVideo.mImage.width, mInfo.mVideo.mImage.height,
       mInfo.mVideo.mDisplay.width, mInfo.mVideo.mDisplay.height);
+  }
+}
+
+void
+HLSDemuxer::UpdateVideoExtraData(int index, RefPtr<MediaByteBuffer>& aExtraData)
+{
+  MOZ_ASSERT(mHlsDemuxerWrapper);
+  HLS_DEBUG("HLSDemuxer", "UpdateVideoExtraData >>>>>> ");
+  jni::Object::LocalRef infoObj = mHlsDemuxerWrapper->GetVideoInfo(index);
+  if (infoObj) {
+    java::HlsVideoInfo::LocalRef videoInfo(mozilla::Move(infoObj));
+    auto&& extraData = videoInfo->ExtraData()->GetElements();
+    aExtraData->Clear();
+    aExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
+                              extraData.Length());
+    HLS_DEBUG("HLSDemuxer", "UpdateVideoExtraData >>>>>> Done ");
+  }
+}
+
+void
+HLSDemuxer::UpdateAudioExtraData(int index, RefPtr<MediaByteBuffer>& aExtraData)
+{
+  MOZ_ASSERT(mHlsDemuxerWrapper);
+  jni::Object::LocalRef infoObj = mHlsDemuxerWrapper->GetAudioInfo(index);
+  if (infoObj) {
+    java::HlsAudioInfo::LocalRef audioInfo(mozilla::Move(infoObj));
+    auto&& extraData = audioInfo->ExtraData()->GetElements();
+    aExtraData->Clear();
+    aExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
+                               extraData.Length());
+    HLS_DEBUG("HLSDemuxer", "UpdateAudioExtraData >>>>>> Done ");
   }
 }
 
@@ -274,6 +311,7 @@ HLSTrackDemuxer::HLSTrackDemuxer(HLSDemuxer* aParent, TrackInfo::TrackType aType
   , mReset(true)
   , mPreRoll(TimeUnit::FromMicroseconds(0))
 {
+  mExtraData = new MediaByteBuffer;
 }
 
 UniquePtr<TrackInfo>
@@ -363,6 +401,15 @@ HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
       HLS_DEBUG("HLSTrackDemuxer", "Error occurred during extraction from Sample java object.");
       return nullptr;
     }
+
+//    if (mType == TrackInfo::kVideoTrack) {
+//      auto sampleExtraIndex = sample->ExtraIndex();
+//      if (mLastExtraIndex != sampleExtraIndex) {
+//        mLastExtraIndex = sampleExtraIndex;
+//        mParent->UpdateVideoExtraData(mLastExtraIndex, mExtraData);
+//      }
+//      mrd->mExtraData = mExtraData;
+//    }
 
     // Write payload into MediaRawData
     UniquePtr<MediaRawDataWriter> writer(mrd->CreateWriter());

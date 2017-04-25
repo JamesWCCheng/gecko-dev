@@ -58,7 +58,9 @@ H264Converter::Decode(MediaRawData* aSample)
   MOZ_RELEASE_ASSERT(!mDecodePromiseRequest.Exists()
                      && !mInitPromiseRequest.Exists(),
                      "Can't request a new decode until previous one completed");
-
+  printf_stderr("[H264Decoder::Decode]  >>>>>>>> IsAnnexB(%d) / IsKeyFrame(%d) / pts(%lld)\n",
+      mp4_demuxer::AnnexB::IsAnnexB(aSample), aSample->mKeyframe,
+      aSample->mTime);
   if (!mp4_demuxer::AnnexB::IsAnnexB(aSample) &&
       !mp4_demuxer::AnnexB::ConvertSampleToAVCC(aSample)) {
     // We need AVCC content to be able to later parse the SPS.
@@ -187,6 +189,7 @@ H264Converter::CreateDecoder(const VideoInfo& aConfig,
                              DecoderDoctorDiagnostics* aDiagnostics,
                              bool isAnnexB)
 {
+  printf_stderr("[H264Decoder::CreateDecoder]  >>>>>>>> \n");
   if (!isAnnexB && !mp4_demuxer::AnnexB::HasSPS(aConfig.mExtraData)) {
     // nothing found yet, will try again later
     printf_stderr("[H264Decoder::CreateDecoder]  NS_ERROR_NOT_INITIALIZED \n");
@@ -207,10 +210,11 @@ H264Converter::CreateDecoder(const VideoInfo& aConfig,
       printf_stderr("[H264Decoder::CreateDecoder]  NS_ERROR_FAILURE \n");
       return NS_ERROR_FAILURE;
     }
+    printf_stderr("[H264Decoder::CreateDecoder]  DecodeSPSFromExtraData OK ! \n");
   } else if (!isAnnexB) {
     // SPS was invalid.
     mLastError = NS_ERROR_FAILURE;
-    printf_stderr("[H264Decoder::CreateDecoder] isAnnexB,  NS_ERROR_FAILURE \n");
+    printf_stderr("[H264Decoder::CreateDecoder] >>>> NS_ERROR_FAILURE \n");
     return NS_ERROR_FAILURE;
   }
 
@@ -335,6 +339,7 @@ H264Converter::CheckForSPSChange(MediaRawData* aSample)
   if (!mp4_demuxer::AnnexB::HasSPS(extra_data)
       || mp4_demuxer::AnnexB::CompareExtraData(extra_data,
                                                mCurrentConfig.mExtraData)) {
+    printf_stderr("[H264Decoder::CheckForSPSChange]  >>>>>>>> return (No SPS or Same Extra)\n");
     return NS_OK;
   }
 
@@ -347,6 +352,8 @@ H264Converter::CheckForSPSChange(MediaRawData* aSample)
       sample->mTrackInfo = new TrackInfoSharedPtr(mCurrentConfig, 0);
     }
     mNeedKeyframe = true;
+    printf_stderr("[H264Decoder::CheckForSPSChange]  >>>>>>>> return New Format need keyframe, pts (%llu)\n",
+      aSample->mTime);
     return NS_OK;
   }
 
@@ -389,6 +396,7 @@ H264Converter::CheckForSPSChange(MediaRawData* aSample)
 void
 H264Converter::UpdateConfigFromExtraData(MediaByteBuffer* aExtraData)
 {
+  printf_stderr("[H264Decoder::UpdateConfigFromExtraData]  >>>>>>>> \n");
   mp4_demuxer::SPSData spsdata;
   if (mp4_demuxer::H264::DecodeSPSFromExtraData(aExtraData, spsdata)
       && spsdata.pic_width > 0
@@ -398,6 +406,9 @@ H264Converter::UpdateConfigFromExtraData(MediaByteBuffer* aExtraData)
     mCurrentConfig.mImage.height = spsdata.pic_height;
     mCurrentConfig.mDisplay.width = spsdata.display_width;
     mCurrentConfig.mDisplay.height = spsdata.display_height;
+    printf_stderr("[H264Decoder::UpdateConfigFromExtraData]  I(%dx%d)/D(%dx%d) \n",
+        mCurrentConfig.mImage.width, mCurrentConfig.mImage.height,
+        mCurrentConfig.mDisplay.width, mCurrentConfig.mDisplay.height);
   }
   mCurrentConfig.mExtraData = aExtraData;
 }

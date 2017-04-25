@@ -73,6 +73,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     private boolean enableV = true;
     private boolean enableA = true;
 
+    private boolean hasVideo = false;
+    private boolean hasAudio = false;
     private boolean videoInfoUpdated = false;
     private boolean audioInfoUpdated = false;
     private boolean isPlayerInitDone = false;
@@ -90,7 +92,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     }
 
     public interface DemuxerCallbacks {
-        void onInitialized();
+        void onInitialized(boolean hasAudio, boolean hasVideo);
         void onDemuxerError(int errorCode);
     }
 
@@ -110,14 +112,12 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         if (isDemuxerInitDone) {
             return;
         }
-        boolean hasVideo =numVideoTracks > 0? true : false;
-        boolean hasAudio =numAudioTracks > 0? true : false;
-
         boolean vDone = hasVideo ? videoInfoUpdated : true;
         boolean aDone = hasAudio ? audioInfoUpdated : true;
 
         if (vDone && aDone) {
-            demuxerCallbacks.onInitialized();
+            demuxerCallbacks.onInitialized(hasAudio, hasVideo);
+            isDemuxerInitDone = true;
         }
     }
 
@@ -345,6 +345,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
                 }
             }
         }
+        hasVideo = numVideoTracks > 0 ? true : false;
+        hasAudio = numAudioTracks > 0 ? true : false;
         trackGroupUpdated = true;
     }
 
@@ -436,13 +438,13 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     public Format getVideoTrackFormat() {
         if (DEBUG) Log.d(LOGTAG, "getVideoTrackFormat");
         assertTrue(vRenderer != null);
-        return vRenderer.getFormat();
+        return hasVideo ? vRenderer.getFormat() : null;
     }
 
     public Format getAudioTrackFormat() {
         if (DEBUG) Log.d(LOGTAG, "getAudioTrackFormat");
         assertTrue(aRenderer != null);
-        return aRenderer.getFormat();
+        return hasAudio ? aRenderer.getFormat() : null;
     }
 
     public boolean seek(long positionMs) {

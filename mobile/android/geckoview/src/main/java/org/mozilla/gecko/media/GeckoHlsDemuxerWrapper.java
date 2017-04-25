@@ -37,7 +37,7 @@ public final class GeckoHlsDemuxerWrapper {
 
         @Override
         @WrapForJNI(dispatchTo = "gecko")
-        public native void onInitialized();
+        public native void onInitialized(boolean hasAudio, boolean hasVideo);;
 
         @Override
         @WrapForJNI(dispatchTo = "gecko")
@@ -93,8 +93,9 @@ public final class GeckoHlsDemuxerWrapper {
         if (DEBUG) Log.d(LOGTAG, "[getAudioInfo]");
         Format fmt = player.getAudioTrackFormat();
         long aDuration = player.getDuration();
-        HlsAudioInfo aInfo = new HlsAudioInfo();
-        if (player != null) {
+        HlsAudioInfo aInfo = null;
+        if (fmt != null) {
+            aInfo = new HlsAudioInfo();
             aInfo.rate = fmt.sampleRate;
             aInfo.channels = fmt.channelCount;
             // TODO: due to http://searchfox.org/mozilla-central/rev/ca7015fa45b30b29176fbaa70ba0a36fe9263c38/dom/media/platforms/android/AndroidDecoderModule.cpp#197
@@ -118,8 +119,9 @@ public final class GeckoHlsDemuxerWrapper {
         if (DEBUG) Log.d(LOGTAG, "[getVideoInfo] extraIndex : " + index);
         Format fmt = player.getVideoTrackFormat();
         long vDuration = player.getDuration();
-        HlsVideoInfo vInfo = new HlsVideoInfo();
+        HlsVideoInfo vInfo = null;
         if (fmt != null) {
+            vInfo = new HlsVideoInfo();
             vInfo.displayX = fmt.width;
             vInfo.displayY = fmt.height;
             vInfo.pictureX = fmt.width;
