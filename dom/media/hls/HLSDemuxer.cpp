@@ -250,9 +250,11 @@ HLSDemuxer::UpdateVideoInfo(int index)
     mInfo.mVideo.mMimeType = NS_ConvertUTF16toUTF8(videoInfo->MimeType()->ToString());
     mInfo.mVideo.mDuration = TimeUnit::FromMicroseconds(videoInfo->Duration());
     auto&& extraData = videoInfo->ExtraData()->GetElements();
-//    mInfo.mVideo.mExtraData->Clear();
-//    mInfo.mVideo.mExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
-//                                            extraData.Length());
+    mInfo.mVideo.mExtraData->Clear();
+    if (extraData.Length() > 0) {
+      mInfo.mVideo.mExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
+                                              extraData.Length());
+    }
     HLS_DEBUG("HLSDemuxer", "UpdateVideoInfo (%d) / I(%dx%d) / D(%dx%d)",
       index, mInfo.mVideo.mImage.width, mInfo.mVideo.mImage.height,
       mInfo.mVideo.mDisplay.width, mInfo.mVideo.mDisplay.height);
@@ -269,8 +271,10 @@ HLSDemuxer::UpdateVideoExtraData(int index, RefPtr<MediaByteBuffer>& aExtraData)
     java::HlsVideoInfo::LocalRef videoInfo(mozilla::Move(infoObj));
     auto&& extraData = videoInfo->ExtraData()->GetElements();
     aExtraData->Clear();
-    aExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
-                              extraData.Length());
+    if (extraData.Length() > 0) {
+      aExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
+                                 extraData.Length());
+    }
     HLS_DEBUG("HLSDemuxer", "UpdateVideoExtraData >>>>>> Done ");
   }
 }
@@ -408,7 +412,10 @@ HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
 //        mLastExtraIndex = sampleExtraIndex;
 //        mParent->UpdateVideoExtraData(mLastExtraIndex, mExtraData);
 //      }
-//      mrd->mExtraData = mExtraData;
+//      auto&& extraData= mExtraData->Elements();
+//      mrd->mExtraData = new MediaByteBuffer;
+//      mrd->mExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
+//                                      mExtraData->Length());
 //    }
 
     // Write payload into MediaRawData

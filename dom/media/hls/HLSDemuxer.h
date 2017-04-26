@@ -126,7 +126,7 @@ private:
   // Amount of pre-roll time when seeking.
   // Set to 80ms if track is Opus.
   const media::TimeUnit mPreRoll;
-  int32_t mLastExtraIndex = 0;
+  int32_t mLastExtraIndex = -1;
   RefPtr<MediaByteBuffer> mExtraData;
 };
 
