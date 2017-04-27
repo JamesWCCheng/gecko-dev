@@ -249,11 +249,13 @@ HLSDemuxer::UpdateVideoInfo(int index)
     mInfo.mVideo.mDisplay.height = videoInfo->DisplayY();
     mInfo.mVideo.mMimeType = NS_ConvertUTF16toUTF8(videoInfo->MimeType()->ToString());
     mInfo.mVideo.mDuration = TimeUnit::FromMicroseconds(videoInfo->Duration());
-    auto&& extraData = videoInfo->ExtraData()->GetElements();
-    mInfo.mVideo.mExtraData->Clear();
-    if (extraData.Length() > 0) {
-      mInfo.mVideo.mExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
-                                              extraData.Length());
+    if (videoInfo->ExtraData()) {
+      auto&& extraData = videoInfo->ExtraData()->GetElements();
+      mInfo.mVideo.mExtraData->Clear();
+      if (extraData.Length() > 0) {
+        mInfo.mVideo.mExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
+                                                extraData.Length());
+      }
     }
     HLS_DEBUG("HLSDemuxer", "UpdateVideoInfo (%d) / I(%dx%d) / D(%dx%d)",
       index, mInfo.mVideo.mImage.width, mInfo.mVideo.mImage.height,

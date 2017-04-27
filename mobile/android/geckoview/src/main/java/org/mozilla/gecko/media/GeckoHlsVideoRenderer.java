@@ -42,16 +42,19 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedNoDurationSamples;
     private long nextKeyFrameTime;
 
+    private byte[] annexB = null;
     private ArrayList<byte[]> extraDataList = new ArrayList<byte[]>();
 
     @Override
     public byte[] getExtraData(int index) {
         assertTrue(index >= 0);
-        assertTrue(index < extraDataList.size());
         if (DEBUG) Log.d(LOGTAG, "getExtraData >>>> index = " + index);
-        byte[] temp = extraDataList.get(index);
-        if (DEBUG) Log.d(LOGTAG, "getExtraData >>>> [" + Utils.bytesToHex(temp) + "]");
-        return extraDataList.get(index);
+        if (index < extraDataList.size()) {
+            byte[] temp = extraDataList.get(index);
+            if (DEBUG) Log.d(LOGTAG, "getExtraData >>>> [" + Utils.bytesToHex(temp) + "]");
+            return extraDataList.get(index);
+        }
+        return null;
     }
 
     public GeckoHlsVideoRenderer(MediaCodecSelector selector,
@@ -205,9 +208,20 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
         bufferForRead.flip();
 
-        int size = bufferForRead.data.limit();
+        int annexBSize = annexB != null ? annexB.length : 0;
+        int dataSize = bufferForRead.data.limit();
+        int size = rendererReconfigurationState != RECONFIGURATION_STATE_NONE ?
+            annexBSize + dataSize : dataSize;
         byte[] realData = new byte[size];
-        bufferForRead.data.get(realData, 0, size);
+        if (rendererReconfigurationState != RECONFIGURATION_STATE_NONE) {
+            for (int i = 0; i < annexBSize; i++) {
+                realData[i] = annexB[i];
+            }
+            bufferForRead.data.get(realData, annexBSize, dataSize);
+        } else {
+            bufferForRead.data.get(realData, 0, dataSize);
+        }
+
         ByteBuffer buffer = ByteBuffer.wrap(realData);
         inputBuffer.clear();
 
@@ -221,7 +235,6 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
         GeckoHlsSample sample = GeckoHlsSample.create(buffer, bufferInfo, cryptoInfo);
 
-        assertTrue(extraDataList.size() >= 1);
         sample.extraIndex = extraDataList.size()-1;
         calculatDuration(sample);
         rendererReconfigurationState = RECONFIGURATION_STATE_NONE;
@@ -465,7 +478,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     }
 
     private void updateExtraData(Format format) {
-        int totalSize = 0;
+        int size= 0;
         byte[] sps = null;
         byte[] pps = null;
         for (int i = 0; i < format.initializationData.size(); i++) {
@@ -475,8 +488,8 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             }
             int offset = data[2] == 0x01 ? 3 : 0;
             offset = data[3] == 0x01 && offset == 0 ? 4 : offset;
-            if (DEBUG) Log.d(LOGTAG, "RAW initialization (" + i + "), [" + Utils.bytesToHex(data) + 
-                             "], offset = " + offset);
+            if (DEBUG) Log.d(LOGTAG, "RAW initialization (" + i + "), [" +
+                             Utils.bytesToHex(data) + "], offset = " + offset);
             if (offset == 0) {
                 return;
             }
@@ -485,22 +498,32 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             } else if (i == 1) {
                 pps = Arrays.copyOfRange(data, offset, data.length);
             }
-            totalSize += format.initializationData.get(i).length;
-            if (DEBUG) Log.d(LOGTAG, "updateExtraData init size [" +
-                             format.initializationData.get(i).length + "]");
+            size += format.initializationData.get(i).length;
         }
+        int count = 0;
+        annexB = new byte[size];
+        for (int i = 0; i < format.initializationData.size(); i++) {
+            byte[] data = format.initializationData.get(i);
+            for (int j = 0; j < data.length; j++) {
+                annexB[count] = data[j];
+                count++;
+            }
+        }
+        if (DEBUG) Log.d(LOGTAG, "annexB [" +
+                         Utils.bytesToHex(annexB) + "]");
 
         byte[] version = {0x01};
         byte[] profile = {sps[0]};
         byte[] compatibility = {sps[1]};
         byte[] level = {sps[2]};
-        // It's annex.
+        // It's annex B.
         byte[] nauLength = {0x03};
         byte[] sizeOfSPS = ByteBuffer.allocate(4).putInt(sps.length).array();
         byte[] sizeOfPPS = ByteBuffer.allocate(4).putInt(pps.length).array();
         byte[] spsLength = Arrays.copyOfRange(sizeOfSPS, 2, sizeOfSPS.length);
         byte[] ppsLength = Arrays.copyOfRange(sizeOfPPS, 2, sizeOfPPS.length);
 
+        // TODO : Check how many start code in sps / pps to correct the numbers.
         byte[] numOfSPS = {0x01};
         byte[] numOfPPS = {0x01};
 
@@ -514,11 +537,11 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         if (DEBUG) Log.d(LOGTAG, "spsLength [" + Utils.bytesToHex(spsLength) + "]");
         if (DEBUG) Log.d(LOGTAG, "ppsLength [" + Utils.bytesToHex(ppsLength) + "]");
 
-        totalSize = version.length + profile.length + compatibility.length + level.length + nauLength.length +
-                    numOfSPS.length + spsLength.length + sps.length +
-                    numOfPPS.length + ppsLength.length + pps.length;
+        size = version.length + profile.length + compatibility.length + level.length + nauLength.length +
+               numOfSPS.length + spsLength.length + sps.length +
+               numOfPPS.length + ppsLength.length + pps.length;
 
-        byte[] videoExtraData = new byte[totalSize];
+        byte[] videoExtraData = new byte[size];
         ByteBuffer target = ByteBuffer.wrap(videoExtraData);
         target.put(version);
         target.put(profile);
@@ -532,5 +555,6 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         target.put(ppsLength);
         target.put(pps);
         extraDataList.add(videoExtraData);
+
     }
 }

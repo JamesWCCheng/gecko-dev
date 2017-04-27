@@ -68,9 +68,11 @@ H264Converter::Decode(MediaRawData* aSample)
       mp4_demuxer::AnnexB::IsAnnexB(aSample), aSample->mKeyframe,
       aSample->mTime);
 
-//  auto s = bin2hex(aSample->Data(), aSample->Size());
-//  printf_stderr("[H264Decoder][Decode] before CSTAVCC : %s",
-//      s.c_str());
+//  if (aSample->mKeyframe) {
+//    auto s = bin2hex(aSample->Data(), aSample->Size());
+//    printf_stderr("[H264Decoder][Decode] before CSTAVCC : %s",
+//        s.c_str());
+//  }
 
   if (!mp4_demuxer::AnnexB::IsAnnexB(aSample) &&
       !mp4_demuxer::AnnexB::ConvertSampleToAVCC(aSample)) {

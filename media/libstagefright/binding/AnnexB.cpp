@@ -12,6 +12,18 @@
 
 using namespace mozilla;
 
+// TODO : Remove this when we finish the develop
+#include <string>
+#include <sstream>
+#include <iomanip>
+std::string bin2hex(const unsigned char *bin, size_t len) {
+  std::ostringstream oss;
+  for (size_t i = 0; i < len; i++) {
+    oss << std::setfill('0') << std::setw(2) << std::hex << static_cast<unsigned int>(bin[i]);
+  }
+  return oss.str();
+}
+
 namespace mp4_demuxer
 {
 
@@ -23,16 +35,24 @@ AnnexB::ConvertSampleToAnnexB(mozilla::MediaRawData* aSample, bool aAddSPS)
   MOZ_ASSERT(aSample);
 
   if (!IsAVCC(aSample)) {
+//    printf_stderr("[AnnexB][ConvertSampleToAnnexB] >>>>>>>>>> !AVCC, false");
     return true;
   }
   MOZ_ASSERT(aSample->Data());
+//  auto s = bin2hex(aSample->Data(), aSample->Size());
+//  printf_stderr("[AnnexB][ConvertSampleToAnnexB] before CST4bytesAVCC : %s",
+//      s.c_str());
 
   if (!ConvertSampleTo4BytesAVCC(aSample)) {
+//    printf_stderr("[AnnexB][ConvertSampleToAnnexB] >>>>>>>>>> !ConvertSampleTo4BytesAVCC, false");
     return false;
   }
-
+//  auto s2 = bin2hex(aSample->Data(), aSample->Size());
+//  printf_stderr("[AnnexB][ConvertSampleToAnnexB] AFter CST4bytesAVCC : %s",
+//      s2.c_str());
   if (aSample->Size() < 4) {
     // Nothing to do, it's corrupted anyway.
+//    printf_stderr("[AnnexB][ConvertSampleToAnnexB] >>>>>>>>>> aSample->Size() < 4, return true");
     return true;
   }
 
@@ -46,12 +66,14 @@ AnnexB::ConvertSampleToAnnexB(mozilla::MediaRawData* aSample, bool aAddSPS)
     const uint8_t* p = reader.Read(nalLen);
 
     if (!writer.Write(kAnnexBDelimiter, ArrayLength(kAnnexBDelimiter))) {
+      printf_stderr("[AnnexB][ConvertSampleToAnnexB] kAnnexBDelimiter return false");
       return false;
     }
     if (!p) {
       break;
     }
     if (!writer.Write(p, nalLen)) {
+      printf_stderr("[AnnexB][ConvertSampleToAnnexB] writer failed, return false");
       return false;
     }
   }
@@ -59,6 +81,7 @@ AnnexB::ConvertSampleToAnnexB(mozilla::MediaRawData* aSample, bool aAddSPS)
   nsAutoPtr<MediaRawDataWriter> samplewriter(aSample->CreateWriter());
 
   if (!samplewriter->Replace(tmp.begin(), tmp.length())) {
+//    printf_stderr("[AnnexB][ConvertSampleToAnnexB]replace, return false");
     return false;
   }
 
@@ -66,7 +89,11 @@ AnnexB::ConvertSampleToAnnexB(mozilla::MediaRawData* aSample, bool aAddSPS)
   if (aAddSPS && aSample->mKeyframe) {
     RefPtr<MediaByteBuffer> annexB =
       ConvertExtraDataToAnnexB(aSample->mExtraData);
+//    auto s3 = bin2hex(annexB->Elements(), annexB->Length());
+//    printf_stderr("[AnnexB][ConvertSampleToAnnexB] prepand AnnexB = %s",
+//        s3.c_str());
     if (!samplewriter->Prepend(annexB->Elements(), annexB->Length())) {
+//      printf_stderr("[AnnexB][ConvertSampleToAnnexB] !Prepend, return false");
       return false;
     }
 
