@@ -104,16 +104,13 @@ HLSDemuxer::OnInitialized(bool aHasAudio, bool aHasVideo)
 {
   MOZ_ASSERT(NS_IsMainThread());
   HLS_DEBUG("HLSDemuxer", "OnInitialized");
-  if (mInitPromise.IsEmpty()) {
-    return;
-  }
+
   if (aHasAudio) {
     UpdateAudioInfo(0);
   }
   if (aHasVideo) {
     UpdateVideoInfo(0);
   }
-  mInitPromise.ResolveIfExists(NS_OK, __func__);
 }
 // Due to inaccuracies in determining buffer end
 // frames (Bug 1065207). This value is based on videos seen in the wild.
@@ -134,6 +131,10 @@ HLSDemuxer::Init()
 void HLSDemuxer::NotifyDataArrived()
 {
   HLS_DEBUG("HLSDemuxer", "NotifyDataArrived()");
+  if (mInitPromise.IsEmpty()) {
+    return;
+  }
+  mInitPromise.ResolveIfExists(NS_OK, __func__);
 }
 
 bool
@@ -249,6 +250,9 @@ HLSDemuxer::UpdateVideoInfo(int index)
     mInfo.mVideo.mDisplay.height = videoInfo->DisplayY();
     mInfo.mVideo.mMimeType = NS_ConvertUTF16toUTF8(videoInfo->MimeType()->ToString());
     mInfo.mVideo.mDuration = TimeUnit::FromMicroseconds(videoInfo->Duration());
+    // We don't need H264Converter to be involved since MediaCodec accept the sample format we provided.
+    mInfo.mVideo.mNeedConversion = false;
+
     if (videoInfo->ExtraData()) {
       auto&& extraData = videoInfo->ExtraData()->GetElements();
       mInfo.mVideo.mExtraData->Clear();

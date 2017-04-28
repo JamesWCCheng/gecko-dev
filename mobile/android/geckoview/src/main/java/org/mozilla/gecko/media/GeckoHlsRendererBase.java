@@ -17,7 +17,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public abstract class GeckoHlsRendererBase extends BaseRenderer {
-    protected static final int QUEUED_INPUT_SAMPLE_DURATION_THRESHOLD = 5000000; //5sec
+    protected static final int QUEUED_INPUT_SAMPLE_DURATION_THRESHOLD = 1000000; //1sec
     protected final MediaCodecSelector mediaCodecSelector;
     protected final FormatHolder formatHolder;
     protected boolean DEBUG;
@@ -29,7 +29,7 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
     protected ByteBuffer inputBuffer = null;
     protected Format format = null;
     protected boolean initialized = false;
-    protected boolean waitingForData = false;
+    protected boolean waitingForData = true;
     protected boolean inputStreamEnded = false;
     protected long firstSampleStartTime = 0;
 
@@ -53,7 +53,6 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
         mediaCodecSelector = selector;
         formatHolder = new FormatHolder();
         initialized = false;
-        waitingForData = false;
         dexmuedInputSamples = new ConcurrentLinkedQueue<>();
     }
 
