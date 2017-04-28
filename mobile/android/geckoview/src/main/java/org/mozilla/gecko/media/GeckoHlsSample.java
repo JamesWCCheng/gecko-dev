@@ -24,8 +24,6 @@ public final class GeckoHlsSample {
     @WrapForJNI
     public int extraIndex;
 
-    public byte[] byteArray;
-
     @WrapForJNI
     public long duration;
 
@@ -34,6 +32,8 @@ public final class GeckoHlsSample {
 
     @WrapForJNI
     public CryptoInfo cryptoInfo;
+
+    private byte[] byteArray;
 
     @WrapForJNI
     public void writeToByteBuffer(ByteBuffer dest) throws IOException {
@@ -60,8 +60,6 @@ public final class GeckoHlsSample {
     }
 
     public static GeckoHlsSample create(ByteBuffer src, BufferInfo info, CryptoInfo cryptoInfo) {
-        BufferInfo bufferInfo = new BufferInfo();
-        bufferInfo.set(0, info.size, info.presentationTimeUs, info.flags);
         return new GeckoHlsSample(byteArrayFromBuffer(src, info.offset, info.size), info, cryptoInfo);
     }
 

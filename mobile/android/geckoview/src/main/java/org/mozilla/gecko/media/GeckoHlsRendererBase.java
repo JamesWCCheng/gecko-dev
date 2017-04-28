@@ -4,7 +4,6 @@
 
 package org.mozilla.gecko.media;
 
-import android.os.Handler;
 import android.util.Log;
 
 import com.google.android.exoplayer2.BaseRenderer;
@@ -19,12 +18,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public abstract class GeckoHlsRendererBase extends BaseRenderer {
     protected static final int QUEUED_INPUT_SAMPLE_DURATION_THRESHOLD = 1000000; //1sec
     protected final MediaCodecSelector mediaCodecSelector;
-    protected final FormatHolder formatHolder;
+    protected final FormatHolder formatHolder = new FormatHolder();
     protected boolean DEBUG;
     protected String LOGTAG;
     protected GeckoHlsPlayer.ComponentListener playerListener;
 
-    protected ConcurrentLinkedQueue<GeckoHlsSample> dexmuedInputSamples;
+    protected ConcurrentLinkedQueue<GeckoHlsSample> demuxedInputSamples = new ConcurrentLinkedQueue<>();
 
     protected ByteBuffer inputBuffer = null;
     protected Format format = null;
@@ -51,18 +50,15 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
         assertTrue(selector != null);
         playerListener = eventListener;
         mediaCodecSelector = selector;
-        formatHolder = new FormatHolder();
-        initialized = false;
-        dexmuedInputSamples = new ConcurrentLinkedQueue<>();
     }
 
     protected boolean isQueuedEnoughData() {
-        if (dexmuedInputSamples.isEmpty()) {
+        if (demuxedInputSamples.isEmpty()) {
             return false;
         }
-        int size = dexmuedInputSamples.size();
+        int size = demuxedInputSamples.size();
         GeckoHlsSample[] queuedSamples =
-                dexmuedInputSamples.toArray(new GeckoHlsSample[size]);
+                demuxedInputSamples.toArray(new GeckoHlsSample[size]);
         return Math.abs(queuedSamples[size - 1].info.presentationTimeUs -
                 queuedSamples[0].info.presentationTimeUs) >
                     QUEUED_INPUT_SAMPLE_DURATION_THRESHOLD? true : false;
@@ -78,12 +74,12 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
         ConcurrentLinkedQueue<GeckoHlsSample> samples =
             new ConcurrentLinkedQueue<GeckoHlsSample>();
 
-        int queuedSize = dexmuedInputSamples.size();
+        int queuedSize = demuxedInputSamples.size();
         for (int i = 0; i < queuedSize; i++) {
             if (i >= number) {
                 break;
             }
-            GeckoHlsSample sample = dexmuedInputSamples.poll();
+            GeckoHlsSample sample = demuxedInputSamples.poll();
             samples.offer(sample);
         }
         if (samples.isEmpty()) {

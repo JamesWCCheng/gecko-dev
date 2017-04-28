@@ -8,7 +8,6 @@ import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.CryptoInfo;
 import android.os.Handler;
-import android.os.SystemClock;
 import android.util.Log;
 
 import com.google.android.exoplayer2.C;
@@ -35,12 +34,12 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     private static final int RECONFIGURATION_STATE_WRITE_PENDING = 1;
     private static final int RECONFIGURATION_STATE_QUEUE_PENDING = 2;
     private boolean rendererReconfigured;
-    private int rendererReconfigurationState;
+    private int rendererReconfigurationState = RECONFIGURATION_STATE_NONE;
 
     private Format[] streamFormats;
     private CodecMaxValues codecMaxValues;
-    private ConcurrentLinkedQueue<GeckoHlsSample> dexmuedNoDurationSamples;
-    private long nextKeyFrameTime;
+    private ConcurrentLinkedQueue<GeckoHlsSample> demuxedNoDurationSamples = new ConcurrentLinkedQueue<>();;
+    private long nextKeyFrameTime = 0;
 
     private byte[] annexB = null;
     private ArrayList<byte[]> extraDataList = new ArrayList<byte[]>();
@@ -64,11 +63,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         assertTrue(Versions.feature16Plus);
         LOGTAG = getClass().getSimpleName();
         DEBUG = true;
-
-        rendererReconfigurationState = RECONFIGURATION_STATE_NONE;
         eventDispatcher = new VideoRendererEventListener.EventDispatcher(eventHandler, eventListener);
-        nextKeyFrameTime = 0;
-        dexmuedNoDurationSamples = new ConcurrentLinkedQueue<>();
     }
 
     @Override
@@ -261,8 +256,8 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     @Override
     protected boolean clearInputSamplesQueue() {
         if (DEBUG) Log.d(LOGTAG, "clearInputSamplesQueue");
-        dexmuedInputSamples.clear();
-        dexmuedNoDurationSamples.clear();
+        demuxedInputSamples.clear();
+        demuxedNoDurationSamples.clear();
         return true;
     }
 
@@ -304,7 +299,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
          * Since we customized renderer as a demuxer. Here we're not able to
          * obtain duration from the DecoderInputBuffer as there's no duration inside.
          * So we calcualte it by referring to nearby samples' timestamp.
-         * A temporary queue |dexmuedNoDurationSamples| is used to queue demuxed
+         * A temporary queue |demuxedNoDurationSamples| is used to queue demuxed
          * samples which have no duration information at first.
          * Considering there're 9 demuxed samples in the queue already,
          * e.g. |-2|-1|0|1|2|3|4|5|6|...
@@ -315,12 +310,12 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
          * here, let's say sample -2 ~ 6.
          */
         if (inputSample != null) {
-            dexmuedNoDurationSamples.offer(inputSample);
+            demuxedNoDurationSamples.offer(inputSample);
         }
-        int sizeOfNoDura = dexmuedNoDurationSamples.size();
+        int sizeOfNoDura = demuxedNoDurationSamples.size();
         int range = sizeOfNoDura >= 10 ? 10 : sizeOfNoDura;
         GeckoHlsSample[] inputArray =
-            dexmuedNoDurationSamples.toArray(new GeckoHlsSample[sizeOfNoDura]);
+            demuxedNoDurationSamples.toArray(new GeckoHlsSample[sizeOfNoDura]);
         if (range >= 10 && !inputStreamEnded) {
             // Calculate the first 'range' elements.
             for (int i = 0; i < range; i++) {
@@ -335,15 +330,15 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                     }
                 }
             }
-            GeckoHlsSample toQueue = dexmuedNoDurationSamples.poll();
-            dexmuedInputSamples.offer(toQueue);
+            GeckoHlsSample toQueue = demuxedNoDurationSamples.poll();
+            demuxedInputSamples.offer(toQueue);
             if (DEBUG) Log.d(LOGTAG, "Demuxed sample PTS : " +
                              toQueue.info.presentationTimeUs + ", duration :" +
                              toQueue.duration + ", isKeyFrame(" +
                              toQueue.isKeyFrame() + ", extraIndex(" +
                              toQueue.extraIndex + "), queue size : " +
-                             dexmuedInputSamples.size() + ", NoDuQueue size : " +
-                             dexmuedNoDurationSamples.size());
+                             demuxedInputSamples.size() + ", NoDuQueue size : " +
+                             demuxedNoDurationSamples.size());
         } else if (inputStreamEnded) {
             for (int i = 0; i < sizeOfNoDura; i++) {
                 for (int j = -2; j < 7; j++) {
@@ -359,7 +354,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             //        A workaround here is to assign a close duration to it.
             long tmpDuration = 33333;
             GeckoHlsSample sample = null;
-            for (sample = dexmuedNoDurationSamples.poll(); sample != null; sample = dexmuedNoDurationSamples.poll()) {
+            for (sample = demuxedNoDurationSamples.poll(); sample != null; sample = demuxedNoDurationSamples.poll()) {
                 if (sample.duration == Long.MAX_VALUE) {
                     sample.duration = tmpDuration;
                     if (DEBUG) Log.d(LOGTAG, "Adjust the PTS of the last sample to " +
@@ -369,13 +364,13 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                 if (DEBUG) Log.d(LOGTAG, "last loop to offer samples - PTS : " +
                                  sample.info.presentationTimeUs + ", Duration : " +
                                  sample.duration + ", isEOS : " + sample.isEOS());
-                dexmuedInputSamples.offer(sample);
+                demuxedInputSamples.offer(sample);
             }
         }
     }
 
     public long getNextKeyFrameTime() {
-        for (GeckoHlsSample sample : dexmuedInputSamples) {
+        for (GeckoHlsSample sample : demuxedInputSamples) {
             if ((sample.info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0) {
                 return sample.info.presentationTimeUs;
             }

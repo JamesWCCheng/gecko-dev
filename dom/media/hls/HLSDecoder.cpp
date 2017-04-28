@@ -22,7 +22,7 @@ HLSDecoder::CreateStateMachine()
   //TODO: check hls demuxer constructor's parameter
   mReader =
     new MediaFormatReader(this,
-                          new HLSDemuxer(GetResource(), AbstractMainThread()),
+                          new HLSDemuxer(GetResource()),
                           GetVideoFrameContainer());
 
   return new MediaDecoderStateMachine(this, mReader);
@@ -41,7 +41,7 @@ bool
 HLSDecoder::IsEnabled()
 {
   // TODO: Currently default return true for testing.
-  HLS_DEBUG_NON_MEMBER("HLSDecoder", "HlsEnabled = %d", MediaPrefs::HLSEnabled());
+  HLS_DEBUG_NON_MEMBER("HLSDecoder", "HLSEnabled = %d", MediaPrefs::HLSEnabled());
   return MediaPrefs::HLSEnabled();
 }
 

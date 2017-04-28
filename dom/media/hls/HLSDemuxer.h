@@ -26,8 +26,7 @@ class HLSTrackDemuxer;
 class HLSDemuxer : public MediaDataDemuxer
 {
 public:
-  explicit HLSDemuxer(MediaResource* aResource,
-                      AbstractThread* aAbstractMainThread);
+  explicit HLSDemuxer(MediaResource* aResource);
 
   RefPtr<InitPromise> Init() override;
 

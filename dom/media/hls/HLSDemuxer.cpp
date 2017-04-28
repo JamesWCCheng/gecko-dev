@@ -80,8 +80,7 @@ private:
   HLSDemuxer* mDemuxer;
 };
 
-HLSDemuxer::HLSDemuxer(MediaResource* aResource,
-                       AbstractThread* aAbstractMainThread)
+HLSDemuxer::HLSDemuxer(MediaResource* aResource)
   : mResource(aResource)
   , mTaskQueue(new AutoTaskQueue(GetMediaThreadPool(MediaThreadType::PLAYBACK),
                                  /* aSupportsTailDispatch = */ false))

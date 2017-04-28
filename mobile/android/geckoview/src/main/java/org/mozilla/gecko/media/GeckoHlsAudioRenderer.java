@@ -21,7 +21,6 @@ import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
 import com.google.android.exoplayer2.util.MimeTypes;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.mozilla.gecko.AppConstants.Versions;
 
@@ -119,14 +118,14 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         if (bufferForRead.isEndOfStream()) {
             if (DEBUG) Log.d(LOGTAG, "Now we're at the End Of Stream.");
             inputStreamEnded = true;
-            dexmuedInputSamples.offer(GeckoHlsSample.EOS);
+            demuxedInputSamples.offer(GeckoHlsSample.EOS);
             return false;
         }
 
         bufferForRead.flip();
         if (DEBUG) Log.d(LOGTAG, "feedInputBuffersQueue: bufferTimeUs : " +
                          bufferForRead.timeUs + ", queueSize = " +
-                         dexmuedInputSamples.size());
+                         demuxedInputSamples.size());
 
         int size = bufferForRead.data.limit();
         byte[] realData = new byte[size];
@@ -142,7 +141,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         flags |= bufferForRead.isEndOfStream() ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0;
         bufferInfo.set(0, size, bufferForRead.timeUs, flags);
         GeckoHlsSample sample = GeckoHlsSample.create(buffer, bufferInfo, cryptoInfo);
-        dexmuedInputSamples.offer(sample);
+        demuxedInputSamples.offer(sample);
 
         if (waitingForData && isQueuedEnoughData()) {
             if (DEBUG) Log.d(LOGTAG, "onDataArrived");
@@ -155,7 +154,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
     @Override
     protected boolean clearInputSamplesQueue() {
         if (DEBUG) Log.d(LOGTAG, "clearInputSamplesQueue");
-        dexmuedInputSamples.clear();
+        demuxedInputSamples.clear();
         return true;
     }
 
