@@ -24,6 +24,7 @@ namespace mozilla {
 typedef TrackInfo::TrackType TrackType;
 using media::TimeUnit;
 using media::TimeIntervals;
+using media::TimeInterval;
 
 static
 VideoInfo::Rotation getVideoInfoRotation(int aRotation) {
@@ -532,8 +533,8 @@ HLSTrackDemuxer::SkipToNextRandomAccessPoint(const media::TimeUnit& aTimeThresho
 media::TimeIntervals
 HLSTrackDemuxer::GetBuffered()
 {
-  TimeIntervals buffered;
-  return buffered;
+  int64_t bufferedTime = mParent->mHlsDemuxerWrapper->GetBuffered(); //us
+  return TimeIntervals(TimeInterval(TimeUnit(), TimeUnit::FromMicroseconds(bufferedTime)));
 }
 
 void
