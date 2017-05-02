@@ -47,10 +47,10 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     @Override
     public byte[] getExtraData(int index) {
         assertTrue(index >= 0);
-        if (DEBUG) Log.d(LOGTAG, "getExtraData >>>> index = " + index);
         if (index < extraDataList.size()) {
             byte[] temp = extraDataList.get(index);
-            if (DEBUG) Log.d(LOGTAG, "getExtraData >>>> [" + Utils.bytesToHex(temp) + "]");
+            if (DEBUG) Log.d(LOGTAG, "getExtraData : index = " + index +
+                             ", data = [" + Utils.bytesToHex(temp) + "]");
             return extraDataList.get(index);
         }
         return null;
@@ -132,12 +132,14 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
     @Override
     protected void resetRenderer() {
+        if (DEBUG) Log.d(LOGTAG, "[resetRenderer] initialized = " + initialized);
         if (initialized) {
             rendererReconfigured = false;
-            if (DEBUG) Log.d(LOGTAG, "[resetRenderer] RECONFIGURATION_STATE_NONE");
             rendererReconfigurationState = RECONFIGURATION_STATE_NONE;
             nextKeyFrameTime = 0;
             inputBuffer = null;
+            annexB = null;
+            extraDataList.clear();
             initialized = false;
         }
     }
@@ -205,18 +207,14 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
         int annexBSize = annexB != null ? annexB.length : 0;
         int dataSize = bufferForRead.data.limit();
-        int size = rendererReconfigurationState != RECONFIGURATION_STATE_NONE ?
-            annexBSize + dataSize : dataSize;
+        int size = bufferForRead.isKeyFrame() ? annexBSize + dataSize : dataSize;
         byte[] realData = new byte[size];
-        if (rendererReconfigurationState != RECONFIGURATION_STATE_NONE) {
-            for (int i = 0; i < annexBSize; i++) {
-                realData[i] = annexB[i];
-            }
+        if (bufferForRead.isKeyFrame()) {
+            System.arraycopy(annexB, 0, realData, 0, annexBSize);
             bufferForRead.data.get(realData, annexBSize, dataSize);
         } else {
             bufferForRead.data.get(realData, 0, dataSize);
         }
-
         ByteBuffer buffer = ByteBuffer.wrap(realData);
         inputBuffer.clear();
 
@@ -230,9 +228,11 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
         GeckoHlsSample sample = GeckoHlsSample.create(buffer, bufferInfo, cryptoInfo);
 
+        assertTrue(extraDataList.size() >= 0);
         sample.extraIndex = extraDataList.size()-1;
         calculatDuration(sample);
         rendererReconfigurationState = RECONFIGURATION_STATE_NONE;
+
         if (waitingForData && isQueuedEnoughData()) {
             if (DEBUG) Log.d(LOGTAG, "onDataArrived");
             playerListener.onDataArrived();
@@ -269,19 +269,16 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                          " => new : " + format);
         handleDrmInitChanged(oldFormat, newFormat);
 
-        updateExtraData(format);
         if (initialized && canReconfigure(oldFormat, format)) {
             if (DEBUG) Log.d(LOGTAG, "[onInputFormatChanged] RECONFIGURATION_STATE_WRITE_PENDING");
             rendererReconfigured = true;
             rendererReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
         } else {
-            // The begining of demuxing
-            if (DEBUG) Log.d(LOGTAG, "[onInputFormatChanged] reset & maybeInit & RECONFIGURATION_STATE_WRITE_PENDING");
+            // The begining of demuxing, 1st time format change.
             resetRenderer();
             maybeInitRenderer();
-            rendererReconfigured = true;
-            rendererReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
         }
+        updateExtraData(format);
         eventDispatcher.inputFormatChanged(newFormat);
     }
 
@@ -495,14 +492,12 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             }
             size += format.initializationData.get(i).length;
         }
-        int count = 0;
+        int startPos = 0;
         annexB = new byte[size];
         for (int i = 0; i < format.initializationData.size(); i++) {
             byte[] data = format.initializationData.get(i);
-            for (int j = 0; j < data.length; j++) {
-                annexB[count] = data[j];
-                count++;
-            }
+            System.arraycopy(data, 0, annexB, startPos, data.length);
+            startPos = data.length;
         }
         if (DEBUG) Log.d(LOGTAG, "annexB [" +
                          Utils.bytesToHex(annexB) + "]");

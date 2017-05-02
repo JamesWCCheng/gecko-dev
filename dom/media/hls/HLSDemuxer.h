@@ -55,8 +55,6 @@ protected:
   int64_t GetNextKeyFrameTime();
   void UpdateVideoInfo(int index);
   void UpdateAudioInfo(int index);
-  void UpdateVideoExtraData(int index, RefPtr<MediaByteBuffer>& aExtraData);
-  void UpdateAudioExtraData(int index, RefPtr<MediaByteBuffer>& aExtraData);
 
 private:
   ~HLSDemuxer();

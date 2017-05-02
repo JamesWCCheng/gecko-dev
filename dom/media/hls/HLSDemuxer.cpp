@@ -21,6 +21,8 @@ using namespace mozilla::java;
 
 namespace mozilla {
 
+//static Atomic<uint32_t> sStreamSourceID(0u);
+
 typedef TrackInfo::TrackType TrackType;
 using media::TimeUnit;
 using media::TimeIntervals;
@@ -267,39 +269,6 @@ HLSDemuxer::UpdateVideoInfo(int index)
   }
 }
 
-void
-HLSDemuxer::UpdateVideoExtraData(int index, RefPtr<MediaByteBuffer>& aExtraData)
-{
-  MOZ_ASSERT(mHlsDemuxerWrapper);
-  HLS_DEBUG("HLSDemuxer", "UpdateVideoExtraData >>>>>> ");
-  jni::Object::LocalRef infoObj = mHlsDemuxerWrapper->GetVideoInfo(index);
-  if (infoObj) {
-    java::HlsVideoInfo::LocalRef videoInfo(mozilla::Move(infoObj));
-    auto&& extraData = videoInfo->ExtraData()->GetElements();
-    aExtraData->Clear();
-    if (extraData.Length() > 0) {
-      aExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
-                                 extraData.Length());
-    }
-    HLS_DEBUG("HLSDemuxer", "UpdateVideoExtraData >>>>>> Done ");
-  }
-}
-
-void
-HLSDemuxer::UpdateAudioExtraData(int index, RefPtr<MediaByteBuffer>& aExtraData)
-{
-  MOZ_ASSERT(mHlsDemuxerWrapper);
-  jni::Object::LocalRef infoObj = mHlsDemuxerWrapper->GetAudioInfo(index);
-  if (infoObj) {
-    java::HlsAudioInfo::LocalRef audioInfo(mozilla::Move(infoObj));
-    auto&& extraData = audioInfo->ExtraData()->GetElements();
-    aExtraData->Clear();
-    aExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
-                               extraData.Length());
-    HLS_DEBUG("HLSDemuxer", "UpdateAudioExtraData >>>>>> Done ");
-  }
-}
-
 HLSDemuxer::~HLSDemuxer()
 {
   HLS_DEBUG("HLSDemuxer", "~HLSDemuxer()");
@@ -412,16 +381,14 @@ HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
       return nullptr;
     }
 
+//    // TODO : Update streamSouceID & videoInfo for MFR.
 //    if (mType == TrackInfo::kVideoTrack) {
 //      auto sampleExtraIndex = sample->ExtraIndex();
 //      if (mLastExtraIndex != sampleExtraIndex) {
 //        mLastExtraIndex = sampleExtraIndex;
-//        mParent->UpdateVideoExtraData(mLastExtraIndex, mExtraData);
+//        mParent->UpdateVideoInfo(mLastExtraIndex);
+//        mrd->mTrackInfo = new TrackInfoSharedPtr(mParent->mInfo.mVideo, ++sStreamSourceID);
 //      }
-//      auto&& extraData= mExtraData->Elements();
-//      mrd->mExtraData = new MediaByteBuffer;
-//      mrd->mExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
-//                                      mExtraData->Length());
 //    }
 
     // Write payload into MediaRawData
@@ -486,7 +453,11 @@ HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
     sample->Dispose();
   }
 
-  UpdateNextKeyFrameTime();
+  if (mType == TrackInfo::kVideoTrack) {
+    // Only need to find NextKeyFrame for Video
+    UpdateNextKeyFrameTime();
+  }
+
   return SamplesPromise::CreateAndResolve(samples, __func__);
 }
 
