@@ -290,8 +290,10 @@ PDMFactory::CreateDecoderWithPDM(PlatformDecoderModule* aPDM,
       RESULT_DETAIL("Decoder configuration error, expected audio or video."));
     return nullptr;
   }
-
-  if (MP4Decoder::IsH264(config.mMimeType) && !aParams.mUseNullDecoder) {
+  printf_stderr("config.GetAsVideoInfo()->mNeedConversion = %d", config.GetAsVideoInfo()->mNeedConversion);
+  if (MP4Decoder::IsH264(config.mMimeType) &&
+      !aParams.mUseNullDecoder &&
+      config.GetAsVideoInfo()->mNeedConversion) {
     RefPtr<H264Converter> h = new H264Converter(aPDM, aParams);
     const nsresult rv = h->GetLastError();
     if (NS_SUCCEEDED(rv) || rv == NS_ERROR_NOT_INITIALIZED) {
