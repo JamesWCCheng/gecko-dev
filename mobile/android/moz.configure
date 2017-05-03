@@ -41,6 +41,10 @@ project_flag('MOZ_ANDROID_CUSTOM_TABS',
              help='Enable support for Android custom tabs',
              default=delayed_getattr(milestone, 'is_nightly'))
 
+# Enable HLS support for Android via ExoPlayer2
+add_old_configure_assignment('MOZ_ANDROID_HLS_SUPPORT',
+                             delayed_getattr(milestone, 'is_nightly'))
+
 # Enable the Switchboard A/B framework code.
 # Note: The framework is always included in the app. This flag controls
 # usage of the framework.
