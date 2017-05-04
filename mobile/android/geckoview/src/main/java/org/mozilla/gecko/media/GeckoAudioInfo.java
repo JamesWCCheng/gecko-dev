@@ -6,15 +6,16 @@ package org.mozilla.gecko.media;
 
 import org.mozilla.gecko.annotation.WrapForJNI;
 
+//A subset of the class AudioInfo in dom/media/MediaInfo.h
 @WrapForJNI
-public final class HlsAudioInfo {
+public final class GeckoAudioInfo {
     public byte[] codecSpecificData = null;
     public byte[] extraData = null;
     public int rate = 0;
     public int channels = 0;
     public int bitDepth = 0;
     public int profile = 0;
-    public String mimeType = null;
     public long duration = 0;
-    public HlsAudioInfo() {}
+    public String mimeType = null;
+    public GeckoAudioInfo() {}
 }

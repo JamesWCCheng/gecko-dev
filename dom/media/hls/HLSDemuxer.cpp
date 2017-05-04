@@ -21,7 +21,7 @@ using namespace mozilla::java;
 
 namespace mozilla {
 
-//static Atomic<uint32_t> sStreamSourceID(0u);
+static Atomic<uint32_t> sStreamSourceID(0u);
 
 typedef TrackInfo::TrackType TrackType;
 using media::TimeUnit;
@@ -222,7 +222,7 @@ HLSDemuxer::UpdateAudioInfo(int index)
   HLS_DEBUG("HLSDemuxer", "UpdateAudioInfo (%d)", index);
   jni::Object::LocalRef infoObj = mHlsDemuxerWrapper->GetAudioInfo(index);
   if (infoObj) {
-    java::HlsAudioInfo::LocalRef audioInfo(mozilla::Move(infoObj));
+    java::GeckoAudioInfo::LocalRef audioInfo(mozilla::Move(infoObj));
     mInfo.mAudio.mRate = audioInfo->Rate();
     mInfo.mAudio.mChannels = audioInfo->Channels();
     mInfo.mAudio.mProfile = audioInfo->Profile();
@@ -242,7 +242,7 @@ HLSDemuxer::UpdateVideoInfo(int index)
   MOZ_ASSERT(mHlsDemuxerWrapper);
   jni::Object::LocalRef infoObj = mHlsDemuxerWrapper->GetVideoInfo(index);
   if (infoObj) {
-    java::HlsVideoInfo::LocalRef videoInfo(mozilla::Move(infoObj));
+    java::GeckoVideoInfo::LocalRef videoInfo(mozilla::Move(infoObj));
     mInfo.mVideo.mStereoMode = getStereoMode(videoInfo->StereoMode());
     mInfo.mVideo.mRotation = getVideoInfoRotation(videoInfo->Rotation());
     //TODO: Check how to get this information since DecoderInputBuffer did not provide this info.
@@ -254,15 +254,6 @@ HLSDemuxer::UpdateVideoInfo(int index)
     mInfo.mVideo.mDuration = TimeUnit::FromMicroseconds(videoInfo->Duration());
     // We don't need H264Converter to be involved since MediaCodec accept the sample format we provided.
     mInfo.mVideo.mNeedConversion = false;
-
-    if (videoInfo->ExtraData()) {
-      auto&& extraData = videoInfo->ExtraData()->GetElements();
-      mInfo.mVideo.mExtraData->Clear();
-      if (extraData.Length() > 0) {
-        mInfo.mVideo.mExtraData->AppendElements(reinterpret_cast<uint8_t*>(&extraData[0]),
-                                                extraData.Length());
-      }
-    }
     HLS_DEBUG("HLSDemuxer", "UpdateVideoInfo (%d) / I(%dx%d) / D(%dx%d)",
       index, mInfo.mVideo.mImage.width, mInfo.mVideo.mImage.height,
       mInfo.mVideo.mDisplay.width, mInfo.mVideo.mDisplay.height);
@@ -290,7 +281,6 @@ HLSTrackDemuxer::HLSTrackDemuxer(HLSDemuxer* aParent, TrackInfo::TrackType aType
   , mReset(true)
   , mPreRoll(TimeUnit::FromMicroseconds(0))
 {
-  mExtraData = new MediaByteBuffer;
 }
 
 UniquePtr<TrackInfo>
@@ -381,15 +371,15 @@ HLSTrackDemuxer::DoGetSamples(int32_t aNumSamples)
       return nullptr;
     }
 
-//    // TODO : Update streamSouceID & videoInfo for MFR.
-//    if (mType == TrackInfo::kVideoTrack) {
-//      auto sampleExtraIndex = sample->ExtraIndex();
-//      if (mLastExtraIndex != sampleExtraIndex) {
-//        mLastExtraIndex = sampleExtraIndex;
-//        mParent->UpdateVideoInfo(mLastExtraIndex);
-//        mrd->mTrackInfo = new TrackInfoSharedPtr(mParent->mInfo.mVideo, ++sStreamSourceID);
-//      }
-//    }
+    // Update streamSouceID & videoInfo for MFR.
+    if (mType == TrackInfo::kVideoTrack) {
+      auto sampleFormatIndex = sample->FormatIndex();
+      if (mLastFormatIndex != sampleFormatIndex) {
+        mLastFormatIndex = sampleFormatIndex;
+        mParent->UpdateVideoInfo(mLastFormatIndex);
+        mrd->mTrackInfo = new TrackInfoSharedPtr(mParent->mInfo.mVideo, ++sStreamSourceID);
+      }
+    }
 
     // Write payload into MediaRawData
     UniquePtr<MediaRawDataWriter> writer(mrd->CreateWriter());

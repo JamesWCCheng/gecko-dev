@@ -91,6 +91,16 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         TRACK_TEXT,
     }
 
+    public static final int E_RESOURCE_BASE         = -100;
+    public static final int E_RESOURCE_UNKNOWN      = E_RESOURCE_BASE + 1;
+    public static final int E_RESOURCE_PLAYER       = E_RESOURCE_BASE + 2;
+    public static final int E_RESOURCE_UNSUPPORTED  = E_RESOURCE_BASE + 3;
+
+    public static final int E_DEMUXER_BASE         = -200;
+    public static final int E_DEMUXER_UNKNOWN      = E_DEMUXER_BASE + 1;
+    public static final int E_DEMUXER_PLAYER       = E_DEMUXER_BASE + 2;
+    public static final int E_DEMUXER_UNSUPPORTED  = E_DEMUXER_BASE + 3;
+
     public interface DemuxerCallbacks {
         void onInitialized(boolean hasAudio, boolean hasVideo);
         void onDemuxerError(int errorCode);
@@ -230,6 +240,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
             case C.TYPE_HLS:
                 return new HlsMediaSource(uri, mediaDataSourceFactory, mainHandler, null);
             default: {
+                resourceCallbacks.onResourceError(E_RESOURCE_UNSUPPORTED);
                 throw new IllegalStateException("Unsupported type: " + type);
             }
         }
@@ -240,17 +251,18 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     }
 
     void addResourceWrapperCallbackListener(ResourceCallbacks callback) {
-        if (DEBUG) Log.d(LOGTAG, " >> addResourceWrapperCallbackListener");
+        if (DEBUG) Log.d(LOGTAG, " addResourceWrapperCallbackListener ...");
         resourceCallbacks = callback;
     }
 
     void addDemuxerWrapperCallbackListener(DemuxerCallbacks callback) {
-        if (DEBUG) Log.d(LOGTAG, " >> addDemuxerWrapperCallbackListener");
+        if (DEBUG) Log.d(LOGTAG, " addDemuxerWrapperCallbackListener ...");
         demuxerCallbacks = callback;
     }
 
     synchronized void init(String url) {
         if (DEBUG) Log.d(LOGTAG, " init");
+        assertTrue(resourceCallbacks != null);
         if (isPlayerInitDone == true) {
             return;
         }
@@ -321,6 +333,12 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     @Override
     public void onPlayerError(ExoPlaybackException e) {
         if (DEBUG) Log.e(LOGTAG, "playerFailed" , e);
+        if (resourceCallbacks != null) {
+            resourceCallbacks.onResourceError(E_RESOURCE_PLAYER);
+        }
+        if (demuxerCallbacks != null) {
+            demuxerCallbacks.onDemuxerError(E_DEMUXER_PLAYER);
+        }
     }
 
     @Override
@@ -370,6 +388,8 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
               durationUs = window.getDurationUs();
           }
         }
+        // TODO : Need to check if the duration from play.getDuration is different
+        // with the one calculated from multi-timelines/windows.
         if (DEBUG) Log.d(LOGTAG, "Media duration (from Timeline) = " + durationUs +
                          "(us)" + " player.getDuration() = " + player.getDuration() +
                          "(ms)");
@@ -394,17 +414,13 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     // API for GeckoHlsDemuxerWrapper
     // =======================================================================
     public ConcurrentLinkedQueue<GeckoHlsSample> getVideoSamples(int number) {
-        if (vRenderer != null) {
-            return vRenderer.getQueuedSamples(number);
-        }
-        return new ConcurrentLinkedQueue<GeckoHlsSample>();
+        return vRenderer != null ? vRenderer.getQueuedSamples(number) :
+                                   new ConcurrentLinkedQueue<GeckoHlsSample>();
     }
 
     public ConcurrentLinkedQueue<GeckoHlsSample> getAudioSamples(int number) {
-        if (aRenderer != null) {
-            return aRenderer.getQueuedSamples(number);
-        }
-        return new ConcurrentLinkedQueue<GeckoHlsSample>();
+        return aRenderer != null ? aRenderer.getQueuedSamples(number) :
+                                   new ConcurrentLinkedQueue<GeckoHlsSample>();
     }
 
     public long getDuration() {
@@ -435,21 +451,23 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         return 0;
     }
 
-    public Format getVideoTrackFormat() {
+    public Format getVideoTrackFormat(int index) {
         if (DEBUG) Log.d(LOGTAG, "getVideoTrackFormat");
         assertTrue(vRenderer != null);
-        return hasVideo ? vRenderer.getFormat() : null;
+        return hasVideo ? vRenderer.getFormat(index) : null;
     }
 
-    public Format getAudioTrackFormat() {
+    public Format getAudioTrackFormat(int index) {
         if (DEBUG) Log.d(LOGTAG, "getAudioTrackFormat");
         assertTrue(aRenderer != null);
-        return hasAudio ? aRenderer.getFormat() : null;
+        return hasAudio ? aRenderer.getFormat(index) : null;
     }
 
     public boolean seek(long positionMs) {
         // positionMs : milliseconds.
-        // NOTE : It's not possible to seek media by tracktype via ExoPlayer Interface.
+        // NOTE : 1) It's not possible to seek media by tracktype via ExoPlayer Interface.
+        //        2) positionMs is samples PTS from MFR, we need to re-adjust it
+        //           for ExoPlayer by subtracting sample start time.
         try {
             // TODO : Gather Timeline Period / Window information to develop
             //        complete timeilne, and seekTime should be inside the duration.
@@ -461,9 +479,10 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
                 }
             }
             if (DEBUG) Log.d(LOGTAG, "seeking  : " + positionMs / 1000 +
-                    " (s); startTime : " + startTime);
+                             " (s); startTime : " + startTime);
             player.seekTo(positionMs - startTime / 1000);
         } catch (Exception e) {
+            demuxerCallbacks.onDemuxerError(E_DEMUXER_UNKNOWN);
             return false;
         }
         return true;
@@ -472,15 +491,6 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     public long getNextKeyFrameTime() {
         long nextKeyFrameTime = vRenderer != null ? vRenderer.getNextKeyFrameTime() : 0;
         return nextKeyFrameTime;
-    }
-
-    public byte[] getExtraData(Track_Type type, int index) {
-        if (type == Track_Type.TRACK_VIDEO && vRenderer != null) {
-            return vRenderer.getExtraData(index);
-        } else if (type == Track_Type.TRACK_AUDIO && aRenderer != null) {
-            return aRenderer.getExtraData(index);
-        }
-        return null;
     }
 
     public void release() {

@@ -21,8 +21,9 @@ public final class GeckoHlsSample {
         EOS = new GeckoHlsSample(null, eosInfo, null);
     }
 
+    // Indicate the index of format which is used by this sample.
     @WrapForJNI
-    public int extraIndex;
+    public int formatIndex;
 
     @WrapForJNI
     public long duration;
@@ -64,7 +65,7 @@ public final class GeckoHlsSample {
     }
 
     private GeckoHlsSample(byte[] bytes, BufferInfo info, CryptoInfo cryptoInfo) {
-        extraIndex = 0;
+        formatIndex = 0;
         duration = Long.MAX_VALUE;
         byteArray = bytes;
         this.info = info;

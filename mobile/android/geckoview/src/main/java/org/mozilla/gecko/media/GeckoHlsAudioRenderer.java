@@ -68,7 +68,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         Object oldDrmInit = oldFormat == null ? null : oldFormat.drmInitData;
         Object newDrnInit = newFormat.drmInitData;
 
-//      TODO: Notify MFR it's encrypted or not.
+//      TODO: Notify MFR if the content is encrypted or not.
         if (newDrnInit != oldDrmInit) {
             if (newDrnInit != null) {
             } else {
@@ -81,7 +81,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         if(initialized || format == null) {
             return;
         }
-
+        if (DEBUG) Log.d(LOGTAG, "Initializing ... ");
         inputBuffer = ByteBuffer.wrap(new byte[22048]);
         initialized = true;
     }
@@ -92,6 +92,11 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         initialized = false;
     }
 
+    /*
+     * The place we get demuxed data from HlsMediaSource(ExoPlayer).
+     * The data will then be converted to GeckoHlsSample and deliver to
+     * GeckoHlsDemuxerWrapper for further use.
+     */
     @Override
     protected synchronized boolean feedInputBuffersQueue() {
         if (!initialized || inputStreamEnded || isQueuedEnoughData()) {
@@ -123,9 +128,6 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         }
 
         bufferForRead.flip();
-        if (DEBUG) Log.d(LOGTAG, "feedInputBuffersQueue: bufferTimeUs : " +
-                         bufferForRead.timeUs + ", queueSize = " +
-                         demuxedInputSamples.size());
 
         int size = bufferForRead.data.limit();
         byte[] realData = new byte[size];
@@ -141,7 +143,18 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         flags |= bufferForRead.isEndOfStream() ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0;
         bufferInfo.set(0, size, bufferForRead.timeUs, flags);
         GeckoHlsSample sample = GeckoHlsSample.create(buffer, bufferInfo, cryptoInfo);
+
+        assertTrue(formats.size() >= 0);
+        // We add a new format in the list once format changes, so the formatIndex
+        // should indicate to the last(latest) format.
+        sample.formatIndex = formats.size()-1;
         demuxedInputSamples.offer(sample);
+
+        if (DEBUG) Log.d(LOGTAG, "Demuxed sample PTS : " +
+                         sample.info.presentationTimeUs + ", duration :" +
+                         sample.duration + ", formatIndex(" +
+                         sample.formatIndex + "), queue size : " +
+                         demuxedInputSamples.size());
 
         if (waitingForData && isQueuedEnoughData()) {
             if (DEBUG) Log.d(LOGTAG, "onDataArrived");
@@ -167,6 +180,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
 
         resetRenderer();
         maybeInitRenderer();
+        formats.add(format);
         eventDispatcher.inputFormatChanged(newFormat);
     }
 }

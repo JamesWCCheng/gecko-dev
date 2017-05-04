@@ -39,8 +39,8 @@ public class GeckoHlsResourceWrapper {
         assertTrue(callback != null);
 
         mPlayer = new GeckoHlsPlayer();
-        mPlayer.init(url);
         mPlayer.addResourceWrapperCallbackListener(callback);
+        mPlayer.init(url);
     }
 
     @WrapForJNI(calledFrom = "gecko")

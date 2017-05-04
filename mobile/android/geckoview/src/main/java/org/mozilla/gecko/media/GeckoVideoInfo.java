@@ -6,8 +6,9 @@ package org.mozilla.gecko.media;
 
 import org.mozilla.gecko.annotation.WrapForJNI;
 
+//A subset of the class VideoInfo in dom/media/MediaInfo.h
 @WrapForJNI
-public final class HlsVideoInfo {
+public final class GeckoVideoInfo {
     public byte[] codecSpecificData = null;
     public byte[] extraData = null;
     public int displayX = 0;
@@ -18,5 +19,5 @@ public final class HlsVideoInfo {
     public int stereoMode = 0;
     public long duration = 0;
     public String mimeType = null;
-    public HlsVideoInfo() {}
+    public GeckoVideoInfo() {}
 }

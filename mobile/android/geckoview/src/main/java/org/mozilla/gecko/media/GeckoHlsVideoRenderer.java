@@ -30,31 +30,31 @@ import org.mozilla.gecko.AppConstants.Versions;
 public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     private final VideoRendererEventListener.EventDispatcher eventDispatcher;
 
+    /*
+     * By configuring these states, initialization data is provided for
+     * ExoPlayer's HlsMediaSouck to parse HLS bitstream and then provide samples
+     * starting with an Access Unit Delimiter including SPS/PPS for TS,
+     * and provide samples starting with an AUD without SPS/PPS for FMP4.
+     */
     private static final int RECONFIGURATION_STATE_NONE = 0;
     private static final int RECONFIGURATION_STATE_WRITE_PENDING = 1;
     private static final int RECONFIGURATION_STATE_QUEUE_PENDING = 2;
     private boolean rendererReconfigured;
     private int rendererReconfigurationState = RECONFIGURATION_STATE_NONE;
 
+    // A list of the formats which may be included in the bitstream.
     private Format[] streamFormats;
+    // The max width/height/inputBufferSize for specific codec format.
     private CodecMaxValues codecMaxValues;
-    private ConcurrentLinkedQueue<GeckoHlsSample> demuxedNoDurationSamples = new ConcurrentLinkedQueue<>();;
+    // A temporary queue for samples whose duration is not calculated yet.
+    private ConcurrentLinkedQueue<GeckoHlsSample> demuxedNoDurationSamples =
+        new ConcurrentLinkedQueue<>();
     private long nextKeyFrameTime = 0;
 
-    private byte[] annexB = null;
-    private ArrayList<byte[]> extraDataList = new ArrayList<byte[]>();
-
-    @Override
-    public byte[] getExtraData(int index) {
-        assertTrue(index >= 0);
-        if (index < extraDataList.size()) {
-            byte[] temp = extraDataList.get(index);
-            if (DEBUG) Log.d(LOGTAG, "getExtraData : index = " + index +
-                             ", data = [" + Utils.bytesToHex(temp) + "]");
-            return extraDataList.get(index);
-        }
-        return null;
-    }
+    // Contain CSD-0(SPS)/CSD-1(PPS) information (in AnnexB format) for
+    // prepending each keyframe. When video format changes, this information
+    // changes accordingly.
+    private byte[] csdInfo = null;
 
     public GeckoHlsVideoRenderer(MediaCodecSelector selector,
                                  Handler eventHandler,
@@ -97,7 +97,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
                     Log.e(LOGTAG, e.getMessage());
                 }
                 if (!decoderCapable) {
-                    if (DEBUG) Log.d(LOGTAG, "FalseCheck [legacyFrameSize, " +
+                    if (DEBUG) Log.d(LOGTAG, "Check [legacyFrameSize, " +
                                      format.width + "x" + format.height + "]");
                 }
             } else {
@@ -122,7 +122,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         if (initialized || format == null) {
             return;
         }
-        if (DEBUG) Log.d(LOGTAG, "[maybeInitRenderer] initializing ... ");
+        if (DEBUG) Log.d(LOGTAG, "Initializing ... ");
         // Calculate maximum size which might be used for target format.
         codecMaxValues = getCodecMaxValues(format, streamFormats);
         // Create a buffer with maximal size for reading source.
@@ -138,12 +138,16 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             rendererReconfigurationState = RECONFIGURATION_STATE_NONE;
             nextKeyFrameTime = 0;
             inputBuffer = null;
-            annexB = null;
-            extraDataList.clear();
+            csdInfo = null;
             initialized = false;
         }
     }
 
+    /*
+     * The place we get demuxed data from HlsMediaSource(ExoPlayer).
+     * The data will then be converted to GeckoHlsSample and deliver to
+     * GeckoHlsDemuxerWrapper for further use.
+     */
     @Override
     protected synchronized boolean feedInputBuffersQueue() {
         if (!initialized || inputStreamEnded || isQueuedEnoughData()) {
@@ -161,7 +165,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         // data to be supplied at the start of the buffer that also contains
         // the first frame in the new format.
         if (rendererReconfigurationState == RECONFIGURATION_STATE_WRITE_PENDING) {
-            if (DEBUG) Log.d(LOGTAG, "[feedInput] put initialization data : RECONFIGURATION_STATE_QUEUE_PENDING");
+            if (DEBUG) Log.d(LOGTAG, "[feedInput][RECONFIGURATION_STATE_WRITE_PENDING] put initialization data");
             for (int i = 0; i < format.initializationData.size(); i++) {
                 byte[] data = format.initializationData.get(i);
                 bufferForRead.data.put(data);
@@ -176,7 +180,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         }
         if (result == C.RESULT_FORMAT_READ) {
             if (rendererReconfigurationState == RECONFIGURATION_STATE_QUEUE_PENDING) {
-                if (DEBUG) Log.d(LOGTAG, "[feedInput] 2 formats in a row : RECONFIGURATION_STATE_WRITE_PENDING");
+                if (DEBUG) Log.d(LOGTAG, "[feedInput][RECONFIGURATION_STATE_QUEUE_PENDING] 2 formats in a row.");
                 // We received two formats in a row. Clear the current buffer of any reconfiguration data
                 // associated with the first format.
                 bufferForRead.clear();
@@ -190,7 +194,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         if (bufferForRead.isEndOfStream()) {
             if (DEBUG) Log.d(LOGTAG, "Now we're at the End Of Stream.");
             if (rendererReconfigurationState == RECONFIGURATION_STATE_QUEUE_PENDING) {
-                if (DEBUG) Log.d(LOGTAG, "[feedInput] isEndOfStream : RECONFIGURATION_STATE_WRITE_PENDING");
+                if (DEBUG) Log.d(LOGTAG, "[feedInput][RECONFIGURATION_STATE_QUEUE_PENDING] isEndOfStream.");
                 // We received a new format immediately before the end of the stream. We need to clear
                 // the corresponding reconfiguration data from the current buffer, but re-write it into
                 // a subsequent buffer if there are any (e.g. if the user seeks backwards).
@@ -205,13 +209,14 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
         bufferForRead.flip();
 
-        int annexBSize = annexB != null ? annexB.length : 0;
+        int csdInfoSize = csdInfo != null ? csdInfo.length : 0;
         int dataSize = bufferForRead.data.limit();
-        int size = bufferForRead.isKeyFrame() ? annexBSize + dataSize : dataSize;
+        int size = bufferForRead.isKeyFrame() ? csdInfoSize + dataSize : dataSize;
         byte[] realData = new byte[size];
         if (bufferForRead.isKeyFrame()) {
-            System.arraycopy(annexB, 0, realData, 0, annexBSize);
-            bufferForRead.data.get(realData, annexBSize, dataSize);
+            // Prepend the CSD information to the sample if it's a key frame.
+            System.arraycopy(csdInfo, 0, realData, 0, csdInfoSize);
+            bufferForRead.data.get(realData, csdInfoSize, dataSize);
         } else {
             bufferForRead.data.get(realData, 0, dataSize);
         }
@@ -228,8 +233,12 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
         GeckoHlsSample sample = GeckoHlsSample.create(buffer, bufferInfo, cryptoInfo);
 
-        assertTrue(extraDataList.size() >= 0);
-        sample.extraIndex = extraDataList.size()-1;
+        assertTrue(formats.size() >= 0);
+        // We add a new format in the list once format changes, so the formatIndex
+        // should indicate to the last(latest) format.
+        sample.formatIndex = formats.size()-1;
+        // There's no duration information from the ExoPlayer's sample, we need
+        // to calculate it.
         calculatDuration(sample);
         rendererReconfigurationState = RECONFIGURATION_STATE_NONE;
 
@@ -246,8 +255,8 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         super.onPositionReset(positionUs, joining);
         if (initialized && rendererReconfigured && format != null) {
             if (DEBUG) Log.d(LOGTAG, "[onPositionReset] RECONFIGURATION_STATE_WRITE_PENDING");
-            // Any reconfiguration data that we send shortly before the reset 
-            // may be discarded. We avoid this issue by sending reconfiguration
+            // Any reconfiguration data that we put shortly before the reset
+            // may be invalid. We avoid this issue by sending reconfiguration
             // data following every position reset.
             rendererReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
         }
@@ -267,10 +276,11 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         format = newFormat;
         if (DEBUG) Log.d(LOGTAG, "[onInputFormatChanged] old : " + oldFormat +
                          " => new : " + format);
+
         handleDrmInitChanged(oldFormat, newFormat);
 
         if (initialized && canReconfigure(oldFormat, format)) {
-            if (DEBUG) Log.d(LOGTAG, "[onInputFormatChanged] RECONFIGURATION_STATE_WRITE_PENDING");
+            if (DEBUG) Log.d(LOGTAG, "[onInputFormatChanged] starting reconfiguration !");
             rendererReconfigured = true;
             rendererReconfigurationState = RECONFIGURATION_STATE_WRITE_PENDING;
         } else {
@@ -278,7 +288,8 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             resetRenderer();
             maybeInitRenderer();
         }
-        updateExtraData(format);
+        formats.add(format);
+        updateCSDInfo(format);
         eventDispatcher.inputFormatChanged(newFormat);
     }
 
@@ -297,26 +308,28 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
          * obtain duration from the DecoderInputBuffer as there's no duration inside.
          * So we calcualte it by referring to nearby samples' timestamp.
          * A temporary queue |demuxedNoDurationSamples| is used to queue demuxed
-         * samples which have no duration information at first.
-         * Considering there're 9 demuxed samples in the queue already,
+         * samples from HlsMediaSource which have no duration information at first.
+         * Considering there're 9 demuxed samples in the _no duration_ queue already,
          * e.g. |-2|-1|0|1|2|3|4|5|6|...
-         * Once a new demuxed sample A (10th) is put into the temporary queue,
+         * Once a new demuxed(No duration) sample A (10th) is put into the
+         * temporary queue,
          * e.g. |-2|-1|0|1|2|3|4|5|6|A|...
          * we are able to calculate the correct duration for sample 0 by finding
          * the most closest but greater pts than sample 0 among these 9 samples,
-         * here, let's say sample -2 ~ 6.
+         * here, let's say sample -2 to 6.
          */
         if (inputSample != null) {
             demuxedNoDurationSamples.offer(inputSample);
         }
         int sizeOfNoDura = demuxedNoDurationSamples.size();
+        // A calculation window we've ever found suitable for both HLS TS & FMP4.
         int range = sizeOfNoDura >= 10 ? 10 : sizeOfNoDura;
         GeckoHlsSample[] inputArray =
             demuxedNoDurationSamples.toArray(new GeckoHlsSample[sizeOfNoDura]);
         if (range >= 10 && !inputStreamEnded) {
             // Calculate the first 'range' elements.
             for (int i = 0; i < range; i++) {
-                // Comparing window size.
+                // Comparing among samples in the window.
                 for (int j = -2; j < 7; j++) {
                     if (i+j >= 0 &&
                         i+j < range &&
@@ -332,8 +345,8 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             if (DEBUG) Log.d(LOGTAG, "Demuxed sample PTS : " +
                              toQueue.info.presentationTimeUs + ", duration :" +
                              toQueue.duration + ", isKeyFrame(" +
-                             toQueue.isKeyFrame() + ", extraIndex(" +
-                             toQueue.extraIndex + "), queue size : " +
+                             toQueue.isKeyFrame() + ", formatIndex(" +
+                             toQueue.formatIndex + "), queue size : " +
                              demuxedInputSamples.size() + ", NoDuQueue size : " +
                              demuxedNoDurationSamples.size());
         } else if (inputStreamEnded) {
@@ -366,13 +379,16 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         }
     }
 
+    // Return the time of first keyframe sample in the queue.
+    // If there's no sample in the queue, return the last one we've found.
     public long getNextKeyFrameTime() {
         for (GeckoHlsSample sample : demuxedInputSamples) {
             if ((sample.info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0) {
-                return sample.info.presentationTimeUs;
+                nextKeyFrameTime = sample.info.presentationTimeUs;
+                break;
             }
         }
-        return 0;
+        return nextKeyFrameTime;
     }
 
     @Override
@@ -384,7 +400,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         Object oldDrmInit = oldFormat == null ? null : oldFormat.drmInitData;
         Object newDrnInit = newFormat.drmInitData;
 
-//      TODO: Notify MFR it's encrypted or not.
+//      TODO: Notify MFR if the content is encrypted or not.
         if (newDrnInit != oldDrmInit) {
             if (newDrnInit != null) {
             } else {
@@ -469,82 +485,19 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         }
     }
 
-    private void updateExtraData(Format format) {
+    private void updateCSDInfo(Format format) {
         int size= 0;
-        byte[] sps = null;
-        byte[] pps = null;
         for (int i = 0; i < format.initializationData.size(); i++) {
-            byte[] data = format.initializationData.get(i);
-            if (data.length <= 4) {
-                return;
-            }
-            int offset = data[2] == 0x01 ? 3 : 0;
-            offset = data[3] == 0x01 && offset == 0 ? 4 : offset;
-            if (DEBUG) Log.d(LOGTAG, "RAW initialization (" + i + "), [" +
-                             Utils.bytesToHex(data) + "], offset = " + offset);
-            if (offset == 0) {
-                return;
-            }
-            if (i == 0) {
-                sps = Arrays.copyOfRange(data, offset, data.length);
-            } else if (i == 1) {
-                pps = Arrays.copyOfRange(data, offset, data.length);
-            }
             size += format.initializationData.get(i).length;
         }
         int startPos = 0;
-        annexB = new byte[size];
+        csdInfo = new byte[size];
         for (int i = 0; i < format.initializationData.size(); i++) {
             byte[] data = format.initializationData.get(i);
-            System.arraycopy(data, 0, annexB, startPos, data.length);
+            System.arraycopy(data, 0, csdInfo, startPos, data.length);
             startPos = data.length;
         }
-        if (DEBUG) Log.d(LOGTAG, "annexB [" +
-                         Utils.bytesToHex(annexB) + "]");
-
-        byte[] version = {0x01};
-        byte[] profile = {sps[0]};
-        byte[] compatibility = {sps[1]};
-        byte[] level = {sps[2]};
-        // It's annex B.
-        byte[] nauLength = {0x03};
-        byte[] sizeOfSPS = ByteBuffer.allocate(4).putInt(sps.length).array();
-        byte[] sizeOfPPS = ByteBuffer.allocate(4).putInt(pps.length).array();
-        byte[] spsLength = Arrays.copyOfRange(sizeOfSPS, 2, sizeOfSPS.length);
-        byte[] ppsLength = Arrays.copyOfRange(sizeOfPPS, 2, sizeOfPPS.length);
-
-        // TODO : Check how many start code in sps / pps to correct the numbers.
-        byte[] numOfSPS = {0x01};
-        byte[] numOfPPS = {0x01};
-
-        if (DEBUG) Log.d(LOGTAG, "version [" + Utils.bytesToHex(version) + "]");
-        if (DEBUG) Log.d(LOGTAG, "profile [" + Utils.bytesToHex(profile) + "]");
-        if (DEBUG) Log.d(LOGTAG, "compatibility [" + Utils.bytesToHex(compatibility) + "]");
-        if (DEBUG) Log.d(LOGTAG, "level [" + Utils.bytesToHex(level) + "]");
-        if (DEBUG) Log.d(LOGTAG, "nauLength [" + Utils.bytesToHex(nauLength) + "]");
-        if (DEBUG) Log.d(LOGTAG, "sps [" + Utils.bytesToHex(sps) + "]");
-        if (DEBUG) Log.d(LOGTAG, "pps [" + Utils.bytesToHex(pps) + "]");
-        if (DEBUG) Log.d(LOGTAG, "spsLength [" + Utils.bytesToHex(spsLength) + "]");
-        if (DEBUG) Log.d(LOGTAG, "ppsLength [" + Utils.bytesToHex(ppsLength) + "]");
-
-        size = version.length + profile.length + compatibility.length + level.length + nauLength.length +
-               numOfSPS.length + spsLength.length + sps.length +
-               numOfPPS.length + ppsLength.length + pps.length;
-
-        byte[] videoExtraData = new byte[size];
-        ByteBuffer target = ByteBuffer.wrap(videoExtraData);
-        target.put(version);
-        target.put(profile);
-        target.put(compatibility);
-        target.put(level);
-        target.put(nauLength);
-        target.put(numOfSPS);
-        target.put(spsLength);
-        target.put(sps);
-        target.put(numOfPPS);
-        target.put(ppsLength);
-        target.put(pps);
-        extraDataList.add(videoExtraData);
-
+        if (DEBUG) Log.d(LOGTAG, "CSDInfo [" +
+                         Utils.bytesToHex(csdInfo) + "]");
     }
 }

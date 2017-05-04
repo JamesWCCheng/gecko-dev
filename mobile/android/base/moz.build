@@ -403,20 +403,10 @@ gvjar.sources += [geckoview_source_dir + 'java/org/mozilla/gecko/' + x
     'media/AsyncCodecFactory.java',
     'media/Codec.java',
     'media/CodecProxy.java',
-    'media/EventLogger.java',
     'media/FormatParam.java',
-    'media/GeckoHlsAudioRenderer.java',
-    'media/GeckoHlsDemuxerWrapper.java',
-    'media/GeckoHlsPlayer.java',
-    'media/GeckoHlsRendererBase.java',
-    'media/GeckoHlsResourceWrapper.java',
-    'media/GeckoHlsSample.java',
-    'media/GeckoHlsVideoRenderer.java',
     'media/GeckoMediaDrm.java',
     'media/GeckoMediaDrmBridgeV21.java',
     'media/GeckoMediaDrmBridgeV23.java',
-    'media/HlsAudioInfo.java',
-    'media/HlsVideoInfo.java',
     'media/JellyBeanAsyncCodec.java',
     'media/MediaDrmProxy.java',
     'media/MediaManager.java',
@@ -450,6 +440,7 @@ if CONFIG['MOZ_ANDROID_HLS_SUPPORT']:
     gvjar.sources += [geckoview_source_dir + 'java/org/mozilla/gecko/' + x
                       for x in [
     'media/EventLogger.java',
+    'media/GeckoAudioInfo.java',
     'media/GeckoHlsAudioRenderer.java',
     'media/GeckoHlsDemuxerWrapper.java',
     'media/GeckoHlsPlayer.java',
@@ -457,8 +448,7 @@ if CONFIG['MOZ_ANDROID_HLS_SUPPORT']:
     'media/GeckoHlsResourceWrapper.java',
     'media/GeckoHlsSample.java',
     'media/GeckoHlsVideoRenderer.java',
-    'media/HlsAudioInfo.java',
-    'media/HlsVideoInfo.java',
+    'media/GeckoVideoInfo.java',
     ]]
 
 gvjar.sources += [geckoview_thirdparty_source_dir + f for f in [

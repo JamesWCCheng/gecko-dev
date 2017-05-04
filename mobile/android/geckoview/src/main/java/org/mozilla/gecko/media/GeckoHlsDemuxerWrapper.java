@@ -87,15 +87,15 @@ public final class GeckoHlsDemuxerWrapper {
     }
 
     @WrapForJNI
-    public HlsAudioInfo getAudioInfo(int trackNumber) {
+    public GeckoAudioInfo getAudioInfo(int index) {
         assertTrue(player != null);
 
         if (DEBUG) Log.d(LOGTAG, "[getAudioInfo]");
-        Format fmt = player.getAudioTrackFormat();
+        Format fmt = player.getAudioTrackFormat(index);
         long aDuration = player.getDuration();
-        HlsAudioInfo aInfo = null;
+        GeckoAudioInfo aInfo = null;
         if (fmt != null) {
-            aInfo = new HlsAudioInfo();
+            aInfo = new GeckoAudioInfo();
             aInfo.rate = fmt.sampleRate;
             aInfo.channels = fmt.channelCount;
             // TODO: due to http://searchfox.org/mozilla-central/rev/ca7015fa45b30b29176fbaa70ba0a36fe9263c38/dom/media/platforms/android/AndroidDecoderModule.cpp#197
@@ -113,15 +113,15 @@ public final class GeckoHlsDemuxerWrapper {
     }
 
     @WrapForJNI
-    public HlsVideoInfo getVideoInfo(int index) {
+    public GeckoVideoInfo getVideoInfo(int index) {
         assertTrue(player != null);
 
         if (DEBUG) Log.d(LOGTAG, "[getVideoInfo] extraIndex : " + index);
-        Format fmt = player.getVideoTrackFormat();
+        Format fmt = player.getVideoTrackFormat(index);
         long vDuration = player.getDuration();
-        HlsVideoInfo vInfo = null;
+        GeckoVideoInfo vInfo = null;
         if (fmt != null) {
-            vInfo = new HlsVideoInfo();
+            vInfo = new GeckoVideoInfo();
             vInfo.displayX = fmt.width;
             vInfo.displayY = fmt.height;
             vInfo.pictureX = fmt.width;
@@ -130,8 +130,6 @@ public final class GeckoHlsDemuxerWrapper {
             vInfo.rotation = fmt.rotationDegrees;
             vInfo.mimeType = fmt.sampleMimeType;
             vInfo.duration = vDuration;
-            vInfo.extraData = player.getExtraData(GeckoHlsPlayer.Track_Type.TRACK_VIDEO,
-                                                  index);
         }
         return vInfo;
     }
@@ -146,12 +144,14 @@ public final class GeckoHlsDemuxerWrapper {
 
     GeckoHlsDemuxerWrapper(GeckoHlsResourceWrapper resWrapper,
                            GeckoHlsPlayer.DemuxerCallbacks callback) {
-        if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper - callback : " + callback);
+        if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper ...");
+        assertTrue(callback != null);
         try {
             player = resWrapper.GetPlayer();
             player.addDemuxerWrapperCallbackListener(callback);
         } catch (Exception e) {
             Log.e(LOGTAG, "Constructing GeckoHlsDemuxerWrapper ... error", e);
+            callback.onDemuxerError(GeckoHlsPlayer.E_DEMUXER_UNKNOWN);
         }
     }
 

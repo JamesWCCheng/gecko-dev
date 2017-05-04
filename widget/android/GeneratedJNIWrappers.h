@@ -5225,6 +5225,205 @@ public:
     template<class Impl> class Natives;
 };
 
+class GeckoAudioInfo : public mozilla::jni::ObjectBase<GeckoAudioInfo>
+{
+public:
+    static const char name[];
+
+    explicit GeckoAudioInfo(const Context& ctx) : ObjectBase<GeckoAudioInfo>(ctx) {}
+
+    struct New_t {
+        typedef GeckoAudioInfo Owner;
+        typedef GeckoAudioInfo::LocalRef ReturnType;
+        typedef GeckoAudioInfo::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "<init>";
+        static constexpr char signature[] =
+                "()V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    static auto New() -> GeckoAudioInfo::LocalRef;
+
+    struct BitDepth_t {
+        typedef GeckoAudioInfo Owner;
+        typedef int32_t ReturnType;
+        typedef int32_t SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "bitDepth";
+        static constexpr char signature[] =
+                "I";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto BitDepth() const -> int32_t;
+
+    auto BitDepth(int32_t) const -> void;
+
+    struct Channels_t {
+        typedef GeckoAudioInfo Owner;
+        typedef int32_t ReturnType;
+        typedef int32_t SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "channels";
+        static constexpr char signature[] =
+                "I";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto Channels() const -> int32_t;
+
+    auto Channels(int32_t) const -> void;
+
+    struct CodecSpecificData_t {
+        typedef GeckoAudioInfo Owner;
+        typedef mozilla::jni::ByteArray::LocalRef ReturnType;
+        typedef mozilla::jni::ByteArray::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "codecSpecificData";
+        static constexpr char signature[] =
+                "[B";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto CodecSpecificData() const -> mozilla::jni::ByteArray::LocalRef;
+
+    auto CodecSpecificData(mozilla::jni::ByteArray::Param) const -> void;
+
+    struct Duration_t {
+        typedef GeckoAudioInfo Owner;
+        typedef int64_t ReturnType;
+        typedef int64_t SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "duration";
+        static constexpr char signature[] =
+                "J";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto Duration() const -> int64_t;
+
+    auto Duration(int64_t) const -> void;
+
+    struct ExtraData_t {
+        typedef GeckoAudioInfo Owner;
+        typedef mozilla::jni::ByteArray::LocalRef ReturnType;
+        typedef mozilla::jni::ByteArray::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "extraData";
+        static constexpr char signature[] =
+                "[B";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto ExtraData() const -> mozilla::jni::ByteArray::LocalRef;
+
+    auto ExtraData(mozilla::jni::ByteArray::Param) const -> void;
+
+    struct MimeType_t {
+        typedef GeckoAudioInfo Owner;
+        typedef mozilla::jni::String::LocalRef ReturnType;
+        typedef mozilla::jni::String::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "mimeType";
+        static constexpr char signature[] =
+                "Ljava/lang/String;";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto MimeType() const -> mozilla::jni::String::LocalRef;
+
+    auto MimeType(mozilla::jni::String::Param) const -> void;
+
+    struct Profile_t {
+        typedef GeckoAudioInfo Owner;
+        typedef int32_t ReturnType;
+        typedef int32_t SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "profile";
+        static constexpr char signature[] =
+                "I";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto Profile() const -> int32_t;
+
+    auto Profile(int32_t) const -> void;
+
+    struct Rate_t {
+        typedef GeckoAudioInfo Owner;
+        typedef int32_t ReturnType;
+        typedef int32_t SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "rate";
+        static constexpr char signature[] =
+                "I";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto Rate() const -> int32_t;
+
+    auto Rate(int32_t) const -> void;
+
+    static const mozilla::jni::CallingThread callingThread =
+            mozilla::jni::CallingThread::ANY;
+
+};
+
 class GeckoHlsDemuxerWrapper : public mozilla::jni::ObjectBase<GeckoHlsDemuxerWrapper>
 {
 public:
@@ -5282,7 +5481,7 @@ public:
                 int32_t> Args;
         static constexpr char name[] = "getAudioInfo";
         static constexpr char signature[] =
-                "(I)Lorg/mozilla/gecko/media/HlsAudioInfo;";
+                "(I)Lorg/mozilla/gecko/media/GeckoAudioInfo;";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -5381,7 +5580,7 @@ public:
                 int32_t> Args;
         static constexpr char name[] = "getVideoInfo";
         static constexpr char signature[] =
-                "(I)Lorg/mozilla/gecko/media/HlsVideoInfo;";
+                "(I)Lorg/mozilla/gecko/media/GeckoVideoInfo;";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -5734,12 +5933,12 @@ public:
 
     auto Duration(int64_t) const -> void;
 
-    struct ExtraIndex_t {
+    struct FormatIndex_t {
         typedef GeckoHlsSample Owner;
         typedef int32_t ReturnType;
         typedef int32_t SetterType;
         typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "extraIndex";
+        static constexpr char name[] = "formatIndex";
         static constexpr char signature[] =
                 "I";
         static const bool isStatic = false;
@@ -5751,9 +5950,9 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    auto ExtraIndex() const -> int32_t;
+    auto FormatIndex() const -> int32_t;
 
-    auto ExtraIndex(int32_t) const -> void;
+    auto FormatIndex(int32_t) const -> void;
 
     struct Info_t {
         typedef GeckoHlsSample Owner;
@@ -5781,17 +5980,17 @@ public:
 
 };
 
-class HlsAudioInfo : public mozilla::jni::ObjectBase<HlsAudioInfo>
+class GeckoVideoInfo : public mozilla::jni::ObjectBase<GeckoVideoInfo>
 {
 public:
     static const char name[];
 
-    explicit HlsAudioInfo(const Context& ctx) : ObjectBase<HlsAudioInfo>(ctx) {}
+    explicit GeckoVideoInfo(const Context& ctx) : ObjectBase<GeckoVideoInfo>(ctx) {}
 
     struct New_t {
-        typedef HlsAudioInfo Owner;
-        typedef HlsAudioInfo::LocalRef ReturnType;
-        typedef HlsAudioInfo::Param SetterType;
+        typedef GeckoVideoInfo Owner;
+        typedef GeckoVideoInfo::LocalRef ReturnType;
+        typedef GeckoVideoInfo::Param SetterType;
         typedef mozilla::jni::Args<> Args;
         static constexpr char name[] = "<init>";
         static constexpr char signature[] =
@@ -5805,209 +6004,10 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    static auto New() -> HlsAudioInfo::LocalRef;
-
-    struct BitDepth_t {
-        typedef HlsAudioInfo Owner;
-        typedef int32_t ReturnType;
-        typedef int32_t SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "bitDepth";
-        static constexpr char signature[] =
-                "I";
-        static const bool isStatic = false;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    auto BitDepth() const -> int32_t;
-
-    auto BitDepth(int32_t) const -> void;
-
-    struct Channels_t {
-        typedef HlsAudioInfo Owner;
-        typedef int32_t ReturnType;
-        typedef int32_t SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "channels";
-        static constexpr char signature[] =
-                "I";
-        static const bool isStatic = false;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    auto Channels() const -> int32_t;
-
-    auto Channels(int32_t) const -> void;
+    static auto New() -> GeckoVideoInfo::LocalRef;
 
     struct CodecSpecificData_t {
-        typedef HlsAudioInfo Owner;
-        typedef mozilla::jni::ByteArray::LocalRef ReturnType;
-        typedef mozilla::jni::ByteArray::Param SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "codecSpecificData";
-        static constexpr char signature[] =
-                "[B";
-        static const bool isStatic = false;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    auto CodecSpecificData() const -> mozilla::jni::ByteArray::LocalRef;
-
-    auto CodecSpecificData(mozilla::jni::ByteArray::Param) const -> void;
-
-    struct Duration_t {
-        typedef HlsAudioInfo Owner;
-        typedef int64_t ReturnType;
-        typedef int64_t SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "duration";
-        static constexpr char signature[] =
-                "J";
-        static const bool isStatic = false;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    auto Duration() const -> int64_t;
-
-    auto Duration(int64_t) const -> void;
-
-    struct ExtraData_t {
-        typedef HlsAudioInfo Owner;
-        typedef mozilla::jni::ByteArray::LocalRef ReturnType;
-        typedef mozilla::jni::ByteArray::Param SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "extraData";
-        static constexpr char signature[] =
-                "[B";
-        static const bool isStatic = false;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    auto ExtraData() const -> mozilla::jni::ByteArray::LocalRef;
-
-    auto ExtraData(mozilla::jni::ByteArray::Param) const -> void;
-
-    struct MimeType_t {
-        typedef HlsAudioInfo Owner;
-        typedef mozilla::jni::String::LocalRef ReturnType;
-        typedef mozilla::jni::String::Param SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "mimeType";
-        static constexpr char signature[] =
-                "Ljava/lang/String;";
-        static const bool isStatic = false;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    auto MimeType() const -> mozilla::jni::String::LocalRef;
-
-    auto MimeType(mozilla::jni::String::Param) const -> void;
-
-    struct Profile_t {
-        typedef HlsAudioInfo Owner;
-        typedef int32_t ReturnType;
-        typedef int32_t SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "profile";
-        static constexpr char signature[] =
-                "I";
-        static const bool isStatic = false;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    auto Profile() const -> int32_t;
-
-    auto Profile(int32_t) const -> void;
-
-    struct Rate_t {
-        typedef HlsAudioInfo Owner;
-        typedef int32_t ReturnType;
-        typedef int32_t SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "rate";
-        static constexpr char signature[] =
-                "I";
-        static const bool isStatic = false;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    auto Rate() const -> int32_t;
-
-    auto Rate(int32_t) const -> void;
-
-    static const mozilla::jni::CallingThread callingThread =
-            mozilla::jni::CallingThread::ANY;
-
-};
-
-class HlsVideoInfo : public mozilla::jni::ObjectBase<HlsVideoInfo>
-{
-public:
-    static const char name[];
-
-    explicit HlsVideoInfo(const Context& ctx) : ObjectBase<HlsVideoInfo>(ctx) {}
-
-    struct New_t {
-        typedef HlsVideoInfo Owner;
-        typedef HlsVideoInfo::LocalRef ReturnType;
-        typedef HlsVideoInfo::Param SetterType;
-        typedef mozilla::jni::Args<> Args;
-        static constexpr char name[] = "<init>";
-        static constexpr char signature[] =
-                "()V";
-        static const bool isStatic = false;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    static auto New() -> HlsVideoInfo::LocalRef;
-
-    struct CodecSpecificData_t {
-        typedef HlsVideoInfo Owner;
+        typedef GeckoVideoInfo Owner;
         typedef mozilla::jni::ByteArray::LocalRef ReturnType;
         typedef mozilla::jni::ByteArray::Param SetterType;
         typedef mozilla::jni::Args<> Args;
@@ -6028,7 +6028,7 @@ public:
     auto CodecSpecificData(mozilla::jni::ByteArray::Param) const -> void;
 
     struct DisplayX_t {
-        typedef HlsVideoInfo Owner;
+        typedef GeckoVideoInfo Owner;
         typedef int32_t ReturnType;
         typedef int32_t SetterType;
         typedef mozilla::jni::Args<> Args;
@@ -6049,7 +6049,7 @@ public:
     auto DisplayX(int32_t) const -> void;
 
     struct DisplayY_t {
-        typedef HlsVideoInfo Owner;
+        typedef GeckoVideoInfo Owner;
         typedef int32_t ReturnType;
         typedef int32_t SetterType;
         typedef mozilla::jni::Args<> Args;
@@ -6070,7 +6070,7 @@ public:
     auto DisplayY(int32_t) const -> void;
 
     struct Duration_t {
-        typedef HlsVideoInfo Owner;
+        typedef GeckoVideoInfo Owner;
         typedef int64_t ReturnType;
         typedef int64_t SetterType;
         typedef mozilla::jni::Args<> Args;
@@ -6091,7 +6091,7 @@ public:
     auto Duration(int64_t) const -> void;
 
     struct ExtraData_t {
-        typedef HlsVideoInfo Owner;
+        typedef GeckoVideoInfo Owner;
         typedef mozilla::jni::ByteArray::LocalRef ReturnType;
         typedef mozilla::jni::ByteArray::Param SetterType;
         typedef mozilla::jni::Args<> Args;
@@ -6112,7 +6112,7 @@ public:
     auto ExtraData(mozilla::jni::ByteArray::Param) const -> void;
 
     struct MimeType_t {
-        typedef HlsVideoInfo Owner;
+        typedef GeckoVideoInfo Owner;
         typedef mozilla::jni::String::LocalRef ReturnType;
         typedef mozilla::jni::String::Param SetterType;
         typedef mozilla::jni::Args<> Args;
@@ -6133,7 +6133,7 @@ public:
     auto MimeType(mozilla::jni::String::Param) const -> void;
 
     struct PictureX_t {
-        typedef HlsVideoInfo Owner;
+        typedef GeckoVideoInfo Owner;
         typedef int32_t ReturnType;
         typedef int32_t SetterType;
         typedef mozilla::jni::Args<> Args;
@@ -6154,7 +6154,7 @@ public:
     auto PictureX(int32_t) const -> void;
 
     struct PictureY_t {
-        typedef HlsVideoInfo Owner;
+        typedef GeckoVideoInfo Owner;
         typedef int32_t ReturnType;
         typedef int32_t SetterType;
         typedef mozilla::jni::Args<> Args;
@@ -6175,7 +6175,7 @@ public:
     auto PictureY(int32_t) const -> void;
 
     struct Rotation_t {
-        typedef HlsVideoInfo Owner;
+        typedef GeckoVideoInfo Owner;
         typedef int32_t ReturnType;
         typedef int32_t SetterType;
         typedef mozilla::jni::Args<> Args;
@@ -6196,7 +6196,7 @@ public:
     auto Rotation(int32_t) const -> void;
 
     struct StereoMode_t {
-        typedef HlsVideoInfo Owner;
+        typedef GeckoVideoInfo Owner;
         typedef int32_t ReturnType;
         typedef int32_t SetterType;
         typedef mozilla::jni::Args<> Args;

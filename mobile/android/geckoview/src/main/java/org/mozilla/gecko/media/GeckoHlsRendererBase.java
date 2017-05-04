@@ -13,6 +13,7 @@ import com.google.android.exoplayer2.FormatHolder;
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public abstract class GeckoHlsRendererBase extends BaseRenderer {
@@ -21,12 +22,14 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
     protected final FormatHolder formatHolder = new FormatHolder();
     protected boolean DEBUG;
     protected String LOGTAG;
+    // Notify GeckoHlsPlayer about renderer's status, i.e. data has arrived.
     protected GeckoHlsPlayer.ComponentListener playerListener;
 
     protected ConcurrentLinkedQueue<GeckoHlsSample> demuxedInputSamples = new ConcurrentLinkedQueue<>();
 
     protected ByteBuffer inputBuffer = null;
     protected Format format = null;
+    protected ArrayList<Format> formats = new ArrayList<Format>();
     protected boolean initialized = false;
     protected boolean waitingForData = true;
     protected boolean inputStreamEnded = false;
@@ -60,13 +63,17 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
         GeckoHlsSample[] queuedSamples =
                 demuxedInputSamples.toArray(new GeckoHlsSample[size]);
         return Math.abs(queuedSamples[size - 1].info.presentationTimeUs -
-                queuedSamples[0].info.presentationTimeUs) >
-                    QUEUED_INPUT_SAMPLE_DURATION_THRESHOLD? true : false;
+                        queuedSamples[0].info.presentationTimeUs) >
+               QUEUED_INPUT_SAMPLE_DURATION_THRESHOLD ? true : false;
     }
 
-    public byte[] getExtraData(int index) { return null; }
-
-    public Format getFormat() { return format; }
+    public Format getFormat(int index) {
+        assertTrue(index >= 0);
+        Format fmt = index < formats.size() ? formats.get(index) : null;
+        if (DEBUG) Log.d(LOGTAG, "getFormat : index = " + index +
+                         ", format : " + fmt);
+        return fmt;
+    }
 
     public long getFirstSamplePTS() { return firstSampleStartTime; }
 
@@ -107,6 +114,7 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
     @Override
     protected void onDisabled() {
         format = null;
+        formats.clear();
         resetRenderer();
     }
 
