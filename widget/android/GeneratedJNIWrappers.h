@@ -5442,7 +5442,7 @@ public:
                 mozilla::jni::Object::Param> Args;
         static constexpr char name[] = "create";
         static constexpr char signature[] =
-                "(Lorg/mozilla/gecko/media/GeckoHlsResourceWrapper;Lorg/mozilla/gecko/media/GeckoHlsPlayer$DemuxerCallbacks;)Lorg/mozilla/gecko/media/GeckoHlsDemuxerWrapper;";
+                "(Lorg/mozilla/gecko/media/GeckoHlsPlayer;Lorg/mozilla/gecko/media/GeckoHlsPlayer$DemuxerCallbacks;)Lorg/mozilla/gecko/media/GeckoHlsDemuxerWrapper;";
         static const bool isStatic = true;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -5735,8 +5735,27 @@ public:
 
     static auto Create(mozilla::jni::String::Param, mozilla::jni::Object::Param) -> GeckoHlsResourceWrapper::LocalRef;
 
+    struct Destroy_t {
+        typedef GeckoHlsResourceWrapper Owner;
+        typedef void ReturnType;
+        typedef void SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "destroy";
+        static constexpr char signature[] =
+                "()V";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto Destroy() const -> void;
+
     static const mozilla::jni::CallingThread callingThread =
-            mozilla::jni::CallingThread::GECKO;
+            mozilla::jni::CallingThread::ANY;
 
 };
 

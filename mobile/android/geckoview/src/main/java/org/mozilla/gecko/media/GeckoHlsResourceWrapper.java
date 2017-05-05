@@ -12,7 +12,8 @@ import org.mozilla.gecko.mozglue.JNIObject;
 public class GeckoHlsResourceWrapper {
     private static final String LOGTAG = "GeckoHlsResourceWrapper";
     private static final boolean DEBUG = true;
-    private GeckoHlsPlayer mPlayer = null;
+    private GeckoHlsPlayer player = null;
+    private boolean destroyed = false;
 
     public static class HlsResourceCallbacks extends JNIObject
     implements GeckoHlsPlayer.ResourceCallbacks {
@@ -38,9 +39,9 @@ public class GeckoHlsResourceWrapper {
         if (DEBUG) Log.d(LOGTAG, "GeckoHlsResourceWrapper created with url = " + url);
         assertTrue(callback != null);
 
-        mPlayer = new GeckoHlsPlayer();
-        mPlayer.addResourceWrapperCallbackListener(callback);
-        mPlayer.init(url);
+        player = new GeckoHlsPlayer();
+        player.addResourceWrapperCallbackListener(callback);
+        player.init(url);
     }
 
     @WrapForJNI(calledFrom = "gecko")
@@ -53,13 +54,27 @@ public class GeckoHlsResourceWrapper {
     @WrapForJNI(calledFrom = "gecko")
     public GeckoHlsPlayer GetPlayer() {
         // GeckoHlsResourceWrapper should always be created before others
-        assertTrue(mPlayer != null);
-        return mPlayer;
+        assertTrue(!destroyed);
+        assertTrue(player != null);
+        return player;
     }
 
     private static void assertTrue(boolean condition) {
         if (DEBUG && !condition) {
             throw new AssertionError("Expected condition to be true");
+        }
+    }
+
+    @WrapForJNI // Called when natvie object is destroyed.
+    private void destroy() {
+        if (DEBUG) Log.d(LOGTAG, "destroy!! Native object is destroyed.");
+        if (destroyed) {
+            return;
+        }
+        destroyed = true;
+        if (player != null) {
+            player.release();
+            player = null;
         }
     }
 }

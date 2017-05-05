@@ -2027,6 +2027,14 @@ auto GeckoHlsResourceWrapper::Create(mozilla::jni::String::Param a0, mozilla::jn
     return mozilla::jni::Method<Create_t>::Call(GeckoHlsResourceWrapper::Context(), nullptr, a0, a1);
 }
 
+constexpr char GeckoHlsResourceWrapper::Destroy_t::name[];
+constexpr char GeckoHlsResourceWrapper::Destroy_t::signature[];
+
+auto GeckoHlsResourceWrapper::Destroy() const -> void
+{
+    return mozilla::jni::Method<Destroy_t>::Call(GeckoHlsResourceWrapper::mCtx, nullptr);
+}
+
 const char GeckoHlsResourceWrapper::HlsResourceCallbacks::name[] =
         "org/mozilla/gecko/media/GeckoHlsResourceWrapper$HlsResourceCallbacks";
 

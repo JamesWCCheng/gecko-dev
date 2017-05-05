@@ -89,6 +89,7 @@ HLSDemuxer::HLSDemuxer(MediaResource* aResource)
   , mMonitor("HLSDemuxer")
 {
   MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(aResource);
   HlsDemuxerCallbacksSupport::Init();
   mJavaCallbacks = GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New();
   MOZ_ASSERT(mJavaCallbacks);
@@ -96,8 +97,8 @@ HLSDemuxer::HLSDemuxer(MediaResource* aResource)
   HlsDemuxerCallbacksSupport::AttachNative(mJavaCallbacks,
                                            mozilla::MakeUnique<HlsDemuxerCallbacksSupport>(this));
 
-  auto hlsRes = static_cast<HLSResource*>(aResource);
-  mHlsDemuxerWrapper = GeckoHlsDemuxerWrapper::Create(hlsRes->GetResourceWrapper(), mJavaCallbacks);
+  auto resourceWrapper = static_cast<HLSResource*>(aResource)->GetResourceWrapper();
+  mHlsDemuxerWrapper = GeckoHlsDemuxerWrapper::Create(resourceWrapper->GetPlayer(), mJavaCallbacks);
   MOZ_ASSERT(mHlsDemuxerWrapper);
 }
 

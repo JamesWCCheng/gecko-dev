@@ -66,6 +66,10 @@ HLSResource::~HLSResource()
     HlsResourceCallbacksSupport::DisposeNative(mJavaCallbacks);
     mJavaCallbacks = nullptr;
   }
+  if (mHlsResourceWrapper) {
+    mHlsResourceWrapper->Destroy();
+    mHlsResourceWrapper = nullptr;
+  }
   HLS_DEBUG("HLSResource", "Destructor");
 }
 

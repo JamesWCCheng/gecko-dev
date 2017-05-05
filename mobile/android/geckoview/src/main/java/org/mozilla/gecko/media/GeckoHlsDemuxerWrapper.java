@@ -73,9 +73,9 @@ public final class GeckoHlsDemuxerWrapper {
     }
 
     @WrapForJNI(calledFrom = "gecko")
-    public static GeckoHlsDemuxerWrapper create(GeckoHlsResourceWrapper resWrapper,
+    public static GeckoHlsDemuxerWrapper create(GeckoHlsPlayer player,
                                                 GeckoHlsPlayer.DemuxerCallbacks callback) {
-        GeckoHlsDemuxerWrapper wrapper = new GeckoHlsDemuxerWrapper(resWrapper, callback);
+        GeckoHlsDemuxerWrapper wrapper = new GeckoHlsDemuxerWrapper(player, callback);
         return wrapper;
     }
 
@@ -142,13 +142,14 @@ public final class GeckoHlsDemuxerWrapper {
         return player.seek(seekTime);
     }
 
-    GeckoHlsDemuxerWrapper(GeckoHlsResourceWrapper resWrapper,
+    GeckoHlsDemuxerWrapper(GeckoHlsPlayer player,
                            GeckoHlsPlayer.DemuxerCallbacks callback) {
         if (DEBUG) Log.d(LOGTAG, "Constructing GeckoHlsDemuxerWrapper ...");
         assertTrue(callback != null);
+        assertTrue(player != null);
         try {
-            player = resWrapper.GetPlayer();
-            player.addDemuxerWrapperCallbackListener(callback);
+            this.player = player;
+            this.player.addDemuxerWrapperCallbackListener(callback);
         } catch (Exception e) {
             Log.e(LOGTAG, "Constructing GeckoHlsDemuxerWrapper ... error", e);
             callback.onDemuxerError(GeckoHlsPlayer.E_DEMUXER_UNKNOWN);
