@@ -56,6 +56,9 @@ if CONFIG['MOZ_DIRECTSHOW']:
 if CONFIG['MOZ_ANDROID_OMX']:
     DIRS += ['android']
 
+if CONFIG['MOZ_ANDROID_HLS_SUPPORT']:
+    DIRS += ['hls']
+
 if CONFIG['MOZ_FMP4']:
     DIRS += ['fmp4']
 
@@ -320,6 +323,9 @@ if CONFIG['ANDROID_VERSION'] > '15':
 
 if CONFIG['MOZ_GONK_MEDIACODEC']:
     DEFINES['MOZ_GONK_MEDIACODEC'] = True
+
+if CONFIG['MOZ_ANDROID_HLS_SUPPORT']:
+    DEFINES['MOZ_ANDROID_HLS_SUPPORT'] = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
