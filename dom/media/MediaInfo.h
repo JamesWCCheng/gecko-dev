@@ -209,6 +209,7 @@ public:
     , mCodecSpecificConfig(new MediaByteBuffer)
     , mExtraData(new MediaByteBuffer)
     , mRotation(kDegree_0)
+    , mNeedConversion(true)
     , mImageRect(nsIntRect(nsIntPoint(), aSize))
   {
   }
@@ -221,6 +222,7 @@ public:
     , mCodecSpecificConfig(aOther.mCodecSpecificConfig)
     , mExtraData(aOther.mExtraData)
     , mRotation(aOther.mRotation)
+    , mNeedConversion(aOther.mNeedConversion)
     , mImageRect(aOther.mImageRect)
     , mAlphaPresent(aOther.mAlphaPresent)
   {
@@ -323,6 +325,10 @@ public:
   // Describing how many degrees video frames should be rotated in clock-wise to
   // get correct view.
   Rotation mRotation;
+
+  // The decoder may accept the sample without the conversion by H264Converter
+  // Default value is true except HLS case on Fennec.
+  bool mNeedConversion;
 
 private:
   // mImage may be cropped; currently only used with the WebM container.
