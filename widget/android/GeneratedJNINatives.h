@@ -503,6 +503,25 @@ const JNINativeMethod CodecProxy::NativeCallbacks::Natives<Impl>::methods[] = {
 };
 
 template<class Impl>
+class GeckoHlsResourceWrapper::HlsResourceCallbacks::Natives : public mozilla::jni::NativeImpl<HlsResourceCallbacks, Impl>
+{
+public:
+    static const JNINativeMethod methods[2];
+};
+
+template<class Impl>
+const JNINativeMethod GeckoHlsResourceWrapper::HlsResourceCallbacks::Natives<Impl>::methods[] = {
+
+    mozilla::jni::MakeNativeMethod<GeckoHlsResourceWrapper::HlsResourceCallbacks::OnDataArrived_t>(
+            mozilla::jni::NativeStub<GeckoHlsResourceWrapper::HlsResourceCallbacks::OnDataArrived_t, Impl>
+            ::template Wrap<&Impl::OnDataArrived>),
+
+    mozilla::jni::MakeNativeMethod<GeckoHlsResourceWrapper::HlsResourceCallbacks::OnResourceError_t>(
+            mozilla::jni::NativeStub<GeckoHlsResourceWrapper::HlsResourceCallbacks::OnResourceError_t, Impl>
+            ::template Wrap<&Impl::OnResourceError>)
+};
+
+template<class Impl>
 class MediaDrmProxy::NativeMediaDrmProxyCallbacks::Natives : public mozilla::jni::NativeImpl<NativeMediaDrmProxyCallbacks, Impl>
 {
 public:
