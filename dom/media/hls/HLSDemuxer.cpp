@@ -115,9 +115,6 @@ HLSDemuxer::OnInitialized(bool aHasAudio, bool aHasVideo)
     UpdateVideoInfo(0);
   }
 }
-// Due to inaccuracies in determining buffer end
-// frames (Bug 1065207). This value is based on videos seen in the wild.
-const TimeUnit HLSDemuxer::EOS_FUZZ = media::TimeUnit::FromMicroseconds(500000);
 
 RefPtr<HLSDemuxer::InitPromise>
 HLSDemuxer::Init()
@@ -279,8 +276,6 @@ HLSTrackDemuxer::HLSTrackDemuxer(HLSDemuxer* aParent, TrackInfo::TrackType aType
   : mParent(aParent)
   , mType(aType)
   , mMonitor("HLSTrackDemuxer")
-  , mReset(true)
-  , mPreRoll(TimeUnit::FromMicroseconds(0))
 {
 }
 
@@ -294,9 +289,9 @@ RefPtr<HLSTrackDemuxer::SeekPromise>
 HLSTrackDemuxer::Seek(const media::TimeUnit& aTime)
 {
   MOZ_ASSERT(mParent, "Called after BreackCycle()");
-  return InvokeAsync<media::TimeUnit&&>(
-           mParent->GetTaskQueue(), this, __func__,
-           &HLSTrackDemuxer::DoSeek, aTime);
+  return InvokeAsync<media::TimeUnit&&>(mParent->GetTaskQueue(), this,
+                                        __func__, &HLSTrackDemuxer::DoSeek,
+                                        aTime);
 }
 
 RefPtr<HLSTrackDemuxer::SeekPromise>
@@ -494,6 +489,7 @@ HLSTrackDemuxer::SkipToNextRandomAccessPoint(const media::TimeUnit& aTimeThresho
 media::TimeIntervals
 HLSTrackDemuxer::GetBuffered()
 {
+  MOZ_ASSERT(mParent, "Called after BreackCycle()");
   int64_t bufferedTime = mParent->mHlsDemuxerWrapper->GetBuffered(); //us
   return TimeIntervals(TimeInterval(TimeUnit(), TimeUnit::FromMicroseconds(bufferedTime)));
 }

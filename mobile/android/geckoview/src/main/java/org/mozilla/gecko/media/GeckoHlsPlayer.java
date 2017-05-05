@@ -315,6 +315,10 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     @Override
     public void onLoadingChanged(boolean isLoading) {
         if (DEBUG) Log.d(LOGTAG, "loading [" + isLoading + "]");
+        if (!isLoading) {
+            // To update buffered position.
+            componentListener.onDataArrived();
+        }
     }
 
     @Override
@@ -436,7 +440,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         // Value returned by getBufferedPosition() is in milliseconds.
         long bufferedPos = player.getBufferedPosition() * 1000;
         if (DEBUG) Log.d(LOGTAG, "getBufferedPosition : " + bufferedPos + "(Us)");
-        return player.getBufferedPosition();
+        return bufferedPos;
     }
 
     public synchronized int getNumberTracks(Track_Type trackType) {

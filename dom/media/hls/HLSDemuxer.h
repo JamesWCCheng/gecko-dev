@@ -45,9 +45,6 @@ public:
 
   void NotifyDataArrived() override;
 
-  // Gap allowed between frames.
-  static const media::TimeUnit EOS_FUZZ;
-
   AutoTaskQueue* GetTaskQueue() { return mTaskQueue; }
   void OnInitialized(bool aHasAudio, bool aHasVideo);
 
@@ -115,14 +112,6 @@ private:
   // Monitor protecting members below accessed from multiple threads.
   Monitor mMonitor;
   Maybe<media::TimeUnit> mNextKeyframeTime;
-  Maybe<RefPtr<MediaRawData>> mNextSample;
-  // Set to true following a reset. Ensure that the next sample demuxed
-  // is available at position 0.
-  bool mReset;
-
-  // Amount of pre-roll time when seeking.
-  // Set to 80ms if track is Opus.
-  const media::TimeUnit mPreRoll;
   int32_t mLastFormatIndex = -1;
 };
 

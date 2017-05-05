@@ -9,6 +9,7 @@ import android.util.Log;
 
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.util.MimeTypes;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -27,7 +28,7 @@ public final class GeckoHlsDemuxerWrapper {
 
     private GeckoHlsPlayer player = null;
     // A flag to avoid using the native object that has been destroyed.
-    private boolean mDestroyed;
+    private boolean destroyed;
 
     public static class HlsDemuxerCallbacks extends JNIObject
         implements GeckoHlsPlayer.DemuxerCallbacks {
@@ -90,21 +91,25 @@ public final class GeckoHlsDemuxerWrapper {
     public GeckoAudioInfo getAudioInfo(int index) {
         assertTrue(player != null);
 
-        if (DEBUG) Log.d(LOGTAG, "[getAudioInfo]");
+        if (DEBUG) Log.d(LOGTAG, "[getAudioInfo] formatIndex : " + index);
         Format fmt = player.getAudioTrackFormat(index);
-        long aDuration = player.getDuration();
         GeckoAudioInfo aInfo = null;
         if (fmt != null) {
             aInfo = new GeckoAudioInfo();
             aInfo.rate = fmt.sampleRate;
             aInfo.channels = fmt.channelCount;
-            // TODO: due to http://searchfox.org/mozilla-central/rev/ca7015fa45b30b29176fbaa70ba0a36fe9263c38/dom/media/platforms/android/AndroidDecoderModule.cpp#197
-            // I have no idea how to get this value, hard code 16 even pcmEncoding is not indicating 16.
-            aInfo.bitDepth = fmt.pcmEncoding == C.ENCODING_PCM_16BIT? 16 : 16;
+            /* According to https://github.com/google/ExoPlayer/blob
+             * /d979469659861f7fe1d39d153b90bdff1ab479cc/library/core/src/main
+             * /java/com/google/android/exoplayer2/audio/MediaCodecAudioRenderer.java#L221-L224,
+             * if the input audio format is not raw, exoplayer would assure that
+             * the sample's pcm encoding bitdepth is 16.
+             * For HLS content, it should always be 16.
+             */
+            assertTrue(!MimeTypes.AUDIO_RAW.equals(fmt.sampleMimeType));
+            aInfo.bitDepth = 16;
             aInfo.mimeType = fmt.sampleMimeType;
-            aInfo.duration = aDuration;
-            // TODO: currently I extract csd0 only
-            // Reference: http://searchfox.org/mozilla-central/rev/7419b368156a6efa24777b21b0e5706be89a9c2f/dom/media/platforms/android/RemoteDataDecoder.cpp#324-329
+            aInfo.duration = player.getDuration();
+            // For HLS content, csd-0 is enough.
             if (!fmt.initializationData.isEmpty()) {
                 aInfo.codecSpecificData = fmt.initializationData.get(0);
             }
@@ -116,9 +121,8 @@ public final class GeckoHlsDemuxerWrapper {
     public GeckoVideoInfo getVideoInfo(int index) {
         assertTrue(player != null);
 
-        if (DEBUG) Log.d(LOGTAG, "[getVideoInfo] extraIndex : " + index);
+        if (DEBUG) Log.d(LOGTAG, "[getVideoInfo] formatIndex : " + index);
         Format fmt = player.getVideoTrackFormat(index);
-        long vDuration = player.getDuration();
         GeckoVideoInfo vInfo = null;
         if (fmt != null) {
             vInfo = new GeckoVideoInfo();
@@ -129,7 +133,7 @@ public final class GeckoHlsDemuxerWrapper {
             vInfo.stereoMode = fmt.stereoMode;
             vInfo.rotation = fmt.rotationDegrees;
             vInfo.mimeType = fmt.sampleMimeType;
-            vInfo.duration = vDuration;
+            vInfo.duration = player.getDuration();
         }
         return vInfo;
     }
@@ -179,10 +183,10 @@ public final class GeckoHlsDemuxerWrapper {
     @WrapForJNI // Called when natvie object is destroyed.
     private void destroy() {
         if (DEBUG) Log.d(LOGTAG, "destroy!! Native object is destroyed.");
-        if (mDestroyed) {
+        if (destroyed) {
             return;
         }
-        mDestroyed = true;
+        destroyed = true;
         release();
     }
 
