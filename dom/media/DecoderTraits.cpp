@@ -22,6 +22,10 @@
 #include "AndroidMediaReader.h"
 #include "AndroidMediaPluginHost.h"
 #endif
+#ifdef MOZ_ANDROID_HLS_SUPPORT
+#include "HLSDecoder.h"
+#include "HLSUtils.h"
+#endif
 #ifdef MOZ_DIRECTSHOW
 #include "DirectShowDecoder.h"
 #include "DirectShowReader.h"
@@ -49,17 +53,6 @@
 
 namespace mozilla
 {
-
-static bool
-IsHttpLiveStreamingType(const MediaContainerType& aType)
-{
-  return // For m3u8.
-         // https://tools.ietf.org/html/draft-pantos-http-live-streaming-19#section-10
-         aType.Type() == MEDIAMIMETYPE("application/vnd.apple.mpegurl")
-         // Some sites serve these as the informal m3u type.
-         || aType.Type() == MEDIAMIMETYPE("application/x-mpegurl")
-         || aType.Type() == MEDIAMIMETYPE("audio/x-mpegurl");
-}
 
 #ifdef MOZ_ANDROID_OMX
 static bool
@@ -154,6 +147,17 @@ CanHandleCodecsType(const MediaContainerType& aType,
     EnsureAndroidMediaPluginHost()->FindDecoder(aType, &supportedCodecs);
   }
 #endif
+#ifdef MOZ_ANDROID_HLS_SUPPORT
+  if (HLSDecoder::IsSupportedType(mimeType)) {
+    if (HLSDecoder::IsSupportedType(aType)) {
+      HLS_DEBUG_NON_MEMBER("DecoderTraits::", "mimeType = %s", mimeType.OriginalString().Data());
+      return CANPLAY_YES;
+    }
+    HLS_DEBUG_NON_MEMBER("DecoderTraits::", "mimeType = %s", mimeType.OriginalString().Data());
+    return CANPLAY_NO;
+  }
+#endif
+
   if (supportedCodecs.IsEmpty()) {
     return CANPLAY_MAYBE;
   }
@@ -172,9 +176,18 @@ CanHandleMediaType(const MediaContainerType& aType,
 {
   MOZ_ASSERT(NS_IsMainThread());
 
+#ifndef MOZ_ANDROID_OMX
   if (IsHttpLiveStreamingType(aType)) {
     Telemetry::Accumulate(Telemetry::MEDIA_HLS_CANPLAY_REQUESTED, true);
   }
+#endif
+#ifdef MOZ_ANDROID_HLS_SUPPORT
+  if (HLSDecoder::IsSupportedType(aType)) {
+    Telemetry::Accumulate(Telemetry::MEDIA_HLS_CANPLAY_REQUESTED, true);
+    HLS_DEBUG_NON_MEMBER("DecoderTraits::", "aType = %s", aType.OriginalString().Data());
+    return CANPLAY_MAYBE;
+  }
+#endif
 
   if (aType.ExtendedType().HaveCodecs()) {
     CanPlayStatus result = CanHandleCodecsType(aType, aDiagnostics);
@@ -323,10 +336,20 @@ InstantiateDecoder(const MediaContainerType& aType,
   }
 #endif
 
+#ifndef MOZ_ANDROID_OMX
   if (IsHttpLiveStreamingType(aType)) {
     // We don't have an HLS decoder.
     Telemetry::Accumulate(Telemetry::MEDIA_HLS_DECODER_SUCCESS, false);
   }
+#endif
+#ifdef MOZ_ANDROID_HLS_SUPPORT
+  if (HLSDecoder::IsSupportedType(aType)) {
+    HLS_DEBUG_NON_MEMBER("DecoderTraits::", "aType = %s", aType.OriginalString().Data());
+    Telemetry::Accumulate(Telemetry::MEDIA_HLS_DECODER_SUCCESS, true);
+    decoder = new HLSDecoder(aOwner);
+    return decoder.forget();
+  }
+#endif
 
   return nullptr;
 }
