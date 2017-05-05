@@ -78,7 +78,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
 
     @Override
     protected final void maybeInitRenderer() {
-        if(initialized || format == null) {
+        if (initialized || format == null) {
             return;
         }
         if (DEBUG) Log.d(LOGTAG, "Initializing ... ");
@@ -147,7 +147,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         assertTrue(formats.size() >= 0);
         // We add a new format in the list once format changes, so the formatIndex
         // should indicate to the last(latest) format.
-        sample.formatIndex = formats.size()-1;
+        sample.formatIndex = formats.size() - 1;
         demuxedInputSamples.offer(sample);
 
         if (DEBUG) Log.d(LOGTAG, "Demuxed sample PTS : " +

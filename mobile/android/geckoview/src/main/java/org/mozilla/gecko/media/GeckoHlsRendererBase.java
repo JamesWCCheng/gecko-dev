@@ -155,7 +155,8 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
 
         maybeInitRenderer();
         if (initialized) {
-            while (feedInputBuffersQueue()) {}
+            while (feedInputBuffersQueue()) {
+            }
         }
     }
 }

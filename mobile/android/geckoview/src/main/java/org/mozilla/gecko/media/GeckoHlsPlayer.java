@@ -319,7 +319,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
 
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int state) {
-        if (DEBUG) Log.d(LOGTAG, "state [" + playWhenReady + ", "+ getStateString(state) + "]");
+        if (DEBUG) Log.d(LOGTAG, "state [" + playWhenReady + ", " + getStateString(state) + "]");
         if (state == ExoPlayer.STATE_READY) {
             player.setPlayWhenReady(true);
         }

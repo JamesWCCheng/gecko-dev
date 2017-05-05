@@ -236,7 +236,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         assertTrue(formats.size() >= 0);
         // We add a new format in the list once format changes, so the formatIndex
         // should indicate to the last(latest) format.
-        sample.formatIndex = formats.size()-1;
+        sample.formatIndex = formats.size() - 1;
         // There's no duration information from the ExoPlayer's sample, we need
         // to calculate it.
         calculatDuration(sample);
@@ -331,12 +331,12 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
             for (int i = 0; i < range; i++) {
                 // Comparing among samples in the window.
                 for (int j = -2; j < 7; j++) {
-                    if (i+j >= 0 &&
-                        i+j < range &&
-                        inputArray[i+j].info.presentationTimeUs > inputArray[i].info.presentationTimeUs) {
+                    if (i + j >= 0 &&
+                        i + j < range &&
+                        inputArray[i + j].info.presentationTimeUs > inputArray[i].info.presentationTimeUs) {
                         inputArray[i].duration =
                             Math.min(inputArray[i].duration,
-                                     inputArray[i+j].info.presentationTimeUs - inputArray[i].info.presentationTimeUs);
+                                     inputArray[i + j].info.presentationTimeUs - inputArray[i].info.presentationTimeUs);
                     }
                 }
             }
@@ -352,11 +352,11 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         } else if (inputStreamEnded) {
             for (int i = 0; i < sizeOfNoDura; i++) {
                 for (int j = -2; j < 7; j++) {
-                    if (i+j >= 0 && i+j < sizeOfNoDura &&
-                        inputArray[i+j].info.presentationTimeUs > inputArray[i].info.presentationTimeUs) {
+                    if (i + j >= 0 && i + j < sizeOfNoDura &&
+                        inputArray[i + j].info.presentationTimeUs > inputArray[i].info.presentationTimeUs) {
                         inputArray[i].duration =
                             Math.min(inputArray[i].duration,
-                                     inputArray[i+j].info.presentationTimeUs - inputArray[i].info.presentationTimeUs);
+                                     inputArray[i + j].info.presentationTimeUs - inputArray[i].info.presentationTimeUs);
                     }
                 }
             }
@@ -486,7 +486,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     }
 
     private void updateCSDInfo(Format format) {
-        int size= 0;
+        int size = 0;
         for (int i = 0; i < format.initializationData.size(); i++) {
             size += format.initializationData.get(i).length;
         }
