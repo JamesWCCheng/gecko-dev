@@ -30,6 +30,10 @@ android {
                     exclude 'com/adjust/**'
                 }
 
+                if (!mozconfig.substs.MOZ_ANDROID_HLS_SUPPORT) {
+                    exclude 'com/google/android/exoplayer2/**'
+                }
+
                 // Exclude LeakCanary: It will be added again via a gradle dependency. This version
                 // here is only the no-op library for mach-based builds.
                 exclude 'com/squareup/leakcanary/**'
