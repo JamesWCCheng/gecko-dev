@@ -1,0 +1,162 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.gecko.media;
+
+import android.util.Log;
+
+import com.google.android.exoplayer2.BaseRenderer;
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.FormatHolder;
+import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+public abstract class GeckoHlsRendererBase extends BaseRenderer {
+    protected static final int QUEUED_INPUT_SAMPLE_DURATION_THRESHOLD = 1000000; //1sec
+    protected final MediaCodecSelector mediaCodecSelector;
+    protected final FormatHolder formatHolder = new FormatHolder();
+    protected boolean DEBUG;
+    protected String LOGTAG;
+    // Notify GeckoHlsPlayer about renderer's status, i.e. data has arrived.
+    protected GeckoHlsPlayer.ComponentListener playerListener;
+
+    protected ConcurrentLinkedQueue<GeckoHlsSample> demuxedInputSamples = new ConcurrentLinkedQueue<>();
+
+    protected ByteBuffer inputBuffer = null;
+    protected Format format = null;
+    protected ArrayList<Format> formats = new ArrayList<Format>();
+    protected boolean initialized = false;
+    protected boolean waitingForData = true;
+    protected boolean inputStreamEnded = false;
+    protected long firstSampleStartTime = 0;
+
+    protected abstract void maybeInitRenderer();
+    protected abstract void resetRenderer();
+    protected abstract boolean feedInputBuffersQueue();
+    protected abstract boolean clearInputSamplesQueue();
+    protected abstract void onInputFormatChanged(Format newFormat);
+
+    protected void assertTrue(boolean condition) {
+        if (DEBUG && !condition) {
+            throw new AssertionError("Expected condition to be true");
+        }
+    }
+
+    public GeckoHlsRendererBase(int trackType, MediaCodecSelector selector,
+                                GeckoHlsPlayer.ComponentListener eventListener) {
+        super(trackType);
+        assertTrue(selector != null);
+        playerListener = eventListener;
+        mediaCodecSelector = selector;
+    }
+
+    protected boolean isQueuedEnoughData() {
+        if (demuxedInputSamples.isEmpty()) {
+            return false;
+        }
+        int size = demuxedInputSamples.size();
+        GeckoHlsSample[] queuedSamples =
+                demuxedInputSamples.toArray(new GeckoHlsSample[size]);
+        return Math.abs(queuedSamples[size - 1].info.presentationTimeUs -
+                        queuedSamples[0].info.presentationTimeUs) >
+               QUEUED_INPUT_SAMPLE_DURATION_THRESHOLD ? true : false;
+    }
+
+    public Format getFormat(int index) {
+        assertTrue(index >= 0);
+        Format fmt = index < formats.size() ? formats.get(index) : null;
+        if (DEBUG) Log.d(LOGTAG, "getFormat : index = " + index +
+                         ", format : " + fmt);
+        return fmt;
+    }
+
+    public long getFirstSamplePTS() { return firstSampleStartTime; }
+
+    public synchronized ConcurrentLinkedQueue<GeckoHlsSample> getQueuedSamples(int number) {
+        ConcurrentLinkedQueue<GeckoHlsSample> samples =
+            new ConcurrentLinkedQueue<GeckoHlsSample>();
+
+        int queuedSize = demuxedInputSamples.size();
+        for (int i = 0; i < queuedSize; i++) {
+            if (i >= number) {
+                break;
+            }
+            GeckoHlsSample sample = demuxedInputSamples.poll();
+            samples.offer(sample);
+        }
+        if (samples.isEmpty()) {
+            if (DEBUG) Log.d(LOGTAG, "getQueuedSamples isEmpty, waitingForData = true !");
+            waitingForData = true;
+        } else if (firstSampleStartTime == 0) {
+            firstSampleStartTime = samples.peek().info.presentationTimeUs;
+            if (DEBUG) Log.d(LOGTAG, "firstSampleStartTime = " + firstSampleStartTime);
+        }
+        return samples;
+    }
+
+    private void readFormat() {
+        int result = readSource(formatHolder, null);
+        if (result == C.RESULT_FORMAT_READ) {
+            onInputFormatChanged(formatHolder.format);
+        }
+    }
+
+    @Override
+    protected void onEnabled(boolean joining) {
+        // Do nothing.
+    }
+
+    @Override
+    protected void onDisabled() {
+        format = null;
+        formats.clear();
+        resetRenderer();
+    }
+
+    @Override
+    public boolean isReady() {
+        return format != null;
+    }
+
+    @Override
+    public boolean isEnded() {
+        return inputStreamEnded;
+    }
+
+    @Override
+    protected void onPositionReset(long positionUs, boolean joining) {
+        if (DEBUG) Log.d(LOGTAG, "onPositionReset : positionUs = " + positionUs);
+        inputStreamEnded = false;
+        if (initialized) {
+            clearInputSamplesQueue();
+        }
+    }
+
+    /*
+     * This is called by ExoPlayerImplInternal.java.
+     * ExoPlayer checks the status of renderer, i.e. isReady() / isEnded(), and
+     * calls renderer.render by passing its wall clock time.
+     */
+    @Override
+    public void render(long positionUs, long elapsedRealtimeUs) {
+        if (DEBUG) Log.d(LOGTAG, "positionUs = " + positionUs +
+                         ", inputStreamEnded = " + inputStreamEnded);
+        if (inputStreamEnded) {
+            return;
+        }
+        if (format == null) {
+            readFormat();
+        }
+
+        maybeInitRenderer();
+        if (initialized) {
+            while (feedInputBuffersQueue()) {
+            }
+        }
+    }
+}
