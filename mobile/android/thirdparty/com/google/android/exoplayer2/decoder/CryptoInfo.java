@@ -130,16 +130,24 @@ public final class CryptoInfo {
   private static final class PatternHolderV24 {
 
     private final android.media.MediaCodec.CryptoInfo frameworkCryptoInfo;
-    private final android.media.MediaCodec.CryptoInfo.Pattern pattern;
+    /**
+     * NOTE : Mozilla Fennec is built against SDK v23 now, in the meanwhile this class
+     *        "PatternHolderV24"" is only used inside {@link CryptoInfo} which provides
+     *        additinoal Pattern information to {@link android.media.MediaCodec.CryptoInfo}
+     *        when SDK version is 24+. It doesn't matter if we don't provide this
+     *        pattern information for HLS feature on the device wheren its SDK version
+     *        is 24+ and that should just work. Comment it for Fennec build process.
+     */
+    // private final android.media.MediaCodec.CryptoInfo.Pattern pattern;
 
     private PatternHolderV24(android.media.MediaCodec.CryptoInfo frameworkCryptoInfo) {
       this.frameworkCryptoInfo = frameworkCryptoInfo;
-      pattern = new android.media.MediaCodec.CryptoInfo.Pattern(0, 0);
+      // pattern = new android.media.MediaCodec.CryptoInfo.Pattern(0, 0);
     }
 
     private void set(int blocksToEncrypt, int blocksToSkip) {
-      pattern.set(blocksToEncrypt, blocksToSkip);
-      frameworkCryptoInfo.setPattern(pattern);
+      // pattern.set(blocksToEncrypt, blocksToSkip);
+      // frameworkCryptoInfo.setPattern(pattern);
     }
 
   }
