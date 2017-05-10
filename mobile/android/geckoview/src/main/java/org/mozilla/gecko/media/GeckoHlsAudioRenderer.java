@@ -110,7 +110,7 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
         bufferForRead.clear();
 
         // Read data from HlsMediaSource
-        int result = readSource(formatHolder, bufferForRead);
+        int result = readSource(formatHolder, bufferForRead, false);
         if (result == C.RESULT_NOTHING_READ) {
             return false;
         }

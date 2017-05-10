@@ -174,7 +174,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
         }
 
         // Read data from HlsMediaSource
-        int result = readSource(formatHolder, bufferForRead);
+        int result = readSource(formatHolder, bufferForRead, false);
         if (result == C.RESULT_NOTHING_READ) {
             return false;
         }

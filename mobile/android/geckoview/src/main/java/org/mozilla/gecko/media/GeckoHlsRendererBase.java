@@ -100,7 +100,7 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
     }
 
     private void readFormat() {
-        int result = readSource(formatHolder, null);
+        int result = readSource(formatHolder, null, true);
         if (result == C.RESULT_FORMAT_READ) {
             onInputFormatChanged(formatHolder.format);
         }
