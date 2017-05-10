@@ -5738,6 +5738,25 @@ public:
 
     auto GetVideoInfo(int32_t) const -> mozilla::jni::Object::LocalRef;
 
+    struct IsLiveStream_t {
+        typedef GeckoHlsDemuxerWrapper Owner;
+        typedef bool ReturnType;
+        typedef bool SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "isLiveStream";
+        static constexpr char signature[] =
+                "()Z";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto IsLiveStream() const -> bool;
+
     struct Seek_t {
         typedef GeckoHlsDemuxerWrapper Owner;
         typedef bool ReturnType;

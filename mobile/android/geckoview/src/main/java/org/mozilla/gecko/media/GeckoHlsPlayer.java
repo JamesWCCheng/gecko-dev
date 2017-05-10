@@ -410,6 +410,9 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         }
     }
 
+    public boolean isLiveStream() {
+        return !isTimelineStatic;
+    }
     // =======================================================================
     // API for GeckoHlsDemuxerWrapper
     // =======================================================================

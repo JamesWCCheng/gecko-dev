@@ -178,7 +178,7 @@ HLSDemuxer::GetTrackDemuxer(TrackType aType, uint32_t aTrackNumber)
 bool
 HLSDemuxer::IsSeekable() const
 {
-  return true;
+  return !mHlsDemuxerWrapper->IsLiveStream();
 }
 
 UniquePtr<EncryptionInfo>
