@@ -108,13 +108,18 @@ public final class GeckoHlsDemuxerWrapper {
             assertTrue(!MimeTypes.AUDIO_RAW.equals(fmt.sampleMimeType));
             aInfo.bitDepth = 16;
             aInfo.mimeType = fmt.sampleMimeType;
-            aInfo.duration = player.getDuration();
+            aInfo.duration = player.isLiveStream() ? 0 : player.getDuration();
             // For HLS content, csd-0 is enough.
             if (!fmt.initializationData.isEmpty()) {
                 aInfo.codecSpecificData = fmt.initializationData.get(0);
             }
         }
         return aInfo;
+    }
+
+    @WrapForJNI
+    boolean isLiveStream() {
+        return player.isLiveStream();
     }
 
     @WrapForJNI
@@ -133,7 +138,7 @@ public final class GeckoHlsDemuxerWrapper {
             vInfo.stereoMode = fmt.stereoMode;
             vInfo.rotation = fmt.rotationDegrees;
             vInfo.mimeType = fmt.sampleMimeType;
-            vInfo.duration = player.getDuration();
+            vInfo.duration = player.isLiveStream() ? 0 : player.getDuration();
         }
         return vInfo;
     }

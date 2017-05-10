@@ -1983,6 +1983,14 @@ auto GeckoHlsDemuxerWrapper::GetVideoInfo(int32_t a0) const -> mozilla::jni::Obj
     return mozilla::jni::Method<GetVideoInfo_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
 }
 
+constexpr char GeckoHlsDemuxerWrapper::IsLiveStream_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::IsLiveStream_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::IsLiveStream() const -> bool
+{
+    return mozilla::jni::Method<IsLiveStream_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr);
+}
+
 constexpr char GeckoHlsDemuxerWrapper::Seek_t::name[];
 constexpr char GeckoHlsDemuxerWrapper::Seek_t::signature[];
 
