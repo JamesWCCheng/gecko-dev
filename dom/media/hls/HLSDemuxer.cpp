@@ -114,6 +114,10 @@ HLSDemuxer::OnInitialized(bool aHasAudio, bool aHasVideo)
   if (aHasVideo) {
     UpdateVideoInfo(0);
   }
+  if (mInitPromise.IsEmpty()) {
+    return;
+  }
+  mInitPromise.ResolveIfExists(NS_OK, __func__);
 }
 
 RefPtr<HLSDemuxer::InitPromise>
@@ -131,10 +135,6 @@ HLSDemuxer::Init()
 void HLSDemuxer::NotifyDataArrived()
 {
   HLS_DEBUG("HLSDemuxer", "NotifyDataArrived()");
-  if (mInitPromise.IsEmpty()) {
-    return;
-  }
-  mInitPromise.ResolveIfExists(NS_OK, __func__);
 }
 
 bool
