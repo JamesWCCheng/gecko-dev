@@ -16,6 +16,8 @@ import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.RendererCapabilities;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.decoder.DecoderCounters;
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
@@ -23,8 +25,9 @@ import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
-import com.google.android.exoplayer2.trackselection.AdaptiveVideoTrackSelection;
+import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.MappingTrackSelector.MappedTrackInfo;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSource;
@@ -43,17 +46,17 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     private static final String LOGTAG = "GeckoHlsPlayer";
     private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
     private static final int MAX_TIMELINE_ITEM_LINES = 3;
-    private static boolean DEBUG = false;
+    private static boolean DEBUG = true;
 
     private DataSource.Factory mMediaDataSourceFactory;
 
     private Handler mMainHandler;
-    private ExoPlayer.EventListener mEventLogger;
     private ExoPlayer mPlayer;
     private GeckoHlsRendererBase[] mRenderers;
     private DefaultTrackSelector mTrackSelector;
     private MediaSource mMediaSource;
     private ComponentListener mComponentListener;
+    private ComponentEventDispatcher mComponentEventDispatcher;
 
     private boolean mIsTimelineStatic = false;
     private long mDurationUs;
@@ -170,6 +173,56 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         }
     }
 
+    public final class ComponentEventDispatcher {
+        public void onDataArrived() {
+            assertTrue(mMainHandler != null);
+            assertTrue(mComponentListener != null);
+            if (!mIsPlayerInitDone) {
+                return;
+            }
+            if (mMainHandler != null && mComponentListener != null) {
+                mMainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mComponentListener.onDataArrived();
+                    }
+                });
+            }
+        }
+
+        public void onVideoInputFormatChanged(final Format format) {
+            assertTrue(mMainHandler != null);
+            assertTrue(mComponentListener != null);
+            if (!mIsPlayerInitDone) {
+                return;
+            }
+            if (mMainHandler != null && mComponentListener != null) {
+                mMainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mComponentListener.onVideoInputFormatChanged(format);
+                    }
+                });
+            }
+        }
+
+        public void onAudioInputFormatChanged(final Format format) {
+            assertTrue(mMainHandler != null);
+            assertTrue(mComponentListener != null);
+            if (!mIsPlayerInitDone) {
+                return;
+            }
+            if (mMainHandler != null && mComponentListener != null) {
+                mMainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mComponentListener.onAudioInputFormatChanged(format);
+                    }
+                });
+            }
+        }
+    }
+
     public final class ComponentListener {
 
         // General purpose implementation
@@ -242,7 +295,7 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         if (DEBUG) { Log.d(LOGTAG, "loading [" + isLoading + "]"); }
         if (!isLoading) {
             // To update buffered position.
-            mComponentListener.onDataArrived();
+            mComponentEventDispatcher.onDataArrived();
         }
     }
 
@@ -257,6 +310,14 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     @Override
     public void onPositionDiscontinuity() {
         if (DEBUG) { Log.d(LOGTAG, "positionDiscontinuity"); }
+    }
+
+    @Override
+    public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
+        if (DEBUG) {
+            Log.d(LOGTAG, "playbackParameters " +
+                  String.format("[speed=%.2f, pitch=%.2f]", playbackParameters.speed, playbackParameters.pitch));
+        }
     }
 
     @Override
@@ -275,6 +336,57 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         if (DEBUG) {
             Log.d(LOGTAG, "onTracksChanged : TGA[" + ignored +
                           "], TSA[" + trackSelections + "]");
+
+            MappedTrackInfo mappedTrackInfo = mTrackSelector.getCurrentMappedTrackInfo();
+            if (mappedTrackInfo == null) {
+              Log.d(LOGTAG, "Tracks []");
+              return;
+            }
+            Log.d(LOGTAG, "Tracks [");
+            // Log tracks associated to renderers.
+            for (int rendererIndex = 0; rendererIndex < mappedTrackInfo.length; rendererIndex++) {
+              TrackGroupArray rendererTrackGroups = mappedTrackInfo.getTrackGroups(rendererIndex);
+              TrackSelection trackSelection = trackSelections.get(rendererIndex);
+              if (rendererTrackGroups.length > 0) {
+                Log.d(LOGTAG, "  Renderer:" + rendererIndex + " [");
+                for (int groupIndex = 0; groupIndex < rendererTrackGroups.length; groupIndex++) {
+                  TrackGroup trackGroup = rendererTrackGroups.get(groupIndex);
+                  String adaptiveSupport = getAdaptiveSupportString(trackGroup.length,
+                          mappedTrackInfo.getAdaptiveSupport(rendererIndex, groupIndex, false));
+                  Log.d(LOGTAG, "    Group:" + groupIndex + ", adaptive_supported=" + adaptiveSupport + " [");
+                  for (int trackIndex = 0; trackIndex < trackGroup.length; trackIndex++) {
+                    String status = getTrackStatusString(trackSelection, trackGroup, trackIndex);
+                    String formatSupport = getFormatSupportString(
+                            mappedTrackInfo.getTrackFormatSupport(rendererIndex, groupIndex, trackIndex));
+                    Log.d(LOGTAG, "      " + status + " Track:" + trackIndex +
+                                  ", " + Format.toLogString(trackGroup.getFormat(trackIndex)) +
+                                  ", supported=" + formatSupport);
+                  }
+                  Log.d(LOGTAG, "    ]");
+                }
+                Log.d(LOGTAG, "  ]");
+              }
+            }
+            // Log tracks not associated with a renderer.
+            TrackGroupArray unassociatedTrackGroups = mappedTrackInfo.getUnassociatedTrackGroups();
+            if (unassociatedTrackGroups.length > 0) {
+              Log.d(LOGTAG, "  Renderer:None [");
+              for (int groupIndex = 0; groupIndex < unassociatedTrackGroups.length; groupIndex++) {
+                Log.d(LOGTAG, "    Group:" + groupIndex + " [");
+                TrackGroup trackGroup = unassociatedTrackGroups.get(groupIndex);
+                for (int trackIndex = 0; trackIndex < trackGroup.length; trackIndex++) {
+                  String status = getTrackStatusString(false);
+                  String formatSupport = getFormatSupportString(
+                          RendererCapabilities.FORMAT_UNSUPPORTED_TYPE);
+                  Log.d(LOGTAG, "      " + status + " Track:" + trackIndex +
+                                ", " + Format.toLogString(trackGroup.getFormat(trackIndex)) +
+                                ", supported=" + formatSupport);
+                }
+                Log.d(LOGTAG, "    ]");
+              }
+              Log.d(LOGTAG, "  ]");
+            }
+            Log.d(LOGTAG, "]");
         }
         mTracksInfo = null;
         int numVideoTracks = 0;
@@ -348,6 +460,47 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         }
     }
 
+    private static String getFormatSupportString(int formatSupport) {
+        switch (formatSupport) {
+          case RendererCapabilities.FORMAT_HANDLED:
+            return "YES";
+          case RendererCapabilities.FORMAT_EXCEEDS_CAPABILITIES:
+            return "NO_EXCEEDS_CAPABILITIES";
+          case RendererCapabilities.FORMAT_UNSUPPORTED_SUBTYPE:
+            return "NO_UNSUPPORTED_TYPE";
+          case RendererCapabilities.FORMAT_UNSUPPORTED_TYPE:
+            return "NO";
+          default:
+            return "?";
+        }
+      }
+
+    private static String getAdaptiveSupportString(int trackCount, int adaptiveSupport) {
+        if (trackCount < 2) {
+          return "N/A";
+        }
+        switch (adaptiveSupport) {
+          case RendererCapabilities.ADAPTIVE_SEAMLESS:
+            return "YES";
+          case RendererCapabilities.ADAPTIVE_NOT_SEAMLESS:
+            return "YES_NOT_SEAMLESS";
+          case RendererCapabilities.ADAPTIVE_NOT_SUPPORTED:
+            return "NO";
+          default:
+            return "?";
+        }
+      }
+
+      private static String getTrackStatusString(TrackSelection selection, TrackGroup group,
+                                                 int trackIndex) {
+        return getTrackStatusString(selection != null && selection.getTrackGroup() == group
+                && selection.indexOf(trackIndex) != C.INDEX_UNSET);
+      }
+
+      private static String getTrackStatusString(boolean enabled) {
+        return enabled ? "[X]" : "[ ]";
+      }
+
     // =======================================================================
     // API for GeckoHlsResourceWrapper
     // =======================================================================
@@ -359,28 +512,26 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
         }
         Context ctx = GeckoAppShell.getApplicationContext();
         mComponentListener = new ComponentListener();
+        mComponentEventDispatcher = new ComponentEventDispatcher();
         mMainHandler = new Handler();
 
         mDurationUs = 0;
 
         // Prepare trackSelector
         TrackSelection.Factory videoTrackSelectionFactory =
-                new AdaptiveVideoTrackSelection.Factory(BANDWIDTH_METER);
+                new AdaptiveTrackSelection.Factory(BANDWIDTH_METER);
         mTrackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
 
         // Prepare customized renderer
         mRenderers = new GeckoHlsRendererBase[2];
-        mRenderers[0] = new GeckoHlsVideoRenderer(mComponentListener);
-        mRenderers[1] = new GeckoHlsAudioRenderer(mComponentListener);
+        mVRenderer = new GeckoHlsVideoRenderer(mComponentEventDispatcher);
+        mARenderer = new GeckoHlsAudioRenderer(mComponentEventDispatcher);
+        mRenderers[0] = mVRenderer;
+        mRenderers[1] = mARenderer;
 
         // Create ExoPlayer instance with specific components.
         mPlayer = ExoPlayerFactory.newInstance(mRenderers, mTrackSelector);
         mPlayer.addListener(this);
-
-        if (DEBUG) {
-            mEventLogger = new EventLogger(mTrackSelector);
-            mPlayer.addListener(mEventLogger);
-        }
 
         Uri uri = Uri.parse(url);
         mMediaDataSourceFactory = buildDataSourceFactory(ctx, BANDWIDTH_METER);
@@ -489,9 +640,6 @@ public class GeckoHlsPlayer implements ExoPlayer.EventListener {
     public void release() {
         if (DEBUG) { Log.d(LOGTAG, "releasing  ..."); }
         if (mPlayer != null) {
-            if (mEventLogger != null) {
-                mPlayer.removeListener(mEventLogger);
-            }
             mPlayer.removeListener(this);
             mPlayer.stop();
             mPlayer.release();

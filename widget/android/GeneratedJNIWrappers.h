@@ -5490,10 +5490,10 @@ public:
                 int32_t,
                 int64_t,
                 mozilla::jni::String::Param,
-                mozilla::jni::ByteBuffer::Param> Args;
+                mozilla::jni::ByteArray::Param> Args;
         static constexpr char name[] = "<init>";
         static constexpr char signature[] =
-                "(IIIIJLjava/lang/String;Ljava/nio/ByteBuffer;)V";
+                "(IIIIJLjava/lang/String;[B)V";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -5503,7 +5503,7 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    static auto New(int32_t, int32_t, int32_t, int32_t, int64_t, mozilla::jni::String::Param, mozilla::jni::ByteBuffer::Param) -> GeckoAudioInfo::LocalRef;
+    static auto New(int32_t, int32_t, int32_t, int32_t, int64_t, mozilla::jni::String::Param, mozilla::jni::ByteArray::Param) -> GeckoAudioInfo::LocalRef;
 
     struct BitDepth_t {
         typedef GeckoAudioInfo Owner;
@@ -5545,12 +5545,12 @@ public:
 
     struct CodecSpecificData_t {
         typedef GeckoAudioInfo Owner;
-        typedef mozilla::jni::ByteBuffer::LocalRef ReturnType;
-        typedef mozilla::jni::ByteBuffer::Param SetterType;
+        typedef mozilla::jni::ByteArray::LocalRef ReturnType;
+        typedef mozilla::jni::ByteArray::Param SetterType;
         typedef mozilla::jni::Args<> Args;
         static constexpr char name[] = "codecSpecificData";
         static constexpr char signature[] =
-                "Ljava/nio/ByteBuffer;";
+                "[B";
         static const bool isStatic = false;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -5560,7 +5560,7 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    auto CodecSpecificData() const -> mozilla::jni::ByteBuffer::LocalRef;
+    auto CodecSpecificData() const -> mozilla::jni::ByteArray::LocalRef;
 
     struct Duration_t {
         typedef GeckoAudioInfo Owner;

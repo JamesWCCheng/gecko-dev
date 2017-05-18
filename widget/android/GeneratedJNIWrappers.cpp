@@ -1902,7 +1902,7 @@ const char GeckoAudioInfo::name[] =
 constexpr char GeckoAudioInfo::New_t::name[];
 constexpr char GeckoAudioInfo::New_t::signature[];
 
-auto GeckoAudioInfo::New(int32_t a0, int32_t a1, int32_t a2, int32_t a3, int64_t a4, mozilla::jni::String::Param a5, mozilla::jni::ByteBuffer::Param a6) -> GeckoAudioInfo::LocalRef
+auto GeckoAudioInfo::New(int32_t a0, int32_t a1, int32_t a2, int32_t a3, int64_t a4, mozilla::jni::String::Param a5, mozilla::jni::ByteArray::Param a6) -> GeckoAudioInfo::LocalRef
 {
     return mozilla::jni::Constructor<New_t>::Call(GeckoAudioInfo::Context(), nullptr, a0, a1, a2, a3, a4, a5, a6);
 }
@@ -1926,7 +1926,7 @@ auto GeckoAudioInfo::Channels() const -> int32_t
 constexpr char GeckoAudioInfo::CodecSpecificData_t::name[];
 constexpr char GeckoAudioInfo::CodecSpecificData_t::signature[];
 
-auto GeckoAudioInfo::CodecSpecificData() const -> mozilla::jni::ByteBuffer::LocalRef
+auto GeckoAudioInfo::CodecSpecificData() const -> mozilla::jni::ByteArray::LocalRef
 {
     return mozilla::jni::Field<CodecSpecificData_t>::Get(GeckoAudioInfo::mCtx, nullptr);
 }

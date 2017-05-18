@@ -24,8 +24,8 @@ import java.nio.ByteBuffer;
 import org.mozilla.gecko.AppConstants.Versions;
 
 public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
-    public GeckoHlsAudioRenderer(GeckoHlsPlayer.ComponentListener eventListener) {
-        super(C.TRACK_TYPE_AUDIO, eventListener);
+    public GeckoHlsAudioRenderer(GeckoHlsPlayer.ComponentEventDispatcher eventDispatcher) {
+        super(C.TRACK_TYPE_AUDIO, eventDispatcher);
         assertTrue(Versions.feature16Plus);
         LOGTAG = getClass().getSimpleName();
         DEBUG = false;
@@ -157,6 +157,6 @@ public class GeckoHlsAudioRenderer extends GeckoHlsRendererBase {
 
     @Override
     protected void notifyPlayerInputFormatChanged(Format newFormat) {
-        mPlayerListener.onAudioInputFormatChanged(newFormat);
+        mPlayerEventDispatcher.onAudioInputFormatChanged(newFormat);
     }
 }

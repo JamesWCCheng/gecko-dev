@@ -28,7 +28,7 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
     protected boolean DEBUG;
     protected String LOGTAG;
     // Notify GeckoHlsPlayer about renderer's status, i.e. data has arrived.
-    protected GeckoHlsPlayer.ComponentListener mPlayerListener;
+    protected GeckoHlsPlayer.ComponentEventDispatcher mPlayerEventDispatcher;
 
     protected ConcurrentLinkedQueue<GeckoHlsSample> mDemuxedInputSamples = new ConcurrentLinkedQueue<>();
 
@@ -54,9 +54,9 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
         }
     }
 
-    public GeckoHlsRendererBase(int trackType, GeckoHlsPlayer.ComponentListener eventListener) {
+    public GeckoHlsRendererBase(int trackType, GeckoHlsPlayer.ComponentEventDispatcher eventDispatcher) {
         super(trackType);
-        mPlayerListener = eventListener;
+        mPlayerEventDispatcher = eventDispatcher;
     }
 
     private boolean isQueuedEnoughData() {
@@ -199,7 +199,7 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
         // Read data from HlsMediaSource
         int result = C.RESULT_NOTHING_READ;
         try {
-            result = readSource(mFormatHolder, bufferForRead);
+            result = readSource(mFormatHolder, bufferForRead, false);
         } catch (Exception e) {
             Log.e(LOGTAG, "[feedInput] Exception when readSource :", e);
             return false;
@@ -232,13 +232,13 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
     private void maybeNotifyDataArrived() {
         if (mWaitingForData && isQueuedEnoughData()) {
             if (DEBUG) { Log.d(LOGTAG, "onDataArrived"); }
-            mPlayerListener.onDataArrived();
+            mPlayerEventDispatcher.onDataArrived();
             mWaitingForData = false;
         }
     }
 
     private void readFormat() {
-        int result = readSource(mFormatHolder, null);
+        int result = readSource(mFormatHolder, null, true);
         if (result == C.RESULT_FORMAT_READ) {
             onInputFormatChanged(mFormatHolder.format);
         }

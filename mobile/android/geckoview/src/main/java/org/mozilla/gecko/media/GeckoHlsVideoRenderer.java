@@ -52,8 +52,8 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
     // changes accordingly.
     private byte[] mCSDInfo = null;
 
-    public GeckoHlsVideoRenderer(GeckoHlsPlayer.ComponentListener eventListener) {
-        super(C.TRACK_TYPE_VIDEO, eventListener);
+    public GeckoHlsVideoRenderer(GeckoHlsPlayer.ComponentEventDispatcher eventDispatcher) {
+        super(C.TRACK_TYPE_VIDEO, eventDispatcher);
         assertTrue(Versions.feature16Plus);
         LOGTAG = getClass().getSimpleName();
         DEBUG = false;
@@ -296,7 +296,7 @@ public class GeckoHlsVideoRenderer extends GeckoHlsRendererBase {
 
     @Override
     protected void notifyPlayerInputFormatChanged(Format newFormat) {
-        mPlayerListener.onVideoInputFormatChanged(newFormat);
+        mPlayerEventDispatcher.onVideoInputFormatChanged(newFormat);
     }
 
     private void calculateSamplesWithin(GeckoHlsSample[] samples, int range) {
