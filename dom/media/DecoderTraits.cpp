@@ -22,6 +22,9 @@
 #include "AndroidMediaReader.h"
 #include "AndroidMediaPluginHost.h"
 #endif
+#ifdef MOZ_ANDROID_HLS_SUPPORT
+#include "HLSDecoder.h"
+#endif
 #ifdef MOZ_DIRECTSHOW
 #include "DirectShowDecoder.h"
 #include "DirectShowReader.h"
@@ -49,18 +52,6 @@
 
 namespace mozilla
 {
-
-static bool
-IsHttpLiveStreamingType(const MediaContainerType& aType)
-{
-  return // For m3u8.
-         // https://tools.ietf.org/html/draft-pantos-http-live-streaming-19#section-10
-         aType.Type() == MEDIAMIMETYPE("application/vnd.apple.mpegurl")
-         // Some sites serve these as the informal m3u type.
-         || aType.Type() == MEDIAMIMETYPE("application/x-mpegurl")
-         || aType.Type() == MEDIAMIMETYPE("audio/x-mpegurl");
-}
-
 #ifdef MOZ_ANDROID_OMX
 static bool
 IsAndroidMediaType(const MediaContainerType& aType)
@@ -75,6 +66,18 @@ IsAndroidMediaType(const MediaContainerType& aType)
          || aType.Type() == MEDIAMIMETYPE("video/x-m4v");
 }
 #endif
+
+
+/* static */ bool
+DecoderTraits::IsHttpLiveStreamingType(const MediaContainerType& aType)
+{
+  return // For m3u8.
+         // https://tools.ietf.org/html/draft-pantos-http-live-streaming-19#section-10
+         aType.Type() == MEDIAMIMETYPE("application/vnd.apple.mpegurl")
+         // Some sites serve these as the informal m3u type.
+         || aType.Type() == MEDIAMIMETYPE("application/x-mpegurl")
+         || aType.Type() == MEDIAMIMETYPE("audio/x-mpegurl");
+}
 
 /* static */ bool
 DecoderTraits::IsMP4SupportedType(const MediaContainerType& aType,
@@ -172,7 +175,13 @@ CanHandleMediaType(const MediaContainerType& aType,
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (IsHttpLiveStreamingType(aType)) {
+#ifdef MOZ_ANDROID_HLS_SUPPORT
+  if (HLSDecoder::IsSupportedType(aType)) {
+    return CANPLAY_MAYBE;
+  }
+#endif
+
+  if (DecoderTraits::IsHttpLiveStreamingType(aType)) {
     Telemetry::Accumulate(Telemetry::MEDIA_HLS_CANPLAY_REQUESTED, true);
   }
 
@@ -323,7 +332,14 @@ InstantiateDecoder(const MediaContainerType& aType,
   }
 #endif
 
-  if (IsHttpLiveStreamingType(aType)) {
+#ifdef MOZ_ANDROID_HLS_SUPPORT
+  if (HLSDecoder::IsSupportedType(aType)) {
+    decoder = new HLSDecoder(aOwner);
+    return decoder.forget();
+  }
+#endif
+
+  if (DecoderTraits::IsHttpLiveStreamingType(aType)) {
     // We don't have an HLS decoder.
     Telemetry::Accumulate(Telemetry::MEDIA_HLS_DECODER_SUCCESS, false);
   }
