@@ -199,7 +199,7 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
         // Read data from HlsMediaSource
         int result = C.RESULT_NOTHING_READ;
         try {
-            result = readSource(mFormatHolder, bufferForRead);
+            result = readSource(mFormatHolder, bufferForRead, false);
         } catch (Exception e) {
             Log.e(LOGTAG, "[feedInput] Exception when readSource :", e);
             return false;
@@ -238,7 +238,7 @@ public abstract class GeckoHlsRendererBase extends BaseRenderer {
     }
 
     private void readFormat() {
-        int result = readSource(mFormatHolder, null);
+        int result = readSource(mFormatHolder, null, true);
         if (result == C.RESULT_FORMAT_READ) {
             onInputFormatChanged(mFormatHolder.format);
         }
