@@ -1963,6 +1963,106 @@ auto GeckoAudioInfo::Rate() const -> int32_t
     return mozilla::jni::Field<Rate_t>::Get(GeckoAudioInfo::mCtx, nullptr);
 }
 
+const char GeckoHlsDemuxerWrapper::name[] =
+        "org/mozilla/gecko/media/GeckoHlsDemuxerWrapper";
+
+constexpr char GeckoHlsDemuxerWrapper::Create_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::Create_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::Create(mozilla::jni::Object::Param a0, mozilla::jni::Object::Param a1) -> GeckoHlsDemuxerWrapper::LocalRef
+{
+    return mozilla::jni::Method<Create_t>::Call(GeckoHlsDemuxerWrapper::Context(), nullptr, a0, a1);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::Destroy_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::Destroy_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::Destroy() const -> void
+{
+    return mozilla::jni::Method<Destroy_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::GetAudioInfo_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetAudioInfo_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetAudioInfo(int32_t a0) const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetAudioInfo_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::GetBuffered_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetBuffered_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetBuffered() const -> int64_t
+{
+    return mozilla::jni::Method<GetBuffered_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::GetNextKeyFrameTime_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetNextKeyFrameTime_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetNextKeyFrameTime() const -> int64_t
+{
+    return mozilla::jni::Method<GetNextKeyFrameTime_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::GetNumberOfTracks_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetNumberOfTracks_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetNumberOfTracks(int32_t a0) const -> int32_t
+{
+    return mozilla::jni::Method<GetNumberOfTracks_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::GetSamples_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetSamples_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetSamples(int32_t a0, int32_t a1) const -> mozilla::jni::ObjectArray::LocalRef
+{
+    return mozilla::jni::Method<GetSamples_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0, a1);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::GetVideoInfo_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::GetVideoInfo_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::GetVideoInfo(int32_t a0) const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetVideoInfo_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::IsLiveStream_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::IsLiveStream_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::IsLiveStream() const -> bool
+{
+    return mozilla::jni::Method<IsLiveStream_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::Seek_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::Seek_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::Seek(int64_t a0) const -> bool
+{
+    return mozilla::jni::Method<Seek_t>::Call(GeckoHlsDemuxerWrapper::mCtx, nullptr, a0);
+}
+
+const char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::name[] =
+        "org/mozilla/gecko/media/GeckoHlsDemuxerWrapper$HlsDemuxerCallbacks";
+
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New_t::signature[];
+
+auto GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::New() -> HlsDemuxerCallbacks::LocalRef
+{
+    return mozilla::jni::Constructor<New_t>::Call(HlsDemuxerCallbacks::Context(), nullptr);
+}
+
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnError_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnError_t::signature[];
+
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnInitialized_t::name[];
+constexpr char GeckoHlsDemuxerWrapper::HlsDemuxerCallbacks::OnInitialized_t::signature[];
+
 const char GeckoHlsResourceWrapper::name[] =
         "org/mozilla/gecko/media/GeckoHlsResourceWrapper";
 
@@ -2077,17 +2177,9 @@ const char GeckoVideoInfo::name[] =
 constexpr char GeckoVideoInfo::New_t::name[];
 constexpr char GeckoVideoInfo::New_t::signature[];
 
-auto GeckoVideoInfo::New(int32_t a0, int32_t a1, int32_t a2, int32_t a3, int32_t a4, int32_t a5, int64_t a6, mozilla::jni::String::Param a7, mozilla::jni::ByteBuffer::Param a8, mozilla::jni::ByteBuffer::Param a9) -> GeckoVideoInfo::LocalRef
+auto GeckoVideoInfo::New(int32_t a0, int32_t a1, int32_t a2, int32_t a3, int32_t a4, int32_t a5, int64_t a6, mozilla::jni::String::Param a7) -> GeckoVideoInfo::LocalRef
 {
-    return mozilla::jni::Constructor<New_t>::Call(GeckoVideoInfo::Context(), nullptr, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
-}
-
-constexpr char GeckoVideoInfo::CodecSpecificData_t::name[];
-constexpr char GeckoVideoInfo::CodecSpecificData_t::signature[];
-
-auto GeckoVideoInfo::CodecSpecificData() const -> mozilla::jni::ByteBuffer::LocalRef
-{
-    return mozilla::jni::Field<CodecSpecificData_t>::Get(GeckoVideoInfo::mCtx, nullptr);
+    return mozilla::jni::Constructor<New_t>::Call(GeckoVideoInfo::Context(), nullptr, a0, a1, a2, a3, a4, a5, a6, a7);
 }
 
 constexpr char GeckoVideoInfo::DisplayHeight_t::name[];
@@ -2112,14 +2204,6 @@ constexpr char GeckoVideoInfo::Duration_t::signature[];
 auto GeckoVideoInfo::Duration() const -> int64_t
 {
     return mozilla::jni::Field<Duration_t>::Get(GeckoVideoInfo::mCtx, nullptr);
-}
-
-constexpr char GeckoVideoInfo::ExtraData_t::name[];
-constexpr char GeckoVideoInfo::ExtraData_t::signature[];
-
-auto GeckoVideoInfo::ExtraData() const -> mozilla::jni::ByteBuffer::LocalRef
-{
-    return mozilla::jni::Field<ExtraData_t>::Get(GeckoVideoInfo::mCtx, nullptr);
 }
 
 constexpr char GeckoVideoInfo::MimeType_t::name[];
