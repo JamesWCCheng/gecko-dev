@@ -22,6 +22,10 @@ function manifestVideo() {
   return gManifestNavigatorSource.contentDocument.createElement('video');
 }
 
+var gHLSTests = [
+  { name:"bipbop_4x3_variant.m3u8", type:"audio/x-mpegurl", duration:59.86002 }
+];
+
 // These are small test files, good for just seeing if something loads. We
 // really only need one test file per backend here.
 var gSmallTests = [

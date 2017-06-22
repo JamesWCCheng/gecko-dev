@@ -357,7 +357,7 @@ def run_test_harness(parser, options):
     options.dumpOutputDirectory = deviceRoot
 
     procName = options.app.split('/')[-1]
-    dm.killProcess(procName)
+    #dm.killProcess(procName)
     if dm.processExist(procName):
         log.warning("unable to kill %s before running tests!" % procName)
 
