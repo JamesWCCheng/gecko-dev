@@ -20,7 +20,8 @@ function startTest(test, token) {
   v.prevTime = 0;
   v.seenEnded = false;
   v.seenSuspend = false;
-
+  v.controls = true;
+  Log(token, "t####################" + v.controls);
   var handler = {
     "ontimeout": function() {
       Log(token, "timed out: ended=" + v.seenEnded + ", suspend=" + v.seenSuspend);
@@ -49,7 +50,8 @@ function startTest(test, token) {
 
   // We should get "ended" and "suspend" events to finish the test.
   var mayFinish = function() {
-    if (v.seenEnded && v.seenSuspend) {
+    Log(token, "t####################" + v.seenSuspend);
+    if (v.seenEnded) {
       finish();
     }
   }

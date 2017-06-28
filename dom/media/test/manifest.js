@@ -21,9 +21,12 @@ function manifestNavigator() {
 function manifestVideo() {
   return gManifestNavigatorSource.contentDocument.createElement('video');
 }
-
+dump("##############################");
+let serverUrl = SpecialPowers.Services.prefs.getCharPref("media.hls.server.url");
+dump("##############################");
+dump(serverUrl);
 var gHLSTests = [
-  { name:"bipbop_4x3_variant.m3u8", type:"audio/x-mpegurl", duration:59.86002 }
+  { name: serverUrl + "/bipbop_4x3_variant.m3u8", type:"audio/x-mpegurl", duration:59.86002 }
 ];
 
 // These are small test files, good for just seeing if something loads. We
